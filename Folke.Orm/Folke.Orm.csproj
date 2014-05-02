@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F180A025-7457-475C-A48B-0D4849BB2B1C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Folke.Orm</RootNamespace>
+    <AssemblyName>Folke.Orm</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MySql.Data">
+      <HintPath>..\packages\MySql.Data.6.8.3\lib\net45\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ColumnAttribute.cs" />
+    <Compile Include="ConstraintEventEnum.cs" />
+    <Compile Include="DatabaseSettings.cs" />
+    <Compile Include="DbDataReaderExtensions.cs" />
+    <Compile Include="FolkeCommand.cs" />
+    <Compile Include="FolkeConnection.cs" />
+    <Compile Include="FolkeList.cs" />
+    <Compile Include="FolkeListAttribute.cs" />
+    <Compile Include="FolkeTransaction.cs" />
+    <Compile Include="FolkeTuple.cs" />
+    <Compile Include="IDatabaseDriver.cs" />
+    <Compile Include="IDatabaseSettings.cs" />
+    <Compile Include="IFolkeConnection.cs" />
+    <Compile Include="IFolkeTable.cs" />
+    <Compile Include="InformationSchema\Columns.cs" />
+    <Compile Include="InformationSchema\Tables.cs" />
+    <Compile Include="MySqlDriver.cs" />
+    <Compile Include="PreparedQueryBuilder.cs" />
+    <Compile Include="PreparedLoadBuilder.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryBuilder.cs" />
+    <Compile Include="SchemaAttribute.cs" />
+    <Compile Include="SchemaQueryBuilder.cs" />
+    <Compile Include="SchemaUpdater.cs" />
+    <Compile Include="SqlOperator.cs" />
+    <Compile Include="TableAttribute.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Folke.Orm.nuspec" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
