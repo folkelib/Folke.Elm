@@ -55,7 +55,7 @@ namespace Folke.Orm.Test
         [SetUp]
         public void Initialize()
         {
-            var driver = new MySqlDriver(new DatabaseSettings { Database = "folketest", Host = "localhost", Password = "test", User = "test" });
+            var driver = new MySqlDriver(new DatabaseSettings { Database = "folkeormtest", Host = "localhost", Password = "test", User = "test" });
             connection = new FolkeConnection(driver);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
