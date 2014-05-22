@@ -88,12 +88,7 @@ namespace Folke.Orm
             return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == value.Id).Single();
         }
 
-        public T Load<T>(int id) where T : class, IFolkeTable, new()
-        {
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).Single();
-        }
-
-        public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
+        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
         {
             var query = new QueryBuilder<T>(this).SelectAll();
             foreach (var fetch in fetches)
@@ -105,12 +100,27 @@ namespace Folke.Orm
             {
                 query.LeftJoinOn(fetch);
             }
-            return query.Where(x => x.Id == id).Single();
+            return query;
+        }
+
+        public T Load<T>(int id) where T : class, IFolkeTable, new()
+        {
+            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).Single();
+        }
+
+        public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
+        {
+            return CreateLoadOrGetQuery<T>(fetches).Where(x => x.Id == id).Single();
         }
 
         public T Get<T>(int id) where T : class, IFolkeTable, new()
         {
             return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).SingleOrDefault();
+        }
+
+        public T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
+        {
+            return CreateLoadOrGetQuery<T>(fetches).Where(x => x.Id == id).SingleOrDefault();
         }
 
         public void Save<T>(T value) where T: class, IFolkeTable, new()

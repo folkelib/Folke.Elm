@@ -36,7 +36,8 @@ namespace Folke.Orm
             Join,
             Values,
             From,
-            Delete
+            Delete,
+            GroupBy
         }
 
         protected class TableAlias
@@ -83,6 +84,14 @@ namespace Folke.Orm
             beginSymbol = driver.BeginSymbol;
             endSymbol = driver.EndSymbol;
             tables = new List<TableAlias>();
+        }
+
+        public string SQL
+        {
+            get
+            {
+                return query.ToString();
+            }
         }
 
         public BaseQueryBuilder<T, TMe> Append(string sql)
@@ -291,7 +300,10 @@ namespace Folke.Orm
             if (expression.Expression is ParameterExpression)
             {
                 var table = GetTable(expression);
-                AppendField(table.name, typeof(int), "Id");
+                if (table != null)
+                    AppendField(table.name, typeof(int), "Id");
+                else
+                    AppendField(GetTable((string)null).name, expression.Type, expression.Member.Name);
             }
             else if (expression.Expression is MemberExpression)
             {
@@ -312,7 +324,7 @@ namespace Folke.Orm
         protected bool TryColumn(MemberExpression column)
         {
             if (currentContext == ContextEnum.Select)
-                throw new Exception("Does not call TryColumn in a Select context");
+                throw new Exception("Do not call TryColumn in a Select context");
 
             if (column.Expression is MemberExpression)
             {
@@ -323,6 +335,8 @@ namespace Folke.Orm
                     AppendField(table.name, column.Type, GetColumnName(column.Member));
                     return true;
                 }
+                else if (column.Member.Name == "Id" && TryColumn(accessTo))
+                    return true;
             }
             else if (column.Expression is ParameterExpression && column.Expression.Type == typeof(T) && parameterTable != null)
             {
@@ -489,6 +503,36 @@ namespace Folke.Orm
         {
             AppendFrom();
             return Table(tableAlias);
+        }
+
+        public BaseQueryBuilder<T, TMe> FromSubQuery(Func<BaseQueryBuilder<T, TMe>, BaseQueryBuilder<T, TMe>> subqueryFactory)
+        {
+            var builder = new BaseQueryBuilder<T, TMe>(driver);
+            builder.parameters = parameters;
+            var subquery = subqueryFactory.Invoke(builder);
+            parameters = builder.parameters;
+            AppendFrom();
+            query.Append(" (");
+            query.Append(subquery.query);
+            query.Append(") AS ");
+
+            var table = RegisterTable(typeof(T), null);
+            query.Append(table.name);
+            return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> InnerJoinSubQuery<U>(Func<BaseQueryBuilder<T, TMe>, BaseQueryBuilder<T, TMe>> subqueryFactory, Expression<Func<U>> tableAlias)
+        {
+            var builder = new BaseQueryBuilder<T, TMe>(driver);
+            builder.parameters = parameters;
+            var subquery = subqueryFactory.Invoke(builder);
+            parameters = builder.parameters;
+            Append(" INNER JOIN (");
+            query.Append(subquery.SQL);
+            query.Append(") AS ");
+            var table = RegisterTable(typeof(U), GetTableAlias(tableAlias.Body as MemberExpression));
+            query.Append(table.name);
+            return this;
         }
 
         public BaseQueryBuilder<T, TMe> From()
@@ -736,45 +780,48 @@ namespace Folke.Orm
             var value = System.Linq.Expressions.Expression.Lambda(expression).Compile().DynamicInvoke();
             Parameter(value);
         }
-
+        
         public BaseQueryBuilder<T, TMe> SelectAll<U>(Expression<Func<T, U>> tableAlias)
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT");
+            Select();
             return All(tableAlias);
         }
 
         public BaseQueryBuilder<T, TMe> SelectAll<U>(Expression<Func<U>> tableAlias)
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT");
+            Select();
             return All(typeof(U), (MemberExpression) tableAlias.Body);
         }
 
         public BaseQueryBuilder<T, TMe> SelectAll()
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT");
+            Select();
             return All(typeof(T), (string) null);
         }
 
         public BaseQueryBuilder<T, TMe> Select()
         {
-            currentContext = ContextEnum.Select;
-            return Append("SELECT");
+            if (currentContext == ContextEnum.Select)
+            {
+                Append(",");
+            }
+            else
+            {
+                currentContext = ContextEnum.Select;
+                Append("SELECT");
+            }
+            return this;
         }
         
         public BaseQueryBuilder<T, TMe> Select(params Expression<Func<T, object>>[] column)
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT");
+            Select();
             return Columns(typeof(T), (string) null, column.Select(x => GetExpressionPropertyInfo(x)));
         }
 
         public BaseQueryBuilder<T, TMe> Select<U,V>(Expression<Func<U>> tableAlias, Expression<Func<V>> column)
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT");
+            Select();
             return Column(typeof(U), (MemberExpression) tableAlias.Body, ((MemberExpression) column.Body).Member as PropertyInfo);
         }
         
@@ -796,8 +843,8 @@ namespace Folke.Orm
 
         public BaseQueryBuilder<T, TMe> SelectCountAll()
         {
-            currentContext = ContextEnum.Select;
-            Append("SELECT COUNT(*)");
+            Select();
+            Append(" COUNT(*)");
             return this;
         }
 
@@ -897,7 +944,14 @@ namespace Folke.Orm
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> In<U>(U[] values)
+        /// <summary>
+        /// Add a IN operator. 
+        /// Example: Where().Column(x => x.Value).In(new[]{12, 13, 14})
+        /// </summary>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public BaseQueryBuilder<T, TMe> In<U>(IEnumerable<U> values)
         {
             query.Append(" IN (");
             bool first = true;
@@ -911,6 +965,11 @@ namespace Folke.Orm
             }
             query.Append(')');
             return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> WhereIn<U>(Expression<Func<T, U>> column, IEnumerable<U> values)
+        {
+            return Where().Column(column).In(values);
         }
 
         public BaseQueryBuilder<T, TMe> Fetch(params Expression<Func<T, object>>[] fetches)
@@ -956,6 +1015,18 @@ namespace Folke.Orm
         {
             Append("INSERT INTO");
             AppendTableName(typeof(T));
+            return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> GroupBy<U>(Expression<Func<T, U>> column)
+        {
+            if (currentContext != ContextEnum.GroupBy)
+                Append("GROUP BY ");
+            else
+                query.Append(',');
+            currentContext = ContextEnum.GroupBy;
+            if (!TryColumn(column.Body as MemberExpression))
+                throw new Exception(column + " is not a valid column");
             return this;
         }
 

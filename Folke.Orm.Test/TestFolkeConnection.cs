@@ -391,5 +391,44 @@ namespace Folke.Orm.Test
                 Assert.AreEqual("Member" + j++, member.Name);
             }
         }
+
+        class Group : IFolkeTable
+        {
+            public int Id { get; set; }
+        }
+        
+        class User : IFolkeTable
+        {
+            public int Id { get; set; }
+        }
+
+        class UserInGroup : IFolkeTable
+        {
+            public int Id { get; set; }
+            public Group Group { get; set; }
+            public User User { get; set; }
+        }
+
+       /* [Test]
+        public void TestSelectFromSubQuery()
+        {
+            connection.Query<UserInGroup>().Select(u => u.Group).FromSubQuery<UserInGroup>(x => x.Select(x => x.)
+        }*/
+
+        [Test]
+        public void TestFromSubQuery()
+        {
+            var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t", query.SQL);
+        }
+
+        [Test]
+        public void TestInnerJoinSubQuery()
+        {
+            UserInGroup a = null;
+            var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group))
+               .InnerJoinSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 2), () => a).On(x => a.Group, x => x.Group);
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t  INNER JOIN (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item1)) AS t1 ON  t1.`Group_id`= t.`Group_id`", query.SQL);
+        }
     }
 }
