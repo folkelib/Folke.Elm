@@ -1,20 +1,16 @@
-﻿using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Web;
-
-namespace Folke.Orm
+﻿namespace Folke.Orm
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data.Common;
+    using System.Linq.Expressions;
+    using System.Reflection;
+
+    using Folke.Orm.InformationSchema;
+
     public class FolkeConnection : IFolkeConnection
     {
-        public IDictionary<string, IDictionary<int, object>> Cache { get; private set; }
-        private DbConnection connection;
-        public string Database { get; set; }
-        public IDatabaseDriver Driver { get; set; }
+        private readonly DbConnection connection;
         private FolkeTransaction transaction;
 
         public FolkeConnection(IDatabaseDriver databaseDriver)
@@ -25,17 +21,17 @@ namespace Folke.Orm
             connection = databaseDriver.CreateConnection();
         }
 
+        public IDictionary<string, IDictionary<int, object>> Cache { get; private set; }
+
+        public string Database { get; set; }
+
+        public IDatabaseDriver Driver { get; set; }
+        
         public FolkeCommand OpenCommand()
         {
             if (transaction == null)
                 connection.Open();
             return new FolkeCommand(this, connection.CreateCommand());
-        }
-
-        internal void CloseCommand()
-        {
-            if (transaction == null)
-                connection.Close();
         }
 
         public FolkeTransaction BeginTransaction()
@@ -88,21 +84,6 @@ namespace Folke.Orm
             return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == value.Id).Single();
         }
 
-        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
-        {
-            var query = new QueryBuilder<T>(this).SelectAll();
-            foreach (var fetch in fetches)
-            {
-                query.AndAll(fetch);
-            }
-            query.From();
-            foreach (var fetch in fetches)
-            {
-                query.LeftJoinOn(fetch);
-            }
-            return query;
-        }
-
         public T Load<T>(int id) where T : class, IFolkeTable, new()
         {
             return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).Single();
@@ -110,7 +91,7 @@ namespace Folke.Orm
 
         public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
         {
-            return CreateLoadOrGetQuery<T>(fetches).Where(x => x.Id == id).Single();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).Single();
         }
 
         public T Get<T>(int id) where T : class, IFolkeTable, new()
@@ -120,10 +101,10 @@ namespace Folke.Orm
 
         public T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
         {
-            return CreateLoadOrGetQuery<T>(fetches).Where(x => x.Id == id).SingleOrDefault();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).SingleOrDefault();
         }
 
-        public void Save<T>(T value) where T: class, IFolkeTable, new()
+        public void Save<T>(T value) where T : class, IFolkeTable, new()
         {
             if (value.Id != 0)
                 throw new Exception("Id must be 0");
@@ -134,24 +115,16 @@ namespace Folke.Orm
             Cache[typeof(T).Name][value.Id] = value;
         }
 
-        public void CreateTable<T>(bool drop = false) where T: class, new()
+        public void CreateTable<T>(bool drop = false) where T : class, new()
         {
             if (drop)
             {
                 new SchemaQueryBuilder<T>(this).DropTable().TryExecute();
             }
+
             new SchemaQueryBuilder<T>(this).CreateTable().Execute();
         }
-
-        internal void CreateTable(Type t, bool drop = false, IList<string> existingTables = null)
-        {
-            if (drop)
-            {
-                new SchemaQueryBuilder<FolkeTuple>(this).DropTable(t).TryExecute();
-            }
-            new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
-        }
-
+        
         public void DropTable<T>() where T : class, new()
         {
             new SchemaQueryBuilder<T>(this).DropTable().Execute();
@@ -168,13 +141,94 @@ namespace Folke.Orm
             schemaUpdater.CreateOrUpdateAll(assembly);
         }
 
+        /// <summary>
+        /// Remove an old element, replacing each reference to this element
+        /// with references to a new element
+        /// </summary>
+        /// <typeparam name="T">The element type</typeparam>
+        /// <param name="oldElement">The element to delete</param>
+        /// <param name="newElement">The element that replaces the previous element</param>
+        public void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new()
+        {
+            var type = typeof(T);
+            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
+            string tableName;
+            string tableSchema;
+            if (tableAttribute != null)
+            {
+                tableName = tableAttribute.Name;
+                tableSchema = tableAttribute.Schema ?? connection.Database;
+            }
+            else
+            {
+                tableName = type.Name;
+                tableSchema = connection.Database;
+            }
+
+            var columns =
+                this.QueryOver<KeyColumnUsage>()
+                    .Where(c => c.ReferencedTableName == tableName && c.ReferencedTableSchema == tableSchema)
+                    .List();
+
+            foreach (var column in columns)
+            {
+                using (var command = this.OpenCommand())
+                {
+                    command.CommandText = string.Format(
+                        "UPDATE `{0}`.`{1}` SET `{2}` = {3} WHERE `{2}` = {4}",
+                        column.TableSchema,
+                        column.TableName,
+                        column.ColumnName,
+                        newElement.Id,
+                        oldElement.Id);
+                    command.ExecuteNonQuery();
+                }
+            }
+
+            Delete(oldElement);
+        }
+
+        internal void CloseCommand()
+        {
+            if (transaction == null)
+                connection.Close();
+        }
+
         internal void EndTransaction()
         {
-            if (transaction != null) // In case EndTransaction has already been called
+            // In case EndTransaction has already been called
+            if (transaction != null) 
             {
                 transaction = null;
                 connection.Close();
             }
+        }
+
+        internal void CreateTable(Type t, bool drop = false, IList<string> existingTables = null)
+        {
+            if (drop)
+            {
+                new SchemaQueryBuilder<FolkeTuple>(this).DropTable(t).TryExecute();
+            }
+
+            new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
+        }
+
+        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
+        {
+            var query = new QueryBuilder<T>(this).SelectAll();
+            foreach (var fetch in fetches)
+            {
+                query.AndAll(fetch);
+            }
+
+            query.From();
+            foreach (var fetch in fetches)
+            {
+                query.LeftJoinOn(fetch);
+            }
+
+            return query;
         }
     } 
 }

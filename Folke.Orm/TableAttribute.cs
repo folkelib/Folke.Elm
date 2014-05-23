@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Folke.Orm
+﻿namespace Folke.Orm
 {
+    using System;
+
+    [System.AttributeUsage(AttributeTargets.Class)]
     public class TableAttribute : Attribute
     {
-        public ConstraintEventEnum OnDelete { get; set; }
-        public ConstraintEventEnum OnUpdate { get; set; }
+        public TableAttribute(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; set; }
+
+        public string Schema { get; set; }
     }
 }
