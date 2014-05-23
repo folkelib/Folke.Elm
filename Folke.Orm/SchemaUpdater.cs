@@ -18,19 +18,21 @@ namespace Folke.Orm
         }
 
         public void CreateOrUpdate<T>()
-            where T: class, new()
+            where T : class, new()
         {
             CreateOrUpdate(typeof(T));
         }
 
         public void CreateOrUpdate(Type tableType)
         {
-            var columns = new QueryBuilder<Columns>(connection).SelectAll().From().Where(x => x.TABLE_NAME == tableType.Name && x.TABLE_SCHEMA == connection.Database).List();
+            var typeMap = connection.Mapper.GetTypeMapping(tableType);
+            var columns = new QueryBuilder<Columns>(connection).SelectAll().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List();
             if (columns.Count == 0)
             {
                 connection.CreateTable(tableType);
                 return;
             }
+
             var alterTable = new SchemaQueryBuilder<FolkeTuple>(connection).AlterTable(tableType);
             var changes = alterTable.AlterColumns(tableType, columns);
             if (changes)

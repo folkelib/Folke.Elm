@@ -61,6 +61,7 @@
     <Compile Include="InformationSchema\Columns.cs" />
     <Compile Include="InformationSchema\KeyColumnUsage.cs" />
     <Compile Include="InformationSchema\Tables.cs" />
+    <Compile Include="Mapper.cs" />
     <Compile Include="MySqlDriver.cs" />
     <Compile Include="PreparedQueryBuilder.cs" />
     <Compile Include="PreparedLoadBuilder.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="SchemaUpdater.cs" />
     <Compile Include="SqlOperator.cs" />
     <Compile Include="TableAttribute.cs" />
+    <Compile Include="TypeMapping.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Folke.Orm.nuspec" />

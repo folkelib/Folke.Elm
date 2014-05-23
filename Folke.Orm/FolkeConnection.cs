@@ -19,6 +19,7 @@
             Driver = databaseDriver;
             Database = databaseDriver.Settings.Database;
             connection = databaseDriver.CreateConnection();
+            Mapper = new Mapper(Database);
         }
 
         public IDictionary<string, IDictionary<int, object>> Cache { get; private set; }
@@ -26,6 +27,8 @@
         public string Database { get; set; }
 
         public IDatabaseDriver Driver { get; set; }
+
+        internal Mapper Mapper { get; private set; }
         
         public FolkeCommand OpenCommand()
         {
@@ -151,23 +154,11 @@
         public void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new()
         {
             var type = typeof(T);
-            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
-            string tableName;
-            string tableSchema;
-            if (tableAttribute != null)
-            {
-                tableName = tableAttribute.Name;
-                tableSchema = tableAttribute.Schema ?? connection.Database;
-            }
-            else
-            {
-                tableName = type.Name;
-                tableSchema = connection.Database;
-            }
+            var typeMap = Mapper.GetTypeMapping(type);
 
             var columns =
                 this.QueryOver<KeyColumnUsage>()
-                    .Where(c => c.ReferencedTableName == tableName && c.ReferencedTableSchema == tableSchema)
+                    .Where(c => c.ReferencedTableName == typeMap.TableName && c.ReferencedTableSchema == typeMap.TableSchema)
                     .List();
 
             foreach (var column in columns)
