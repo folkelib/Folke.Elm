@@ -36,7 +36,7 @@ namespace Folke.Orm
         void Save<T>(T value) where T : class, IFolkeTable, new();
         void Delete<T>(T value) where T : class, IFolkeTable, new();
         T Refresh<T>(T value) where T : class, IFolkeTable, new();
-
+        void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new();
         void CreateTable<T>(bool drop = false) where T : class, new();
         void DropTable<T>() where T : class, new();
         void CreateOrUpdateTable<T>() where T : class, new();
