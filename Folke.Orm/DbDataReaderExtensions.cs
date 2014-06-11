@@ -23,6 +23,10 @@ namespace Folke.Orm
                 value = reader.GetInt32(index);
             else if (type == typeof(long))
                 value = reader.GetInt64(index);
+            else if (type == typeof(float))
+                value = reader.GetFloat(index);
+            else if (type == typeof(double))
+                value = reader.GetDouble(index);
             else if (type == typeof(DateTime))
             {
                 var date = reader.GetDateTime(index);
@@ -35,7 +39,7 @@ namespace Folke.Orm
                 var text = reader.GetString(index);
                 var names = type.GetEnumNames();
                 var enumIndex = 0;
-                for (var i = 0; i< names.Length; i++)
+                for (var i = 0; i < names.Length; i++)
                 {
                     if (names[i] == text)
                     {
