@@ -1,10 +1,10 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace Folke.Orm.Test
 {
-    [TestClass]
+    [TestFixture]
     public class TestFolkeConnection
     {
         public class TestPoco : IFolkeTable
@@ -52,10 +52,10 @@ namespace Folke.Orm.Test
 
         private FolkeConnection connection;
 
-        [TestInitialize]
+        [SetUp]
         public void Initialize()
         {
-            var driver = new MySqlDriver(new DatabaseSettings { Database = "folketest", Host = "localhost", Password = "toto", User = "checked" });
+            var driver = new MySqlDriver(new DatabaseSettings { Database = "folkeormtest", Host = "localhost", Password = "test", User = "test" });
             connection = new FolkeConnection(driver);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
@@ -64,7 +64,7 @@ namespace Folke.Orm.Test
             connection.CreateTable<TestCollection>(drop: true);
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             connection.DropTable<TestCollection>();
@@ -75,14 +75,14 @@ namespace Folke.Orm.Test
         }
 
 
-        [TestMethod]
+        [Test]
         public void TestCreate()
         {
             connection.CreateTable<TestCreatePoco>();
             connection.DropTable<TestCreatePoco>();
         }
 
-        [TestMethod]
+        [Test]
         public void TestSave()
         {
             var newPoco = new TestPoco { Name = "Tutu "};
@@ -90,7 +90,7 @@ namespace Folke.Orm.Test
             Assert.AreNotEqual(0, newPoco.Id);
         }
 
-        [TestMethod]
+        [Test]
         public void TestQuery()
         {
             var newPoco = new TestPoco { Name = "Tutu " };
@@ -99,7 +99,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Name, foundPoco.Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestBoolean()
         {
             var newPocoFalse = new TestPoco { Name = "Hihi" };
@@ -115,7 +115,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPocoFalse.Name, foundFalse[0].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestIsNull()
         {
             var newPoco = new TestPoco { Name = null };
@@ -124,7 +124,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Id, foundPoco.Id);
         }
 
-        [TestMethod]
+        [Test]
         public void TestMany()
         {
             var newPoco = new TestPoco { Name = null };
@@ -136,7 +136,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco, manies[0].Poco);
         }
 
-        [TestMethod]
+        [Test]
         public void TestSelectColumns()
         {
             var newPoco = new TestPoco { Name = "Ihihi" };
@@ -147,7 +147,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Name, poco[0].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestManyNoJoin()
         {
             var newPoco = new TestPoco { Name = null };
@@ -162,7 +162,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
         }
 
-        [TestMethod]
+        [Test]
         public void TestManyNoJoinNameNotRetreived()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -178,7 +178,7 @@ namespace Folke.Orm.Test
             Assert.IsNull(manies[0].Poco.Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestManyJoin()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -193,8 +193,8 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
             Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
         }
-        
-        [TestMethod]
+
+        [Test]
         public void TestManyFetch()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -216,7 +216,7 @@ namespace Folke.Orm.Test
             public TestManyPoco Many { get; set; }
         }
 
-        [TestMethod]
+        [Test]
         public void TestAnonymous()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -231,7 +231,7 @@ namespace Folke.Orm.Test
         }
 
 
-        [TestMethod]
+        [Test]
         public void TestAnonymousWithCriteria()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -250,7 +250,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newMany.Toto, manies[0].Many.Toto);
         }
 
-        [TestMethod]
+        [Test]
         public void TestAnonymousWithCriteria2()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -269,7 +269,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(null, manies[0].Many);
         }
 
-        [TestMethod]
+        [Test]
         public void TestLimitAndOrder()
         {
             for (var i = 0; i<10; i++)
@@ -283,7 +283,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual("Name7", pocos[1].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestSubquery()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -299,7 +299,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Name, pocos[0].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestLoadWithFetch()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -320,7 +320,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(three.Toto, multi.Three.Toto);
         }
 
-        [TestMethod]
+        [Test]
         public void TestPrepare()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -339,7 +339,7 @@ namespace Folke.Orm.Test
 
         private PreparedQueryBuilder<TestPoco, string> staticQuery = new PreparedQueryBuilder<TestPoco, string>(q => q.SelectAll().From().Where((x, y) => x.Name == y.Item0));
 
-        [TestMethod]
+        [Test]
         public void TestPrepareStatic()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -355,7 +355,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual("One", result[0].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestLike()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -368,7 +368,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual("One", result[0].Name);
         }
 
-        [TestMethod]
+        [Test]
         public void TestCollectionAuto()
         {
             var collection = new TestCollection { Name = "Collection" };
@@ -390,6 +390,45 @@ namespace Folke.Orm.Test
                 Assert.AreEqual(coll, member.Collection);
                 Assert.AreEqual("Member" + j++, member.Name);
             }
+        }
+
+        class Group : IFolkeTable
+        {
+            public int Id { get; set; }
+        }
+        
+        class User : IFolkeTable
+        {
+            public int Id { get; set; }
+        }
+
+        class UserInGroup : IFolkeTable
+        {
+            public int Id { get; set; }
+            public Group Group { get; set; }
+            public User User { get; set; }
+        }
+
+       /* [Test]
+        public void TestSelectFromSubQuery()
+        {
+            connection.Query<UserInGroup>().Select(u => u.Group).FromSubQuery<UserInGroup>(x => x.Select(x => x.)
+        }*/
+
+        [Test]
+        public void TestFromSubQuery()
+        {
+            var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t", query.SQL);
+        }
+
+        [Test]
+        public void TestInnerJoinSubQuery()
+        {
+            UserInGroup a = null;
+            var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group))
+               .InnerJoinSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 2), () => a).On(x => a.Group, x => x.Group);
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t  INNER JOIN (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item1)) AS t1 ON  t1.`Group_id`= t.`Group_id`", query.SQL);
         }
     }
 }

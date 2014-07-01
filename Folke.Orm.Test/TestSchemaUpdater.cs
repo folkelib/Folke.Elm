@@ -1,9 +1,9 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
+using System;
 
 namespace Folke.Orm.Test
 {
-    [TestClass]
+    [TestFixture]
     public class TestSchemaUpdater
     {
         private class FirstClass
@@ -14,15 +14,15 @@ namespace Folke.Orm.Test
 
         private FolkeConnection connection;
         
-        [TestInitialize]
+        [SetUp]
         public void Initialize()
         {
-            var driver = new MySqlDriver(new DatabaseSettings { Database = "folketest", Host = "localhost", Password = "toto", User = "checked" });
+            var driver = new MySqlDriver(new DatabaseSettings { Database = "folkeormtest", Host = "localhost", Password = "test", User = "test" });
             connection = new FolkeConnection(driver);
             connection.CreateTable<FirstClass>(true);
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             connection.DropTable<FirstClass>();
@@ -38,7 +38,7 @@ namespace Folke.Orm.Test
             }
         }
 
-        [TestMethod]
+        [Test]
         public void AddColumn()
         {
             connection.CreateOrUpdateTable<AddColumnClass.FirstClass>();
@@ -53,7 +53,7 @@ namespace Folke.Orm.Test
             }
         }
 
-        [TestMethod]    
+        [Test]    
         public void ChangeColumnType()
         {
             connection.CreateOrUpdateTable<ChangeColumnTypeClass.FirstClass>();

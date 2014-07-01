@@ -9,7 +9,7 @@
     <projectUrl>https://github.com/folkelib/orm</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Initial package creation.</releaseNotes>
+    <releaseNotes>Add WhereIn shortcut.</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <tags>orm mysql</tags>
   </metadata>

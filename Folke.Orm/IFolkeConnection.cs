@@ -32,10 +32,11 @@ namespace Folke.Orm
         /// <param name="id">The id</param>
         /// <returns>The object or null if it can not be found</returns>
         T Get<T>(int id) where T : class, IFolkeTable, new();
+        T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
         void Save<T>(T value) where T : class, IFolkeTable, new();
         void Delete<T>(T value) where T : class, IFolkeTable, new();
         T Refresh<T>(T value) where T : class, IFolkeTable, new();
-
+        void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new();
         void CreateTable<T>(bool drop = false) where T : class, new();
         void DropTable<T>() where T : class, new();
         void CreateOrUpdateTable<T>() where T : class, new();

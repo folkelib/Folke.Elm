@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Folke.Orm.InformationSchema
+﻿namespace Folke.Orm.InformationSchema
 {
-    [Schema("INFORMATION_SCHEMA")]
+    [Table("COLUMNS", Schema = "INFORMATION_SCHEMA")]
     internal class Columns
     {
         public string TABLE_CATALOG { get; set; }
