@@ -61,6 +61,8 @@
     <Compile Include="InformationSchema\Columns.cs" />
     <Compile Include="InformationSchema\KeyColumnUsage.cs" />
     <Compile Include="InformationSchema\Tables.cs" />
+    <Compile Include="IManyToManyTable.cs" />
+    <Compile Include="ManyToManyHelpers.cs" />
     <Compile Include="Mapper.cs" />
     <Compile Include="MySqlDriver.cs" />
     <Compile Include="PreparedQueryBuilder.cs" />
@@ -74,7 +76,9 @@
     <Compile Include="TypeMapping.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Folke.Orm.nuspec" />
+    <None Include="Folke.Orm.nuspec">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
