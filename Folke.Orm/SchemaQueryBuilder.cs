@@ -255,8 +255,7 @@ namespace Folke.Orm
                     var newType = foreign ? "INT" : connection.Driver.GetSqlType(property);
                     if (!connection.Driver.EquivalentTypes(newType, existingColumn.COLUMN_TYPE))
                     {
-                        if (changes)
-                            query.Append(',');
+                        AddComma();
                     
                         query.Append(" CHANGE COLUMN ");
                         AppendColumnName(property);
