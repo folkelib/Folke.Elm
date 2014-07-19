@@ -14,8 +14,11 @@ namespace Folke.Orm
             where TChild : class, IFolkeTable, new()
             where TChildDto : IFolkeTable
         {
+            if (newDtos == null)
+                newDtos = new List<TChildDto>();
+
             var valuesToAdd = newDtos.Where(v => v.Id == 0 || currentValues == null || !currentValues.Any(cv => cv.Child.Id == v.Id)).ToList();
-            var newValues = currentValues.ToList();
+            var newValues = currentValues == null ? new List<T>() : currentValues.ToList();
             if (valuesToAdd.Any())
             {
                 var existingChildrenIds = valuesToAdd.Where(c => c.Id != 0).Select(c => c.Id);
