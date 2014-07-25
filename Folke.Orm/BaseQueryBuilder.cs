@@ -1136,7 +1136,7 @@ namespace Folke.Orm
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> Set(T value)
+        public BaseQueryBuilder<T, TMe> SetAll(T value)
         {
             this.Append("SET ");
             this.currentContext = ContextEnum.Set;
@@ -1156,6 +1156,24 @@ namespace Folke.Orm
                 this.query.Append("=");
                 this.Parameter(property.GetValue(value));
             }
+            return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> Set<U>(Expression<Func<T, U>> column, Expression<Func<T, U>> value)
+        {
+            if (this.currentContext == ContextEnum.Set)
+            {
+                this.Append(", ");
+            }
+            else
+            {
+                this.Append("SET ");
+                this.currentContext = ContextEnum.Set;
+            }
+
+            this.Column(column);
+            this.Append("=");
+            this.AddExpression(value);
             return this;
         }
 

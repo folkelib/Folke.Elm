@@ -77,7 +77,7 @@
         {
             if (value.Id == 0)
                 throw new Exception("Id must not be 0");
-            new QueryBuilder<T>(this).Update().Set(value).Where(x => x.Id == value.Id).Execute();
+            new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Id == value.Id).Execute();
         }
 
         public T Refresh<T>(T value) where T : class, IFolkeTable, new()
