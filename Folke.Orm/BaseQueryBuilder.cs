@@ -1173,7 +1173,7 @@ namespace Folke.Orm
 
             this.Column(column);
             this.Append("=");
-            this.AddExpression(value);
+            this.AddExpression(value.Body);
             return this;
         }
 
