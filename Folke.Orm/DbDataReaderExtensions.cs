@@ -27,6 +27,10 @@ namespace Folke.Orm
                 value = reader.GetFloat(index);
             else if (type == typeof(double))
                 value = reader.GetDouble(index);
+            else if (type == typeof(TimeSpan))
+            {
+                value = new TimeSpan(0, 0, reader.GetInt32(index));
+            }
             else if (type == typeof(DateTime))
             {
                 var date = reader.GetDateTime(index);

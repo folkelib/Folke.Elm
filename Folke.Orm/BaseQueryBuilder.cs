@@ -637,7 +637,11 @@ namespace Folke.Orm
             if (parameter != null)
             {
                 var parameterType = parameter.GetType();
-                if (IsForeign(parameterType))
+                if (parameterType == typeof(TimeSpan))
+                {
+                    parameter = ((TimeSpan)parameter).TotalSeconds;
+                }
+                else if (IsForeign(parameterType))
                 {
                     parameter = parameterType.GetProperty("Id").GetValue(parameter);
                     if (parameter.Equals(0))

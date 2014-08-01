@@ -55,6 +55,10 @@ namespace Folke.Orm
             {
                 return "DATETIME";
             }
+            else if (type == typeof(TimeSpan))
+            {
+                return "INT";
+            }
             else if (type.IsEnum)
             {
                 return "VARCHAR(255)";
