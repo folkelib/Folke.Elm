@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
+    public interface IManyToManyHelperConfiguration<TChild, TDto>
+            where TChild : IFolkeTable
+    {
+        bool AreEqual(TChild child, TDto dto);
+        TChild Map(TDto dto);
+        IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto);
+        void UpdateDto(TDto dto, TChild child);
+    }
+
     public static class ManyToManyHelpers
     {
         public static IReadOnlyList<T> UpdateManyToMany<T, TParent, TChild, TChildDto>(this IFolkeConnection connection, TParent parent, IReadOnlyList<T> currentValues, ICollection<TChildDto> newDtos, Func<TChildDto, TChild> mapper)
@@ -14,24 +23,63 @@ namespace Folke.Orm
             where TChild : class, IFolkeTable, new()
             where TChildDto : IFolkeTable
         {
+            return connection.UpdateManyToMany<T, TParent, TChild, TChildDto>(parent, currentValues, newDtos, new FolkeTableManyToManyHelper<TChild, TChildDto>(mapper));
+        }
+
+        private class FolkeTableManyToManyHelper<TChild, TDto> : IManyToManyHelperConfiguration<TChild, TDto>
+            where TChild: class, IFolkeTable, new()
+            where TDto: IFolkeTable
+        {
+            private Func<TDto, TChild> mapper;
+            public FolkeTableManyToManyHelper(Func<TDto, TChild> mapper)
+            {
+              this.mapper = mapper;
+            }
+
+            public bool AreEqual(TChild child, TDto dto)
+            {
+                return child.Id == dto.Id;
+            }
+
+            public TChild Map(TDto dto)
+            {
+                return mapper(dto);
+            }
+
+            public IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto)
+            {
+                var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id);
+                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().WhereIn(c => c.Id, existingChildrenIds).List() : (List<TChild>)null;
+            }
+
+            public void UpdateDto(TDto dto, TChild child)
+            {
+                dto.Id = child.Id;
+            }
+        }
+
+        public static IReadOnlyList<T> UpdateManyToMany<T, TParent, TChild, TChildDto>(this IFolkeConnection connection, TParent parent, IReadOnlyList<T> currentValues, ICollection<TChildDto> newDtos, IManyToManyHelperConfiguration<TChild, TChildDto> helper)
+            where T : class, IManyToManyTable<TParent, TChild>, new()
+            where TParent : IFolkeTable
+            where TChild : class, IFolkeTable, new()
+        {
             if (newDtos == null)
                 newDtos = new List<TChildDto>();
 
-            var valuesToAdd = newDtos.Where(v => v.Id == 0 || currentValues == null || !currentValues.Any(cv => cv.Child.Id == v.Id)).ToList();
+            var valuesToAdd = newDtos.Where(v => currentValues == null || !currentValues.Any(cv => helper.AreEqual(cv.Child, v))).ToList();
             var newValues = currentValues == null ? new List<T>() : currentValues.ToList();
             if (valuesToAdd.Any())
             {
-                var existingChildrenIds = valuesToAdd.Where(c => c.Id != 0).Select(c => c.Id);
-                var existingChildren = existingChildrenIds.Any() ? connection.QueryOver<TChild>().WhereIn(c => c.Id, existingChildrenIds).List()  : (List<TChild>)null;
+                var existingChildren = helper.QueryExisting(connection, valuesToAdd);
 
                 foreach (var newDto in valuesToAdd)
                 {
-                    var child = existingChildren == null ? null : existingChildren.SingleOrDefault(c => c.Id == newDto.Id);
+                    var child = existingChildren == null ? null : existingChildren.SingleOrDefault(c => helper.AreEqual(c, newDto));
                     if (child == null)
                     {
-                        child = mapper(newDto);
+                        child = helper.Map(newDto);
                         connection.Save(child);
-                        newDto.Id = child.Id;
+                        helper.UpdateDto(newDto, child);
                     }
 
                     var newElement = new T { Child = child, Parent = parent };
@@ -42,7 +90,7 @@ namespace Folke.Orm
             
             if (currentValues != null)
             {
-                var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => nv.Id != cv.Child.Id));
+                var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => !helper.AreEqual(cv.Child, nv)));
                 if (valuesToRemove.Any())
                 {
                     connection.Query<T>().Delete().From().WhereIn(c => c.Id, valuesToRemove.Select(s => s.Id)).Execute();
