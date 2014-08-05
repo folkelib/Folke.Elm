@@ -938,6 +938,10 @@ namespace Folke.Orm
             return this;
         }
 
+        /// <summary>
+        /// Start a sub-select
+        /// </summary>
+        /// <returns></returns>
         public BaseQueryBuilder<T, TMe> BeginSub()
         {
             if (this.queryStack == null)
@@ -948,6 +952,10 @@ namespace Folke.Orm
             return this;
         }
 
+        /// <summary>
+        /// End a sub-select
+        /// </summary>
+        /// <returns></returns>
         public BaseQueryBuilder<T, TMe> EndSub()
         {
             this.currentContext = this.queryStack.Pop();
@@ -968,6 +976,30 @@ namespace Folke.Orm
         {
             this.Append(this.currentContext == ContextEnum.Where ? "OR" : "WHERE");
             this.currentContext = ContextEnum.Where;
+            return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> OrWhere<U>(Expression<Func<T, U>> expression)
+        {
+            OrWhere().AddExpression(expression.Body);
+            return this;
+        }
+
+        /// <summary>
+        /// Begins a sub-expression in a where expression (open a parenthesis)
+        /// </summary>
+        /// <returns></returns>
+        public BaseQueryBuilder<T, TMe> BeginWhereSubExpression<U>(Expression<Func<T, U>> expression)
+        {
+            Where();
+            query.Append('(');
+            this.AddExpression(expression.Body);
+            return this;
+        }
+
+        public BaseQueryBuilder<T, TMe> EndWhereSubExpression()
+        {
+            query.Append(')');
             return this;
         }
 
