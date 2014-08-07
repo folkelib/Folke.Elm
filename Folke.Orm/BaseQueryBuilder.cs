@@ -813,6 +813,13 @@ namespace Folke.Orm
                             this.query.Append(" LIKE ");
                             this.AddExpression(call.Arguments[1]);
                             break;
+                        case "StartsWith":
+                            this.AddExpression(call.Arguments[0]);
+                            this.query.Append(" LIKE ");
+                            var text = (string) System.Linq.Expressions.Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke();
+                            text = text.Replace("\\", "\\\\").Replace("%","\\%") + "%";
+                            this.Parameter(text);
+                            break;
                         default:
                             throw new Exception("Bizarre");
                     }

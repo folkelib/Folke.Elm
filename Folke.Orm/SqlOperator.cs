@@ -12,5 +12,10 @@ namespace Folke.Orm
         {
             return false;
         }
+
+        public static bool StartsWith(string a, string text)
+        {
+            return false;
+        }
     }
 }
