@@ -1326,8 +1326,10 @@ namespace Folke.Orm
             var cache = connection.Cache;
             object value = null;
             var idMappedField = mappedClass.idField;
-            
-            if (idMappedField != null)
+
+            // If the key field is mapped or if its value is already known, create a new item and
+            // store it in cache
+            if (idMappedField != null && (idMappedField.selectedField != null || expectedId != 0))
             {
                 if (!cache.ContainsKey(type.Name))
                     cache[type.Name] = new Dictionary<int, object>();
@@ -1348,9 +1350,6 @@ namespace Folke.Orm
                 }
                 else
                 {
-                    if (expectedId == 0)
-                        throw new Exception("Id can not be 0");
-
                     id = expectedId;
                 }
 

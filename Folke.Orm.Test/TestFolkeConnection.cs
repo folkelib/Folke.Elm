@@ -430,5 +430,33 @@ namespace Folke.Orm.Test
                .InnerJoinSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 2), () => a).On(x => a.Group, x => x.Group);
             Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t  INNER JOIN (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item1)) AS t1 ON  t1.`Group_id`= t.`Group_id`", query.SQL);
         }
+
+        [Test]
+        public void SelectOneColumnInTableWithForeignKeys()
+        {
+            var newPoco = new TestPoco { Name = "Name" };
+            connection.Save(newPoco);
+            var newMany = new TestManyPoco { Toto = "Toto", Poco = newPoco };
+            connection.Save(newMany);
+
+            connection.Cache.Clear();
+
+            var response = connection.Query<TestManyPoco>().Select(x => x.Toto).From().List();
+            Assert.AreEqual(newMany.Toto, response[0].Toto);
+        }
+
+        [Test]
+        public void SelectOneColumnAndIdInTableWithForeignKeys()
+        {
+            var newPoco = new TestPoco { Name = "Name" };
+            connection.Save(newPoco);
+            var newMany = new TestManyPoco { Toto = "Toto", Poco = newPoco };
+            connection.Save(newMany);
+
+            connection.Cache.Clear();
+
+            var response = connection.Query<TestManyPoco>().Select(x => x.Id).Select(x => x.Toto).From().List();
+            Assert.AreEqual(newMany.Toto, response[0].Toto);
+        }
     }
 }
