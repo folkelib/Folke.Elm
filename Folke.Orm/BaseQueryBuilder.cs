@@ -138,7 +138,7 @@ namespace Folke.Orm
 
         private string GetTableAlias(MemberExpression tableAlias)
         {
-            if (tableAlias == null)
+            if (tableAlias == null || tableAlias.Expression == null)
                 return null;
 
             string aliasValue = null;
