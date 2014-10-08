@@ -9,32 +9,37 @@ namespace Folke.Orm
 {
     public class FolkeTransaction : IDisposable
     {
-        private DbTransaction transaction;
         private FolkeConnection connection;
+        private bool commited = false;
 
-        public FolkeTransaction(FolkeConnection connection, DbTransaction transaction)
+        public FolkeTransaction(FolkeConnection connection)
         {
             this.connection = connection;
-            this.transaction = transaction;
-        }
+       }
 
         public void Dispose()
         {
-            transaction.Dispose();
-            connection.EndTransaction();
+            if (!commited)
+                connection.RollbackTransaction();
         }
 
         internal void Rollback()
         {
-            transaction.Rollback();
-            connection.EndTransaction();
+            if (!commited)
+            {
+                commited = true;
+                connection.RollbackTransaction();
+            }
         }
 
 
         public void Commit()
         {
-            transaction.Commit();
-            connection.EndTransaction();
+            if (!commited)
+            {
+                commited = true;
+                connection.CommitTransaction();
+            }
         }
     }
 }

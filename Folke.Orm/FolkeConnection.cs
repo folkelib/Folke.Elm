@@ -11,7 +11,9 @@
     public class FolkeConnection : IFolkeConnection
     {
         private readonly DbConnection connection;
-        private FolkeTransaction transaction;
+        private DbTransaction transaction;
+        private int stackedTransactions = 0;
+        private bool askRollback;
 
         public FolkeConnection(IDatabaseDriver databaseDriver)
         {
@@ -39,9 +41,14 @@
 
         public FolkeTransaction BeginTransaction()
         {
-            connection.Open();
-            transaction = new FolkeTransaction(this, connection.BeginTransaction());
-            return transaction;
+            if (transaction == null)
+            {
+                connection.Open();
+                transaction = connection.BeginTransaction();
+                askRollback = false;
+            }
+            stackedTransactions++;
+            return new FolkeTransaction(this);
         }
 
         public QueryBuilder<T> Query<T>() where T : class, new()
@@ -185,16 +192,34 @@
                 connection.Close();
         }
 
-        internal void EndTransaction()
+        internal void RollbackTransaction()
         {
-            // In case EndTransaction has already been called
-            if (transaction != null) 
+            stackedTransactions--;
+            askRollback = true;
+
+            if (stackedTransactions == 0) 
             {
+                transaction.Rollback();
                 transaction = null;
                 connection.Close();
             }
         }
 
+        internal void CommitTransaction()
+        {
+            stackedTransactions--;
+
+            if (stackedTransactions == 0)
+            {
+                if (askRollback)
+                    transaction.Rollback();
+                else
+                    transaction.Commit();
+                transaction = null;
+                connection.Close();
+            }
+        }
+        
         internal void CreateTable(Type t, bool drop = false, IList<string> existingTables = null)
         {
             if (drop)
