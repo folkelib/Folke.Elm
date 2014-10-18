@@ -63,6 +63,10 @@ namespace Folke.Orm
             {
                 return "VARCHAR(255)";
             }
+            else if (type == typeof(decimal))
+            {
+                return "DECIMAL(15,5)";
+            }
             else if (type == typeof(string))
             {
                 var attribute = property.GetCustomAttribute<ColumnAttribute>();
