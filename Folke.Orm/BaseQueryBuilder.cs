@@ -1499,7 +1499,7 @@ namespace Folke.Orm
         // TODO move this elsewhere
         public static bool IsIgnored(Type type)
         {
-            return type.IsGenericType;
+            return type.IsGenericType && Nullable.GetUnderlyingType(type) == null;
         }
 
         public BaseQueryBuilder<T, TMe> Delete()

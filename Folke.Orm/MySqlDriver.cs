@@ -27,6 +27,9 @@ namespace Folke.Orm
         public string GetSqlType(PropertyInfo property)
         {
             var type = property.PropertyType;
+            if (type.IsGenericType)
+                type = Nullable.GetUnderlyingType(type);
+
             if (type == typeof(bool))
             {
                 return "TINYINT";

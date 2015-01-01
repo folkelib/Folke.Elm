@@ -17,6 +17,9 @@ namespace Folke.Orm
         public static object GetTypedValue(this DbDataReader reader, Type type, int index)
         {
             object value;
+            if (type.IsGenericType)
+                type = Nullable.GetUnderlyingType(type);
+
             if (type == typeof(string))
                 value = reader.GetString(index);
             else if (type == typeof(int))
