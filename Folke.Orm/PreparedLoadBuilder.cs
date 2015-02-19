@@ -40,7 +40,7 @@ namespace Folke.Orm
                     query.From();
                     foreach (var fetch in fetches)
                     {
-                        query.LeftJoinOn(fetch);
+                        query.LeftJoinOnId(fetch);
                     }
                     query.Where((x, y) => x.Id == y.Item0);
                 }

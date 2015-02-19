@@ -20,4 +20,11 @@ namespace Folke.Orm
         public T0 Item0 { get; set; }
         public T1 Item1 { get; set; }
     }
+
+    public class FolkeTuple<T0, T1, T2>
+    {
+        public T0 Item0 { get; set; }
+        public T1 Item1 { get; set; }
+        public T2 Item2 { get; set; }
+    }
 }

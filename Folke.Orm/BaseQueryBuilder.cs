@@ -598,15 +598,21 @@ namespace Folke.Orm
             return this.Table(tableAlias);
         }
 
+        public BaseQueryBuilder<T, TMe> LeftJoinOnId<U>(Expression<Func<T, U>> column)
+        {
+            return this.LeftJoin(column).OnId(column);
+        }
+
         public BaseQueryBuilder<T, TMe> RightJoin<U>(Expression<Func<T, U>> tableAlias)
         {
             this.Append("RIGHT JOIN");
             return this.Table(tableAlias);
         }
 
-        public BaseQueryBuilder<T, TMe> LeftJoinOn<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> InnerJoin<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            return this.LeftJoin(column).On(column);
+            this.Append("INNER JOIN");
+            return this.Table(tableAlias);
         }
 
         public string Result
@@ -917,8 +923,8 @@ namespace Folke.Orm
             this.AppendField(this.GetTable(rightTableAlias).name, rightColumn.PropertyType, rightColumn.Name);
             return this;
         }
-        
-        public BaseQueryBuilder<T, TMe> On<U>(Expression<Func<T, U>> rightColumn)
+
+        public BaseQueryBuilder<T, TMe> OnId<U>(Expression<Func<T, U>> rightColumn)
         {
             this.currentContext = ContextEnum.Join;
             this.Append("ON ");
@@ -926,6 +932,14 @@ namespace Folke.Orm
             this.Column(memberExpression);
             this.query.Append("=");
             this.Column(memberExpression.Type, this.GetTableAlias(memberExpression), memberExpression.Type.GetProperty("Id"));
+            return this;
+        }
+        
+        public BaseQueryBuilder<T, TMe> On<U>(Expression<Func<T, U>> expression)
+        {
+            this.currentContext = ContextEnum.Join;
+            this.Append("ON ");
+            AddExpression(expression.Body);
             return this;
         }
 
@@ -1061,7 +1075,7 @@ namespace Folke.Orm
                 this.AndAll(fetch);
             this.From();
             foreach (var fetch in fetches)
-                this.LeftJoinOn(fetch);
+                this.LeftJoinOnId(fetch);
             return this;
         }
 

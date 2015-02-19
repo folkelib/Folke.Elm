@@ -71,7 +71,7 @@
                 query.AndAll(fetch);
             query.From();
             foreach (var fetch in fetches)
-                query.LeftJoinOn(fetch);
+                query.LeftJoinOnId(fetch);
             return query;
         }
         
@@ -241,7 +241,7 @@
             query.From();
             foreach (var fetch in fetches)
             {
-                query.LeftJoinOn(fetch);
+                query.LeftJoinOnId(fetch);
             }
 
             return query;
