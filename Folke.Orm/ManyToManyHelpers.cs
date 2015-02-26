@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
@@ -23,14 +21,19 @@ namespace Folke.Orm
             where TChild : class, IFolkeTable, new()
             where TChildDto : IFolkeTable
         {
-            return connection.UpdateManyToMany<T, TParent, TChild, TChildDto>(parent, currentValues, newDtos, new FolkeTableManyToManyHelper<TChild, TChildDto>(mapper));
+            return connection.UpdateManyToMany(parent, currentValues, newDtos, new FolkeTableManyToManyHelper<TChild, TChildDto>(mapper));
+        }
+
+        public static T MustExist<T>() where T : class
+        {
+            throw new Exception("The item does not exist");
         }
 
         private class FolkeTableManyToManyHelper<TChild, TDto> : IManyToManyHelperConfiguration<TChild, TDto>
             where TChild: class, IFolkeTable, new()
             where TDto: IFolkeTable
         {
-            private Func<TDto, TChild> mapper;
+            private readonly Func<TDto, TChild> mapper;
             public FolkeTableManyToManyHelper(Func<TDto, TChild> mapper)
             {
               this.mapper = mapper;
@@ -48,8 +51,8 @@ namespace Folke.Orm
 
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto)
             {
-                var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id);
-                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().WhereIn(c => c.Id, existingChildrenIds).List() : (List<TChild>)null;
+                var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id).ToArray();
+                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().WhereIn(c => c.Id, existingChildrenIds).List() : null;
             }
 
             public void UpdateDto(TDto dto, TChild child)
@@ -90,7 +93,7 @@ namespace Folke.Orm
             
             if (currentValues != null)
             {
-                var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => !helper.AreEqual(cv.Child, nv)));
+                var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => !helper.AreEqual(cv.Child, nv))).ToArray();
                 if (valuesToRemove.Any())
                 {
                     connection.Query<T>().Delete().From().WhereIn(c => c.Id, valuesToRemove.Select(s => s.Id)).Execute();
