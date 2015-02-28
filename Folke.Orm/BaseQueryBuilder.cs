@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Folke.Orm
 {
     using System;
@@ -12,7 +14,7 @@ namespace Folke.Orm
     /// Used to create a SQL query and create objects with its results
     /// </summary>
     /// <typeparam name="T">The return type of the SQL query</typeparam>
-    /// <typeparam name="TMe">A Tuple with the query parameters</typeparam>
+    /// <typeparam name="TMe">A Tuple with the query commandParameters</typeparam>
     public class BaseQueryBuilder<T, TMe>
         where T : class, new()
     {
@@ -69,7 +71,7 @@ namespace Folke.Orm
             GroupBy
         }
 
-        protected class TableAlias
+        public class TableAlias
         {
             public Type type;
             public string name;
@@ -85,12 +87,12 @@ namespace Folke.Orm
 
         protected StringBuilder query = new StringBuilder();
         private IList<FieldAlias> selectedFields;
-        private IList<TableAlias> tables;
+        private readonly IList<TableAlias> tables;
         protected TableAlias parameterTable;
 
         private ContextEnum currentContext = ContextEnum.Unknown;
         private Stack<ContextEnum> queryStack;
-        private bool noAlias = false;
+        private bool noAlias;
         private IList<object> parameters;
 
         protected readonly FolkeConnection connection;
@@ -101,39 +103,39 @@ namespace Folke.Orm
         public BaseQueryBuilder(FolkeConnection connection)
         {
             this.connection = connection;
-            this.driver = connection.Driver;
-            this.beginSymbol = this.driver.BeginSymbol;
-            this.endSymbol = this.driver.EndSymbol;
-            this.tables = new List<TableAlias>();
+            driver = connection.Driver;
+            beginSymbol = driver.BeginSymbol;
+            endSymbol = driver.EndSymbol;
+            tables = new List<TableAlias>();
         }
 
         public BaseQueryBuilder(IDatabaseDriver driver)
         {
             this.driver = driver;
-            this.beginSymbol = driver.BeginSymbol;
-            this.endSymbol = driver.EndSymbol;
-            this.tables = new List<TableAlias>();
+            beginSymbol = driver.BeginSymbol;
+            endSymbol = driver.EndSymbol;
+            tables = new List<TableAlias>();
         }
 
-        public string SQL
+        public string Sql
         {
             get
             {
-                return this.query.ToString();
+                return query.ToString();
             }
         }
 
         public BaseQueryBuilder<T, TMe> Append(string sql)
         {
-            if (this.query.Length != 0)
-                this.query.Append(' ');
-            this.query.Append(sql);
+            if (query.Length != 0)
+                query.Append(' ');
+            query.Append(sql);
             return this;
         }
 
-        protected TableAlias RegisterTable<U>(Expression<Func<T, U>> alias)
+        protected TableAlias RegisterTable<TU>(Expression<Func<T, TU>> alias)
         {
-            return this.RegisterTable(typeof(U), this.GetTableAlias(alias.Body as MemberExpression));
+            return RegisterTable(typeof(TU), GetTableAlias(alias.Body as MemberExpression));
         }
 
         private string GetTableAlias(MemberExpression tableAlias)
@@ -157,62 +159,63 @@ namespace Folke.Orm
                     aliasValue = tableAlias.Expression + "." + aliasValue;
                     break;
                 }
-                else
-                    tableAlias = (MemberExpression)tableAlias.Expression;
+                tableAlias = (MemberExpression)tableAlias.Expression;
             }
             return aliasValue;
         }
+        
+        public TableAlias RegisterTable()
+        {
+            return RegisterTable(null, null);
+        }
 
-        protected TableAlias RegisterTable(Type type, string tableAlias)
+        internal TableAlias RegisterTable(Type type, string tableAlias)
         {
             if (tableAlias == null)
             {
-                if (this.parameterTable == null)
+                if (parameterTable == null)
                 {
-                    this.parameterTable = new TableAlias { name = "t", alias = null, type = typeof(T) };
-                    this.tables.Add(this.parameterTable);
+                    parameterTable = new TableAlias { name = "t", alias = null, type = typeof(T) };
+                    tables.Add(parameterTable);
                 }
-                return this.parameterTable;
+                return parameterTable;
             }
 
-            var table = this.tables.SingleOrDefault(t => t.alias == tableAlias);
+            var table = tables.SingleOrDefault(t => t.alias == tableAlias);
             if (table == null)
             {
-                table = new TableAlias { name = "t" + this.tables.Count, alias = tableAlias, type = type };
-                this.tables.Add(table);
+                table = new TableAlias { name = "t" + tables.Count, alias = tableAlias, type = type };
+                tables.Add(table);
             }
             return table;
         }
 
         protected TableAlias GetTable(string tableAlias)
         {
-            return this.tables.SingleOrDefault(t => t.alias == tableAlias);
+            return tables.SingleOrDefault(t => t.alias == tableAlias);
         }
 
         protected TableAlias GetTable(MemberExpression alias)
         {
-            return this.GetTable(this.GetTableAlias(alias));
+            return GetTable(GetTableAlias(alias));
         }
         
         /// <summary>
         /// Add a field name to the query. Very low level.
         /// </summary>
         /// <param name="tableName"></param>
-        /// <param name="columnType"></param>
-        /// <param name="name"></param>
-        private void AppendField(string tableName, Type columnType, string name)
+        /// <param name="propertyInfo"></param>
+        private void AppendField(string tableName, MemberInfo propertyInfo)
         {
-            this.query.Append(' ');
-            if (tableName != null && !this.noAlias)
+            query.Append(' ');
+            if (tableName != null && !noAlias)
             {
-                this.query.Append(tableName);
-                this.query.Append(".");
+                query.Append(tableName);
+                query.Append(".");
             }
-            this.query.Append(this.beginSymbol);
-            this.query.Append(name);
-            if (IsForeign(columnType))
-                this.query.Append("_id");
-            this.query.Append(this.endSymbol);
+            query.Append(beginSymbol);
+            query.Append(TableHelpers.GetColumnName(propertyInfo));
+            query.Append(endSymbol);
         }
 
         /*private void AppendField<U>(Expression<Func<T, U>> expression)
@@ -223,23 +226,9 @@ namespace Folke.Orm
             AppendField(table.name, typeof(U), memberExpression.Member.Name);
         }*/
 
-        /// <summary>
-        /// Get a column name from a property. Allow the column name
-        /// to be overloaded by an attribute
-        /// </summary>
-        /// <param name="property">The property</param>
-        /// <returns>The column name</returns>
-        private string GetColumnName(MemberInfo property)
-        {
-            var column = property.GetCustomAttribute<ColumnAttribute>();
-            if (column != null && column.Name != null)
-                return column.Name;
-            return property.Name;
-        }
-
         protected BaseQueryBuilder<T, TMe> Column(Type tableType, MemberExpression tableAlias, PropertyInfo column)
         {
-            return this.Column(tableType, this.GetTableAlias(tableAlias), column);
+            return Column(tableType, GetTableAlias(tableAlias), column);
         }
 
         /// <summary>
@@ -253,23 +242,23 @@ namespace Folke.Orm
         protected BaseQueryBuilder<T, TMe> Column(Type tableType, string tableAlias, PropertyInfo column)
         {
             TableAlias table;
-            if (this.currentContext == ContextEnum.Select)
+            if (currentContext == ContextEnum.Select)
             {
-                table = this.RegisterTable(tableType, tableAlias);
-                if (this.selectedFields == null)
-                    this.selectedFields = new List<FieldAlias>();
-                this.selectedFields.Add(new FieldAlias { propertyInfo = column, alias = table.alias, index = this.selectedFields.Count });
+                table = RegisterTable(tableType, tableAlias);
+                if (selectedFields == null)
+                    selectedFields = new List<FieldAlias>();
+                selectedFields.Add(new FieldAlias { propertyInfo = column, alias = table.alias, index = selectedFields.Count });
             }
             else
             {
-                table = this.GetTable(tableAlias);
+                table = GetTable(tableAlias);
                 if (table == null)
                     throw new Exception("Table " + tableAlias + " not found");
 
                 if (table.type != tableType)
                     throw new Exception("Internal error, table type " + tableType + " does not match table alias " + tableAlias + ", which had a type of " + table.type);
             }
-            this.AppendField(table.name, column.PropertyType, this.GetColumnName(column));
+            AppendField(table.name, column);
             return this;
         }
 
@@ -281,7 +270,7 @@ namespace Folke.Orm
         /// <returns></returns>
         public BaseQueryBuilder<T, TMe> Column(PropertyInfo column)
         {
-            return this.Column(typeof(T), (string) null, column);
+            return Column(typeof(T), (string) null, column);
         }
 
         /// <summary>
@@ -294,30 +283,27 @@ namespace Folke.Orm
         {
             if (column.NodeType == ExpressionType.Parameter)
             {
-                return this.Column(typeof(T), (string)null, typeof(T).GetProperty("Id"));
+                return Column(typeof(T), (string)null, typeof(T).GetProperty("Id"));
             }
             var columnMember = (MemberExpression) column;
             
             if (columnMember.Expression is MemberExpression)
             {
-                return this.Column(columnMember.Expression.Type, this.GetTableAlias(columnMember.Expression as MemberExpression), (PropertyInfo) columnMember.Member);
+                return Column(columnMember.Expression.Type, GetTableAlias(columnMember.Expression as MemberExpression), (PropertyInfo) columnMember.Member);
             }
-            else
-            {
-                return this.Column(typeof(T), (string)null, (PropertyInfo)columnMember.Member);
-            }
+            return Column(typeof(T), (string)null, (PropertyInfo)columnMember.Member);
         }
 
         /// <summary>
         /// Add a column name to the query using a lambda expression. If the context is Select, the column is added
         /// to the list of selected columns.
         /// </summary>
-        /// <typeparam name="U">The column type</typeparam>
+        /// <typeparam name="TU">The column type</typeparam>
         /// <param name="column">An expression that returns the column</param>
         /// <returns>The query itself</returns>
-        public BaseQueryBuilder<T, TMe> Column<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> Column<TU>(Expression<Func<T, TU>> column)
         {
-            return this.Column((MemberExpression)column.Body);
+            return Column(column.Body);
         }
 
         /// <summary>
@@ -328,20 +314,50 @@ namespace Folke.Orm
         {
             if (expression.Expression is ParameterExpression)
             {
-                var table = this.GetTable(expression);
+                var table = GetTable(expression);
                 if (table != null)
-                    this.AppendField(table.name, typeof(int), "Id");
+                    AppendField(table.name, TableHelpers.GetKey(table.type));
                 else
-                    this.AppendField(this.GetTable((string)null).name, expression.Type, expression.Member.Name);
+                    AppendField(GetTable((string)null).name, expression.Member);
             }
             else if (expression.Expression is MemberExpression)
             {
                 var accessTo = expression.Expression as MemberExpression;
-                var table = this.GetTable(accessTo);
-                this.AppendField(table.name, expression.Type, expression.Member.Name);
+                var table = GetTable(accessTo);
+                AppendField(table.name, expression.Member);
             }
             else
                 throw new Exception("Must be a x.Member or x.Member.Submember");
+        }
+
+        protected bool TryColumn(Expression tableExpression, MemberInfo propertyInfo)
+        {
+            if (currentContext == ContextEnum.Select)
+                throw new Exception("Do not call TryColumn in a Select context");
+
+            if (tableExpression is MemberExpression)
+            {
+                var accessTo = tableExpression as MemberExpression;
+                var table = GetTable(accessTo);
+                if (table != null)
+                {
+                    AppendField(table.name, propertyInfo);
+                    return true;
+                }
+                if (propertyInfo.Name == "Id" && TryColumn(accessTo))
+                    return true;
+            }
+            else if (tableExpression is ParameterExpression && tableExpression.Type == typeof(T) && parameterTable != null)
+            {
+                AppendField(parameterTable.name, propertyInfo);
+                return true;
+            }
+            else if (tableExpression is ParameterExpression && tableExpression.Type == typeof(TMe))
+            {
+                query.Append("@" + propertyInfo.Name);
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -352,37 +368,19 @@ namespace Folke.Orm
         /// <returns></returns>
         protected bool TryColumn(MemberExpression column)
         {
-            if (this.currentContext == ContextEnum.Select)
+            if (currentContext == ContextEnum.Select)
                 throw new Exception("Do not call TryColumn in a Select context");
 
-            if (column.Expression is MemberExpression)
+            if (TryColumn(column.Expression, column.Member))
             {
-                var accessTo = column.Expression as MemberExpression;
-                var table = this.GetTable(accessTo);
-                if (table != null)
-                {
-                    this.AppendField(table.name, column.Type, this.GetColumnName(column.Member));
-                    return true;
-                }
-                else if (column.Member.Name == "Id" && this.TryColumn(accessTo))
-                    return true;
-            }
-            else if (column.Expression is ParameterExpression && column.Expression.Type == typeof(T) && this.parameterTable != null)
-            {
-                this.AppendField(this.parameterTable.name, column.Type, this.GetColumnName(column.Member));
-                return true;
-            }
-            else if (column.Expression is ParameterExpression && column.Expression.Type == typeof(TMe))
-            {
-                this.query.Append("@" + column.Member.Name);
                 return true;
             }
             else
             {
-                var table = this.GetTable(column);
+                var table = GetTable(column);
                 if (table != null)
                 {
-                    this.AppendField(table.name, typeof(int), "Id");
+                    AppendField(table.name, TableHelpers.GetKey(table.type));
                     return true;
                 }
             }
@@ -398,7 +396,7 @@ namespace Folke.Orm
         /// <returns></returns>
         protected BaseQueryBuilder<T, TMe> Columns(Type tableType, MemberExpression tableAlias, IEnumerable<PropertyInfo> columns)
         {
-            return this.Columns(tableType, this.GetTableAlias(tableAlias), columns);
+            return Columns(tableType, GetTableAlias(tableAlias), columns);
         }
 
         /// <summary>
@@ -410,25 +408,25 @@ namespace Folke.Orm
         /// <returns></returns>
         protected BaseQueryBuilder<T, TMe> Columns(Type tableType, string tableAlias, IEnumerable<PropertyInfo> columns)
         {
-            var table = this.RegisterTable(tableType, tableAlias);
-            if (this.query.Length != 0)
-                this.query.Append(' ');
+            var table = RegisterTable(tableType, tableAlias);
+            if (query.Length != 0)
+                query.Append(' ');
             bool first = true;
-            if (this.selectedFields == null)
-                this.selectedFields = new List<FieldAlias>();
+            if (selectedFields == null)
+                selectedFields = new List<FieldAlias>();
 
             foreach (var column in columns)
             {
-                if (IsIgnored(column.PropertyType))
+                if (TableHelpers.IsIgnored(column.PropertyType))
                     continue;
 
-                this.selectedFields.Add(new FieldAlias { propertyInfo = column, alias = table.alias, index = this.selectedFields.Count });
+                selectedFields.Add(new FieldAlias { propertyInfo = column, alias = table.alias, index = selectedFields.Count });
 
                 if (first)
                     first = false;
                 else
-                    this.query.Append(',');
-                this.AppendField(table.name, column.PropertyType, this.GetColumnName(column));
+                    query.Append(',');
+                AppendField(table.name, column);
             }
             return this;
         }
@@ -437,16 +435,16 @@ namespace Folke.Orm
         {
             MemberExpression member;
             if (column.Body.NodeType == ExpressionType.Convert)
-                member = ((UnaryExpression)column.Body).Operand as MemberExpression;
+                member = (MemberExpression)((UnaryExpression)column.Body).Operand;
             else
-                member = column.Body as MemberExpression;
+                member = (MemberExpression)column.Body;
             return member.Member as PropertyInfo;                
         }
 
         public BaseQueryBuilder<T, TMe> Columns(params Expression<Func<T, object>>[] column)
         {
             // TODO gérer le cas où le retour est casté depuis une value
-            return this.Columns(typeof(T), (string) null, column.Select(x => GetExpressionPropertyInfo(x)));
+            return Columns(typeof(T), (string) null, column.Select(GetExpressionPropertyInfo));
         }
 
         /// <summary>
@@ -457,189 +455,187 @@ namespace Folke.Orm
         /// <returns></returns>
         public BaseQueryBuilder<T, TMe> All(Type tableType, MemberExpression tableAlias)
         {
-            return this.All(tableType, this.GetTableAlias(tableAlias));
+            return All(tableType, GetTableAlias(tableAlias));
         }
 
         public BaseQueryBuilder<T, TMe> All(Type tableType, string tableAlias)
         {
-            return this.Columns(tableType, tableAlias, tableType.GetProperties());
+            return Columns(tableType, tableAlias, tableType.GetProperties());
         }
 
-        public BaseQueryBuilder<T, TMe> All<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> All<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            return this.All(typeof(U), (MemberExpression) tableAlias.Body);
+            return All(typeof(TU), (MemberExpression) tableAlias.Body);
         }
 
         protected void AppendTableName(Type type)
         {
-            if (this.query.Length != 0)
-                this.query.Append(' ');
+            if (query.Length != 0)
+                query.Append(' ');
             var tableAttribute = type.GetCustomAttribute<TableAttribute>();
             if (tableAttribute != null)
             {
                 if (tableAttribute.Schema != null)
                 {
-                    this.query.Append(this.beginSymbol);
-                    this.query.Append(tableAttribute.Schema);
-                    this.query.Append(this.endSymbol);
-                    this.query.Append('.');
+                    query.Append(beginSymbol);
+                    query.Append(tableAttribute.Schema);
+                    query.Append(endSymbol);
+                    query.Append('.');
                 }
 
-                this.query.Append(this.beginSymbol);
-                this.query.Append(tableAttribute.Name);
-                this.query.Append(this.endSymbol);
+                query.Append(beginSymbol);
+                query.Append(tableAttribute.Name);
+                query.Append(endSymbol);
             }
             else
             {
-                this.query.Append(this.beginSymbol);
-                this.query.Append(type.Name);
-                this.query.Append(this.endSymbol);
+                query.Append(beginSymbol);
+                query.Append(type.Name);
+                query.Append(endSymbol);
             }
         }
 
-        protected BaseQueryBuilder<T, TMe> Table<U>(Expression<Func<T, U>> tableAlias)
+        protected BaseQueryBuilder<T, TMe> Table<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            return this.Table(tableAlias.Body.Type, tableAlias.Body as MemberExpression);
+            return Table(tableAlias.Body.Type, tableAlias.Body as MemberExpression);
         }
 
         protected BaseQueryBuilder<T, TMe> Table(Type tableType, MemberExpression tableAlias)
         {
-            return this.Table(tableType, this.GetTableAlias(tableAlias));
+            return Table(tableType, GetTableAlias(tableAlias));
         }
 
         protected BaseQueryBuilder<T, TMe> Table(Type tableType, string tableAlias)
         {
-            var table = this.RegisterTable(tableType, tableAlias);
+            var table = RegisterTable(tableType, tableAlias);
             
-            this.AppendTableName(tableType);
-            if (!this.noAlias)
+            AppendTableName(tableType);
+            if (!noAlias)
             {
-                this.query.Append(" as ");
-                this.query.Append(table.name);
+                query.Append(" as ");
+                query.Append(table.name);
             }
             return this;
         }
 
         private void AppendFrom()
         {
-            if (this.currentContext == ContextEnum.Select || this.currentContext == ContextEnum.Delete)
+            if (currentContext == ContextEnum.Select || currentContext == ContextEnum.Delete)
             {
-                this.baseMappedClass = this.MapClass(typeof(T));
-                this.Append("FROM");
+                baseMappedClass = MapClass(typeof(T));
+                Append("FROM");
             }
-            else if (this.currentContext == ContextEnum.From)
-                this.Append(",");
-            this.currentContext = ContextEnum.From;
+            else if (currentContext == ContextEnum.From)
+                Append(",");
+            currentContext = ContextEnum.From;
         }
 
-        public BaseQueryBuilder<T, TMe> From<U>(Expression<Func<U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> From<TU>(Expression<Func<TU>> tableAlias)
         {
-            this.AppendFrom();
-            return this.Table(typeof(U), (MemberExpression) tableAlias.Body);
+            AppendFrom();
+            return Table(typeof(TU), (MemberExpression) tableAlias.Body);
         }
 
-        public BaseQueryBuilder<T, TMe> From<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> From<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.AppendFrom();
-            return this.Table(tableAlias);
+            AppendFrom();
+            return Table(tableAlias);
         }
 
         public BaseQueryBuilder<T, TMe> FromSubQuery(Func<BaseQueryBuilder<T, TMe>, BaseQueryBuilder<T, TMe>> subqueryFactory)
         {
-            var builder = new BaseQueryBuilder<T, TMe>(this.driver);
-            builder.parameters = this.parameters;
+            var builder = new BaseQueryBuilder<T, TMe>(driver) {parameters = parameters};
             var subquery = subqueryFactory.Invoke(builder);
-            this.parameters = builder.parameters;
-            this.AppendFrom();
-            this.query.Append(" (");
-            this.query.Append(subquery.query);
-            this.query.Append(") AS ");
+            parameters = builder.parameters;
+            AppendFrom();
+            query.Append(" (");
+            query.Append(subquery.query);
+            query.Append(") AS ");
 
-            var table = this.RegisterTable(typeof(T), null);
-            this.query.Append(table.name);
+            var table = RegisterTable(typeof(T), null);
+            query.Append(table.name);
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> InnerJoinSubQuery<U>(Func<BaseQueryBuilder<T, TMe>, BaseQueryBuilder<T, TMe>> subqueryFactory, Expression<Func<U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> InnerJoinSubQuery<TU>(Func<BaseQueryBuilder<T, TMe>, BaseQueryBuilder<T, TMe>> subqueryFactory, Expression<Func<TU>> tableAlias)
         {
-            var builder = new BaseQueryBuilder<T, TMe>(this.driver);
-            builder.parameters = this.parameters;
+            var builder = new BaseQueryBuilder<T, TMe>(driver) {parameters = parameters};
             var subquery = subqueryFactory.Invoke(builder);
-            this.parameters = builder.parameters;
-            this.Append(" INNER JOIN (");
-            this.query.Append(subquery.SQL);
-            this.query.Append(") AS ");
-            var table = this.RegisterTable(typeof(U), this.GetTableAlias(tableAlias.Body as MemberExpression));
-            this.query.Append(table.name);
+            parameters = builder.parameters;
+            Append(" INNER JOIN (");
+            query.Append(subquery.Sql);
+            query.Append(") AS ");
+            var table = RegisterTable(typeof(TU), GetTableAlias(tableAlias.Body as MemberExpression));
+            query.Append(table.name);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> From()
         {
-            this.AppendFrom();
-            return this.Table(typeof(T), (string) null);
+            AppendFrom();
+            return Table(typeof(T), (string) null);
         }
 
-        public BaseQueryBuilder<T, TMe> AndFrom<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> AndFrom<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.Append(",");
-            return this.Table(tableAlias);
+            Append(",");
+            return Table(tableAlias);
         }
 
         public BaseQueryBuilder<T, TMe> LeftJoin(Type tableType, string tableAlias)
         {
-            this.Append("LEFT JOIN");
-            return this.Table(tableType, tableAlias);
+            Append("LEFT JOIN");
+            return Table(tableType, tableAlias);
         }
 
-        public BaseQueryBuilder<T, TMe> LeftJoin<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> LeftJoin<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.Append("LEFT JOIN");
-            return this.Table(tableAlias);
+            Append("LEFT JOIN");
+            return Table(tableAlias);
         }
 
-        public BaseQueryBuilder<T, TMe> LeftJoinOnId<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> LeftJoinOnId<TU>(Expression<Func<T, TU>> column)
         {
-            return this.LeftJoin(column).OnId(column);
+            return LeftJoin(column).OnId(column);
         }
 
-        public BaseQueryBuilder<T, TMe> RightJoin<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> RightJoin<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.Append("RIGHT JOIN");
-            return this.Table(tableAlias);
+            Append("RIGHT JOIN");
+            return Table(tableAlias);
         }
 
         public BaseQueryBuilder<T, TMe> InnerJoin<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.Append("INNER JOIN");
-            return this.Table(tableAlias);
+            Append("INNER JOIN");
+            return Table(tableAlias);
         }
 
         public string Result
         {
             get
             {
-                return this.query.ToString();
+                return query.ToString();
             }
         }
 
         public void Parameter(object parameter)
         {
-            if (parameter == null && this.currentContext != ContextEnum.Set && this.currentContext != ContextEnum.Values)
+            if (parameter == null && currentContext != ContextEnum.Set && currentContext != ContextEnum.Values)
             {
-                var toChange = this.query.ToString().TrimEnd(' ');
+                var toChange = query.ToString().TrimEnd(' ');
                 if (toChange.LastIndexOf('=') != toChange.Length - 1)
                     throw new Exception("Compare to null must be =");
-                this.query.Clear();
-                this.query.Append(toChange.Substring(0, toChange.Length - 1));
-                this.query.Append(" IS NULL");
+                query.Clear();
+                query.Append(toChange.Substring(0, toChange.Length - 1));
+                query.Append(" IS NULL");
                 return;
             }
 
-            if (this.parameters == null)
-                this.parameters = new List<object>();
+            if (parameters == null)
+                parameters = new List<object>();
 
-            var parameterIndex = this.parameters.Count;
+            var parameterIndex = parameters.Count;
             if (parameter != null)
             {
                 var parameterType = parameter.GetType();
@@ -647,28 +643,28 @@ namespace Folke.Orm
                 {
                     parameter = ((TimeSpan)parameter).TotalSeconds;
                 }
-                else if (IsForeign(parameterType))
+                else if (TableHelpers.IsForeign(parameterType))
                 {
-                    parameter = parameterType.GetProperty("Id").GetValue(parameter);
+                    parameter = TableHelpers.GetKey(parameterType).GetValue(parameter);
                     if (parameter.Equals(0))
                         throw new Exception("Id should not be 0");
                 }
             }
 
-            this.parameters.Add(parameter);
+            parameters.Add(parameter);
             
-            this.query.Append("@Item" + parameterIndex);
+            query.Append("@Item" + parameterIndex);
         }
 
-        protected FolkeCommand CreateCommand(IFolkeConnection connection, object[] parameters)
+        protected FolkeCommand CreateCommand(IFolkeConnection folkeConnection, object[] commandParameters)
         {
-            var command = connection.OpenCommand();
-            if (parameters != null)
+            var command = folkeConnection.OpenCommand();
+            if (commandParameters != null)
             {
-                for (var i = 0; i < parameters.Length; i++)
+                for (var i = 0; i < commandParameters.Length; i++)
                 {
-                    var parameterName = "Item" + i.ToString();
-                    var parameter = parameters[i];
+                    var parameterName = "Item" + i.ToString(CultureInfo.InvariantCulture);
+                    var parameter = commandParameters[i];
                     var commandParameter = command.CreateParameter();
                     commandParameter.ParameterName = parameterName;
                     if (parameter == null)
@@ -678,19 +674,25 @@ namespace Folke.Orm
                         var parameterType = parameter.GetType();
                         if (parameterType.IsEnum)
                             commandParameter.Value = parameterType.GetEnumName(parameter);
-                        else if (parameter is IFolkeTable)
-                            commandParameter.Value = ((IFolkeTable)parameter).Id;
                         else
-                            commandParameter.Value = parameter;
+                        {
+                            var table = parameter as IFolkeTable;
+                            commandParameter.Value = table != null ? table.Id : parameter;
+                        }
                     }
                     command.Parameters.Add(commandParameter);
                 }
             }
-            command.CommandText = this.query.ToString();
+            command.CommandText = query.ToString();
             return command;
         }
 
-        protected void AddExpression(Expression expression)
+        internal void AddExpression<TU>(Expression<Func<T, TU>> expression)
+        {
+            AddExpression(expression.Body);
+        }
+
+        internal void AddExpression(Expression expression)
         {
             if (expression is UnaryExpression)
             {
@@ -698,76 +700,76 @@ namespace Folke.Orm
                 switch (unary.NodeType)
                 {
                     case ExpressionType.Negate:
-                        this.query.Append('-');
+                        query.Append('-');
                         break;
                     case ExpressionType.Not:
-                        this.query.Append(" NOT ");
+                        query.Append(" NOT ");
                         break;
                     case ExpressionType.Convert:
                         break;
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
-                this.AddExpression(unary.Operand);
+                AddExpression(unary.Operand);
                 return;
             }
             
             if (expression is BinaryExpression)
             {
                 var binary = expression as BinaryExpression;
-                this.query.Append('(');
+                query.Append('(');
                 
-                this.AddExpression(binary.Left);
+                AddExpression(binary.Left);
 
                 if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
                 {
                     if (binary.NodeType == ExpressionType.Equal)
-                        this.query.Append(" IS NULL");
+                        query.Append(" IS NULL");
                     else if (binary.NodeType == ExpressionType.NotEqual)
-                        this.query.Append(" IS NOT NULL");
+                        query.Append(" IS NOT NULL");
                     else
-                        throw new Exception("Operator not supported with null right member in " + binary.ToString());
-                    this.query.Append(")");
+                        throw new Exception("Operator not supported with null right member in " + binary);
+                    query.Append(")");
                     return;
                 }
 
                 switch (binary.NodeType)
                 {
                     case ExpressionType.Add:
-                        this.query.Append("+");
+                        query.Append("+");
                         break;
                     case ExpressionType.AndAlso:
-                        this.query.Append(" AND ");
+                        query.Append(" AND ");
                         break;
                     case ExpressionType.Divide:
-                        this.query.Append("/");
+                        query.Append("/");
                         break;
                     case ExpressionType.Equal:
-                        this.query.Append('=');
+                        query.Append('=');
                         break;
                     case ExpressionType.GreaterThan:
-                        this.query.Append(">");
+                        query.Append(">");
                         break;
                     case ExpressionType.GreaterThanOrEqual:
-                        this.query.Append(">=");
+                        query.Append(">=");
                         break;
                     case ExpressionType.LessThan:
-                        this.query.Append("<");
+                        query.Append("<");
                         break;
                     case ExpressionType.LessThanOrEqual:
-                        this.query.Append("<=");
+                        query.Append("<=");
                         break;
                     case ExpressionType.Modulo:
-                        this.query.Append("%");
+                        query.Append("%");
                         break;
                     case ExpressionType.Multiply:
-                        this.query.Append('*');
+                        query.Append('*');
                         break;
                     case ExpressionType.OrElse:
-                        this.query.Append(" OR ");
+                        query.Append(" OR ");
                         break;
                     case ExpressionType.Subtract:
-                        this.query.Append('-');
+                        query.Append('-');
                         break;
                     default:
                         throw new Exception("Expression type not supported");
@@ -778,184 +780,228 @@ namespace Folke.Orm
                 {
                     var enumType = ((UnaryExpression)binary.Left).Operand.Type;
                     var enumIndex = (int) ((ConstantExpression)binary.Right).Value;
-                    this.Parameter(enumType.GetEnumValues().GetValue(enumIndex));
+                    Parameter(enumType.GetEnumValues().GetValue(enumIndex));
                 }
                 else
                 {
-                    this.AddExpression(binary.Right);
+                    AddExpression(binary.Right);
                 }
-                this.query.Append(')');
+                query.Append(')');
                 return;
             }
 
             if (expression is ConstantExpression)
             {
                 var constant = expression as ConstantExpression;
-                this.Parameter(constant.Value);
+                Parameter(constant.Value);
                 return;
             }
 
             if (expression is MemberExpression)
             {
-                if (this.TryColumn(expression as MemberExpression))
+                if (TryColumn(expression as MemberExpression))
                     return;
             }
 
             if (expression.NodeType == ExpressionType.Parameter)
             {
-                this.AppendField(this.parameterTable.name, typeof(int), "Id");
+                AppendField(parameterTable.name, TableHelpers.GetKey(parameterTable.type));
                 return;
             }
 
             if (expression.NodeType == ExpressionType.Call)
             {
-                var call = expression as MethodCallExpression;
-                if (call.Method.DeclaringType == typeof(SqlOperator))
+                var call = (MethodCallExpression)expression;
+                
+                if (call.Method.DeclaringType == typeof (ExpressionHelpers))
                 {
                     switch (call.Method.Name)
                     {
-                        case "Like":
-                            this.AddExpression(call.Arguments[0]);
-                            this.query.Append(" LIKE ");
-                            this.AddExpression(call.Arguments[1]);
+                        case "Property":
+                            var propertyInfo = (PropertyInfo)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke();
+                            TryColumn(call.Arguments[0], propertyInfo);
                             break;
-                        case "StartsWith":
-                            this.AddExpression(call.Arguments[0]);
-                            this.query.Append(" LIKE ");
-                            var text = (string) System.Linq.Expressions.Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke();
-                            text = text.Replace("\\", "\\\\").Replace("%","\\%") + "%";
-                            this.Parameter(text);
+                        case "Like":
+                            AddExpression(call.Arguments[0]);
+                            query.Append(" LIKE ");
+                            AddExpression(call.Arguments[1]);
                             break;
                         default:
-                            throw new Exception("Bizarre");
+                            throw new Exception("Unsupported expression helper");
                     }
+                    return;
+                }
+
+                if (call.Method.DeclaringType == typeof (string))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case "StartsWith":
+                            AddExpression(call.Object);
+                            query.Append(" LIKE ");
+                            var text = (string) Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
+                            text = text.Replace("\\", "\\\\").Replace("%","\\%") + "%";
+                            Parameter(text);
+                            break;
+                        default:
+                            throw new Exception("Unsupported string method");
+                    }
+                    return;
+                }
+
+                if (call.Method.Name == "Equals")
+                {
+                    query.Append('(');
+                    AddExpression(call.Object);
+                    query.Append('=');
+                    AddExpression(call.Arguments[0]);
+                    query.Append(')');
                     return;
                 }
             }
 
-            var value = System.Linq.Expressions.Expression.Lambda(expression).Compile().DynamicInvoke();
-            this.Parameter(value);
+            var value = Expression.Lambda(expression).Compile().DynamicInvoke();
+            Parameter(value);
         }
         
-        public BaseQueryBuilder<T, TMe> SelectAll<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> SelectAll<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            this.Select();
-            return this.All(tableAlias);
+            Select();
+            return All(tableAlias);
         }
 
-        public BaseQueryBuilder<T, TMe> SelectAll<U>(Expression<Func<U>> tableAlias)
+        /// <summary>
+        /// Select all the field of the selected table
+        /// </summary>
+        /// <typeparam name="TU">The table type</typeparam>
+        /// <param name="tableAlias">The table</param>
+        /// <returns>The query builder</returns>
+        public BaseQueryBuilder<T, TMe> SelectAll<TU>(Expression<Func<TU>> tableAlias)
         {
-            this.Select();
-            return this.All(typeof(U), (MemberExpression) tableAlias.Body);
+            Select();
+            return All(typeof(TU), (MemberExpression) tableAlias.Body);
         }
 
+        /// <summary>
+        /// Select all the field of the bean table
+        /// </summary>
+        /// <returns>The query builder</returns>
         public BaseQueryBuilder<T, TMe> SelectAll()
         {
-            this.Select();
-            return this.All(typeof(T), (string) null);
+            Select();
+            return All(typeof(T), (string) null);
         }
 
+        /// <summary>
+        /// Begins a select command
+        /// </summary>
+        /// <returns>The query builder</returns>
         public BaseQueryBuilder<T, TMe> Select()
         {
-            if (this.currentContext == ContextEnum.Select)
+            if (currentContext == ContextEnum.Select)
             {
-                this.Append(",");
+                Append(",");
             }
             else
             {
-                this.currentContext = ContextEnum.Select;
-                this.Append("SELECT");
+                currentContext = ContextEnum.Select;
+                Append("SELECT");
             }
             return this;
         }
         
+        /// <summary>
+        /// Select several columns
+        /// </summary>
+        /// <param name="column">A column to select</param>
+        /// <returns></returns>
         public BaseQueryBuilder<T, TMe> Select(params Expression<Func<T, object>>[] column)
         {
-            this.Select();
-            return this.Columns(typeof(T), (string) null, column.Select(x => GetExpressionPropertyInfo(x)));
+            Select();
+            return Columns(typeof(T), (string) null, column.Select(GetExpressionPropertyInfo));
         }
 
-        public BaseQueryBuilder<T, TMe> Select<U,V>(Expression<Func<U>> tableAlias, Expression<Func<V>> column)
+        public BaseQueryBuilder<T, TMe> Select<TU, TV>(Expression<Func<TU>> tableAlias, Expression<Func<TV>> column)
         {
-            this.Select();
-            return this.Column(typeof(U), (MemberExpression) tableAlias.Body, ((MemberExpression) column.Body).Member as PropertyInfo);
+            Select();
+            return Column(typeof(TU), (MemberExpression) tableAlias.Body, ((MemberExpression) column.Body).Member as PropertyInfo);
         }
         
         public BaseQueryBuilder<T, TMe> AndAll(Type tableType, MemberExpression tableAlias)
         {
-            return this.AndAll(tableType, this.GetTableAlias(tableAlias));
+            return AndAll(tableType, GetTableAlias(tableAlias));
         }
 
         public BaseQueryBuilder<T, TMe> AndAll(Type tableType, string tableAlias)
         {
-            this.Append(",");
-            return this.All(tableType, tableAlias);
+            Append(",");
+            return All(tableType, tableAlias);
         }
 
-        public BaseQueryBuilder<T, TMe> AndAll<U>(Expression<Func<T, U>> tableAlias)
+        public BaseQueryBuilder<T, TMe> AndAll<TU>(Expression<Func<T, TU>> tableAlias)
         {
-            return this.AndAll(tableAlias.Body.Type, (MemberExpression) tableAlias.Body);
+            return AndAll(tableAlias.Body.Type, (MemberExpression) tableAlias.Body);
         }
 
         public BaseQueryBuilder<T, TMe> SelectCountAll()
         {
-            this.Select();
-            this.Append(" COUNT(*)");
+            Select();
+            Append(" COUNT(*)");
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> On<U>(Expression<Func<T, U>> leftColumn, Expression<Func<T, U>> rightColumn)
+        public BaseQueryBuilder<T, TMe> On<TU>(Expression<Func<T, TU>> leftColumn, Expression<Func<T, TU>> rightColumn)
         {
-            this.currentContext = ContextEnum.Join;
-            this.Append("ON ");
-            this.OnField(leftColumn.Body as MemberExpression);
-            this.query.Append("=");
-            this.OnField(rightColumn.Body as MemberExpression);
+            currentContext = ContextEnum.Join;
+            Append("ON ");
+            OnField(leftColumn.Body as MemberExpression);
+            query.Append("=");
+            OnField(rightColumn.Body as MemberExpression);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> On(PropertyInfo leftColumn, string leftTableAlias, PropertyInfo rightColumn, string rightTableAlias)
         {
-            this.currentContext = ContextEnum.Join;
-            this.Append("ON ");
-            this.AppendField(this.GetTable(leftTableAlias).name, leftColumn.PropertyType, leftColumn.Name);
-            this.query.Append("=");
-            this.AppendField(this.GetTable(rightTableAlias).name, rightColumn.PropertyType, rightColumn.Name);
+            currentContext = ContextEnum.Join;
+            Append("ON ");
+            AppendField(GetTable(leftTableAlias).name, leftColumn);
+            query.Append("=");
+            AppendField(GetTable(rightTableAlias).name, rightColumn);
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> OnId<U>(Expression<Func<T, U>> rightColumn)
+        public BaseQueryBuilder<T, TMe> OnId<TU>(Expression<Func<T, TU>> rightColumn)
         {
-            this.currentContext = ContextEnum.Join;
-            this.Append("ON ");
+            currentContext = ContextEnum.Join;
+            Append("ON ");
             var memberExpression = (MemberExpression) rightColumn.Body;
-            this.Column(memberExpression);
-            this.query.Append("=");
-            this.Column(memberExpression.Type, this.GetTableAlias(memberExpression), memberExpression.Type.GetProperty("Id"));
+            Column(memberExpression);
+            query.Append("=");
+            Column(memberExpression.Type, GetTableAlias(memberExpression), memberExpression.Type.GetProperty("Id"));
             return this;
         }
         
-        public BaseQueryBuilder<T, TMe> On<U>(Expression<Func<T, U>> expression)
+        public BaseQueryBuilder<T, TMe> On<TU>(Expression<Func<T, TU>> expression)
         {
-            this.currentContext = ContextEnum.Join;
-            this.Append("ON ");
+            currentContext = ContextEnum.Join;
+            Append("ON ");
             AddExpression(expression.Body);
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> Max<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> Max<TU>(Expression<Func<T, TU>> column)
         {
-            return this.Append("MAX(").Column(column).Append(")");
+            return Append("MAX(").Column(column).Append(")");
         }
 
         public BaseQueryBuilder<T, TMe> BeginMax()
         {
-            return this.Append("MAX(");
+            return Append("MAX(");
         }
 
         public BaseQueryBuilder<T, TMe> EndMax()
         {
-            this.query.Append(')');
+            query.Append(')');
             return this;
         }
 
@@ -965,11 +1011,11 @@ namespace Folke.Orm
         /// <returns></returns>
         public BaseQueryBuilder<T, TMe> BeginSub()
         {
-            if (this.queryStack == null)
-                this.queryStack = new Stack<ContextEnum>();
-            this.queryStack.Push(this.currentContext);
-            this.currentContext = ContextEnum.Unknown;
-            this.query.Append('(');
+            if (queryStack == null)
+                queryStack = new Stack<ContextEnum>();
+            queryStack.Push(currentContext);
+            currentContext = ContextEnum.Unknown;
+            query.Append('(');
             return this;
         }
 
@@ -979,28 +1025,28 @@ namespace Folke.Orm
         /// <returns></returns>
         public BaseQueryBuilder<T, TMe> EndSub()
         {
-            this.currentContext = this.queryStack.Pop();
-            this.query.Append(')');
+            currentContext = queryStack.Pop();
+            query.Append(')');
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Where()
         {
-            if (this.currentContext == ContextEnum.Unknown)
-                this.SelectAll().From();
-            this.Append(this.currentContext == ContextEnum.Where ? "AND" : "WHERE");
-            this.currentContext = ContextEnum.Where;
+            if (currentContext == ContextEnum.Unknown)
+                SelectAll().From();
+            Append(currentContext == ContextEnum.Where ? "AND" : "WHERE");
+            currentContext = ContextEnum.Where;
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> OrWhere()
         {
-            this.Append(this.currentContext == ContextEnum.Where ? "OR" : "WHERE");
-            this.currentContext = ContextEnum.Where;
+            Append(currentContext == ContextEnum.Where ? "OR" : "WHERE");
+            currentContext = ContextEnum.Where;
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> OrWhere<U>(Expression<Func<T, U>> expression)
+        public BaseQueryBuilder<T, TMe> OrWhere<TU>(Expression<Func<T, TU>> expression)
         {
             OrWhere().AddExpression(expression.Body);
             return this;
@@ -1010,11 +1056,11 @@ namespace Folke.Orm
         /// Begins a sub-expression in a where expression (open a parenthesis)
         /// </summary>
         /// <returns></returns>
-        public BaseQueryBuilder<T, TMe> BeginWhereSubExpression<U>(Expression<Func<T, U>> expression)
+        public BaseQueryBuilder<T, TMe> BeginWhereSubExpression<TU>(Expression<Func<T, TU>> expression)
         {
             Where();
             query.Append('(');
-            this.AddExpression(expression.Body);
+            AddExpression(expression.Body);
             return this;
         }
 
@@ -1026,17 +1072,17 @@ namespace Folke.Orm
 
         public BaseQueryBuilder<T, TMe> Exists()
         {
-            return this.Append("EXISTS");
+            return Append("EXISTS");
         }
 
         public BaseQueryBuilder<T, TMe> NotExists()
         {
-            return this.Append("NOT EXISTS");
+            return Append("NOT EXISTS");
         }
         
         public BaseQueryBuilder<T, TMe> Equals()
         {
-            this.query.Append('=');
+            query.Append('=');
             return this;
         }
 
@@ -1044,193 +1090,193 @@ namespace Folke.Orm
         /// Add a IN operator. 
         /// Example: Where().Column(x => x.Value).In(new[]{12, 13, 14})
         /// </summary>
-        /// <typeparam name="U"></typeparam>
+        /// <typeparam name="TU"></typeparam>
         /// <param name="values"></param>
         /// <returns></returns>
-        public BaseQueryBuilder<T, TMe> In<U>(IEnumerable<U> values)
+        public BaseQueryBuilder<T, TMe> In<TU>(IEnumerable<TU> values)
         {
-            this.query.Append(" IN (");
+            query.Append(" IN (");
             bool first = true;
             foreach (var value in values)
             {
                 if (first)
                     first = false;
                 else
-                    this.query.Append(',');
-                this.Parameter(value);
+                    query.Append(',');
+                Parameter(value);
             }
-            this.query.Append(')');
+            query.Append(')');
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> WhereIn<U>(Expression<Func<T, U>> column, IEnumerable<U> values)
+        public BaseQueryBuilder<T, TMe> WhereIn<TU>(Expression<Func<T, TU>> column, IEnumerable<TU> values)
         {
-            return this.Where().Column(column).In(values);
+            return Where().Column(column).In(values);
         }
 
         public BaseQueryBuilder<T, TMe> Fetch(params Expression<Func<T, object>>[] fetches)
         {
-            this.SelectAll();
+            SelectAll();
             foreach (var fetch in fetches)
-                this.AndAll(fetch);
-            this.From();
+                AndAll(fetch);
+            From();
             foreach (var fetch in fetches)
-                this.LeftJoinOnId(fetch);
+                LeftJoinOnId(fetch);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Where(Expression<Func<T, TMe, bool>> expression)
         {
-            this.Where();
-            this.AddExpression(expression.Body);
+            Where();
+            AddExpression(expression.Body);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Where(Expression<Func<T, bool>> expression)
         {
-            this.Where();
-            this.AddExpression(expression.Body);
+            Where();
+            AddExpression(expression.Body);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> AndOn(Expression<Func<T, bool>> expression)
         {
-            this.Append("AND ");
-            this.AddExpression(expression.Body);
+            Append("AND ");
+            AddExpression(expression.Body);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Update()
         {
-            this.Append("UPDATE ");
-            this.Table(typeof(T), (string) null);
+            Append("UPDATE ");
+            Table(typeof(T), (string) null);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> InsertInto()
         {
-            this.Append("INSERT INTO");
-            this.AppendTableName(typeof(T));
+            Append("INSERT INTO");
+            AppendTableName(typeof(T));
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> GroupBy<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> GroupBy<TU>(Expression<Func<T, TU>> column)
         {
-            if (this.currentContext != ContextEnum.GroupBy)
-                this.Append("GROUP BY ");
+            if (currentContext != ContextEnum.GroupBy)
+                Append("GROUP BY ");
             else
-                this.query.Append(',');
-            this.currentContext = ContextEnum.GroupBy;
-            if (!this.TryColumn(column.Body as MemberExpression))
+                query.Append(',');
+            currentContext = ContextEnum.GroupBy;
+            if (!TryColumn(column.Body as MemberExpression))
                 throw new Exception(column + " is not a valid column");
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> OrderBy<U>(Expression<Func<T, U>> column)
+        public BaseQueryBuilder<T, TMe> OrderBy<TU>(Expression<Func<T, TU>> column)
         {
-            if (this.currentContext != ContextEnum.OrderBy)
-                this.Append("ORDER BY ");
+            if (currentContext != ContextEnum.OrderBy)
+                Append("ORDER BY ");
             else
-                this.query.Append(',');
-            this.currentContext = ContextEnum.OrderBy;
-            if (!this.TryColumn(column.Body as MemberExpression))
+                query.Append(',');
+            currentContext = ContextEnum.OrderBy;
+            if (!TryColumn(column.Body as MemberExpression))
                 throw new Exception(column + " is not a valid column");
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Desc()
         {
-            return this.Append("DESC");
+            return Append("DESC");
         }
 
         public BaseQueryBuilder<T, TMe> Asc()
         {
-            return this.Append("ASC");
+            return Append("ASC");
         }
 
         public BaseQueryBuilder<T, TMe> Limit(int offset, int count)
         {
-            this.query.Append(" LIMIT ").Append(offset).Append(",").Append(count);
+            query.Append(" LIMIT ").Append(offset).Append(",").Append(count);
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> Limit<U>(Expression<Func<TMe, U>> offset, int count)
+        public BaseQueryBuilder<T, TMe> Limit<TU>(Expression<Func<TMe, TU>> offset, int count)
         {
-            var expression = offset.Body as MemberExpression;
-            this.query.Append(" LIMIT @").Append(expression.Member.Name).Append(",").Append(count);
+            var expression = (MemberExpression)offset.Body;
+            query.Append(" LIMIT @").Append(expression.Member.Name).Append(",").Append(count);
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> Values(T value)
         {
-            this.currentContext = ContextEnum.Values;
-            this.query.Append(" (");
+            currentContext = ContextEnum.Values;
+            query.Append(" (");
             bool first = true;
             var type = value.GetType();
             foreach (var property in type.GetProperties())
             {
-                if (IsIgnored(property.PropertyType) || IsReadOnly(property))
+                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
                     continue;
                 if (first)
                     first = false;
                 else
-                    this.query.Append(",");
-                this.AppendField(null, property.PropertyType, this.GetColumnName(property));
+                    query.Append(",");
+                AppendField(null, property);
             }
-            this.query.Append(") VALUES (");
+            query.Append(") VALUES (");
             first = true;
             foreach (var property in type.GetProperties())
             {
-                if (IsIgnored(property.PropertyType) || IsReadOnly(property))
+                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
                     continue;
                 if (first)
                     first = false;
                 else
-                    this.query.Append(",");
-                this.Parameter(property.GetValue(value));
+                    query.Append(",");
+                Parameter(property.GetValue(value));
             }
-            this.query.Append(")");
+            query.Append(")");
             return this;
         }
 
         public BaseQueryBuilder<T, TMe> SetAll(T value)
         {
-            this.Append("SET ");
-            this.currentContext = ContextEnum.Set;
+            Append("SET ");
+            currentContext = ContextEnum.Set;
             var type = value.GetType();
             bool first = true;
-            var table = this.parameterTable;
+            var table = parameterTable;
             foreach (var property in type.GetProperties())
             {
-                if (IsIgnored(property.PropertyType) || IsReadOnly(property))
+                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
                     continue;
 
                 if (first)
                     first = false;
                 else
-                    this.query.Append(",");
-                this.AppendField(table.name, property.PropertyType, this.GetColumnName(property));
-                this.query.Append("=");
-                this.Parameter(property.GetValue(value));
+                    query.Append(",");
+                AppendField(table.name, property);
+                query.Append("=");
+                Parameter(property.GetValue(value));
             }
             return this;
         }
 
-        public BaseQueryBuilder<T, TMe> Set<U>(Expression<Func<T, U>> column, Expression<Func<T, U>> value)
+        public BaseQueryBuilder<T, TMe> Set<TU>(Expression<Func<T, TU>> column, Expression<Func<T, TU>> value)
         {
-            if (this.currentContext == ContextEnum.Set)
+            if (currentContext == ContextEnum.Set)
             {
-                this.Append(", ");
+                Append(", ");
             }
             else
             {
-                this.Append("SET ");
-                this.currentContext = ContextEnum.Set;
+                Append("SET ");
+                currentContext = ContextEnum.Set;
             }
 
-            this.Column(column);
-            this.Append("=");
-            this.AddExpression(value.Body);
+            Column(column);
+            Append("=");
+            AddExpression(value.Body);
             return this;
         }
 
@@ -1250,23 +1296,23 @@ namespace Folke.Orm
 
         private class MappedClass
         {
-            public IList<MappedField> fields = new List<MappedField>();
+            public readonly IList<MappedField> fields = new List<MappedField>();
             public IList<MappedCollection> collections;
             public MappedField idField;
             public ConstructorInfo constructor;
 
-            public object Construct(IFolkeConnection connection, Type type, int id)
+            public object Construct(IFolkeConnection connection, Type type, object id)
             {
-                var ret = this.constructor.Invoke(null);
+                var ret = constructor.Invoke(null);
                 
-                if (this.idField != null)
-                    this.idField.propertyInfo.SetValue(ret, id);
+                if (idField != null)
+                    idField.propertyInfo.SetValue(ret, id);
 
-                if (this.collections != null)
+                if (collections != null)
                 {
-                    foreach (var collection in this.collections)
+                    foreach (var collection in collections)
                     {
-                        collection.propertyInfo.SetValue(ret, collection.listConstructor.Invoke(new object[] { connection, type, id, collection.listJoins }));
+                        collection.propertyInfo.SetValue(ret, collection.listConstructor.Invoke(new[] { connection, type, id, collection.listJoins }));
                     }
                 }
                 return ret;
@@ -1277,22 +1323,22 @@ namespace Folke.Orm
         
         private MappedClass MapClass(Type type, string alias = null)
         {
-            if (this.selectedFields == null)
+            if (selectedFields == null)
                 return null;
 
             var mappedClass = new MappedClass();
 
-            var idProperty = type.GetProperty("Id");
+            var idProperty = TableHelpers.GetKey(type);
             mappedClass.constructor = type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
-                var selectedField = this.selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == idProperty);
+                var selectedField = selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == idProperty);
                 mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty };
             }
             
             foreach (var property in type.GetProperties())
             {
-                if (property.Name == "Id")
+                if (property == idProperty)
                     continue;
 
                 var propertyType = property.PropertyType;
@@ -1316,17 +1362,17 @@ namespace Folke.Orm
                         mappedClass.collections.Add(mappedCollection);
                     }
                 }
-                else if (!IsIgnored(propertyType))
+                else if (!TableHelpers.IsIgnored(propertyType))
                 {
-                    var fieldInfo = this.selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == property);
-                    bool isForeign = IsForeign(property.PropertyType);
+                    var fieldInfo = selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == property);
+                    bool isForeign = TableHelpers.IsForeign(property.PropertyType);
                     if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
                     {
                         var mappedField = new MappedField { propertyInfo = property, selectedField = fieldInfo };
 
-                        if (IsForeign(property.PropertyType))
+                        if (TableHelpers.IsForeign(property.PropertyType))
                         {
-                            mappedField.mappedClass = this.MapClass(property.PropertyType, alias == null ? property.Name : alias + "." + property.Name);
+                            mappedField.mappedClass = MapClass(property.PropertyType, alias == null ? property.Name : alias + "." + property.Name);
                         }
                         mappedClass.fields.Add(mappedField);
                     }
@@ -1335,31 +1381,31 @@ namespace Folke.Orm
             return mappedClass;
         }
         
-        private object Read(IFolkeConnection connection, Type type, DbDataReader reader, MappedClass mappedClass, int expectedId = 0)
+        private object Read(IFolkeConnection folkeConnection, Type type, DbDataReader reader, MappedClass mappedClass, object expectedId = null)
         {
-            var cache = connection.Cache;
-            object value = null;
+            var cache = folkeConnection.Cache;
+            object value;
             var idMappedField = mappedClass.idField;
 
             // If the key field is mapped or if its value is already known, create a new item and
             // store it in cache
-            if (idMappedField != null && (idMappedField.selectedField != null || expectedId != 0))
+            if (idMappedField != null && (idMappedField.selectedField != null || expectedId != null))
             {
                 if (!cache.ContainsKey(type.Name))
-                    cache[type.Name] = new Dictionary<int, object>();
+                    cache[type.Name] = new Dictionary<object, object>();
                 var typeCache = cache[type.Name];
 
-                int id;
+                object id;
 
                 if (idMappedField.selectedField != null)
                 {
                     var index = idMappedField.selectedField.index;
 
-                    if (expectedId == 0 && reader.IsDBNull(index))
+                    if (expectedId == null && reader.IsDBNull(index))
                         return null;
 
-                    id = reader.GetInt32(index);
-                    if (expectedId != 0 && id != expectedId)
+                    id = reader.GetValue(index);
+                    if (expectedId != null && !id.Equals(expectedId))
                         throw new Exception("Unexpected id");
                 }
                 else
@@ -1373,13 +1419,13 @@ namespace Folke.Orm
                 }
                 else
                 {
-                    value = mappedClass.Construct(connection, type, id);
+                    value = mappedClass.Construct(folkeConnection, type, id);
                     typeCache[id] = value;
                 }
             }
             else
             {
-                value = mappedClass.Construct(connection, type, 0);
+                value = mappedClass.Construct(folkeConnection, type, 0);
             }
 
             foreach (var mappedField in mappedClass.fields)
@@ -1391,13 +1437,15 @@ namespace Folke.Orm
                 
                 if (mappedField.mappedClass == null)
                 {
+                    if (fieldInfo == null)
+                        throw new Exception("Unknown error");
                     object field = reader.GetTypedValue(mappedField.propertyInfo.PropertyType, fieldInfo.index);
                     mappedField.propertyInfo.SetValue(value, field);
                 }
                 else 
                 {
-                    int id = fieldInfo == null ? 0 : reader.GetInt32(fieldInfo.index);
-                    object other = this.Read(connection, mappedField.propertyInfo.PropertyType, reader, mappedField.mappedClass, id);
+                    object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.index);
+                    object other = Read(folkeConnection, mappedField.propertyInfo.PropertyType, reader, mappedField.mappedClass, id);
                     mappedField.propertyInfo.SetValue(value, other);
                 }
             }
@@ -1405,41 +1453,41 @@ namespace Folke.Orm
         }
 
 
-        public T Single(IFolkeConnection connection, params object[] parameters)
+        public T Single(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = this.CreateCommand(connection, parameters))
+            using (var command = CreateCommand(folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read())
                         throw new Exception("No result found");
-                    var value = this.Read(connection, typeof(T), reader, this.baseMappedClass);
+                    var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
                     reader.Close();
                     return (T)value;
                 }
             }
         }
 
-        public T SingleOrDefault(IFolkeConnection connection, params object[] parameters)
+        public T SingleOrDefault(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = this.CreateCommand(connection, parameters))
+            using (var command = CreateCommand(folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read())
                         return default(T);
-                    var value = this.Read(connection, typeof(T), reader, this.baseMappedClass);
+                    var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
                     reader.Close();
                     return (T)value;
                 }
             }
         }
 
-        public bool TryExecute(IFolkeConnection connection, params object[] parameters)
+        public bool TryExecute(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
             try
             {
-                this.Execute(connection, parameters);
+                Execute(folkeConnection, commandParameters);
                 return true;
             }
             catch(Exception)
@@ -1448,24 +1496,24 @@ namespace Folke.Orm
             }
         }
 
-        public void Execute(IFolkeConnection connection, params object[] parameters)
+        public void Execute(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = this.CreateCommand(connection, parameters))
+            using (var command = CreateCommand(folkeConnection, commandParameters))
             {
                 command.ExecuteNonQuery();
             }
         }
 
-        public IList<T> List(IFolkeConnection connection, params object[] parameters)
+        public IList<T> List(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = this.CreateCommand(connection, parameters))
+            using (var command = CreateCommand(folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     var ret = new List<T>();
                     while (reader.Read())
                     {
-                        var value = this.Read(connection, typeof(T), reader, this.baseMappedClass);
+                        var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
                         ret.Add((T)value);
                     }
                     reader.Close();
@@ -1477,75 +1525,79 @@ namespace Folke.Orm
         /// <summary>
         /// Assumes that the result is one scalar value and nothing else, get this
         /// </summary>
-        /// <typeparam name="U">The scalar value type</typeparam>
-        /// <param name="connection">A connection</param>
-        /// <param name="parameters">Optional parameters if the query had parameters</param>
+        /// <typeparam name="TU">The scalar value type</typeparam>
+        /// <param name="folkeConnection">A folkeConnection</param>
+        /// <param name="commandParameters">Optional commandParameters if the query had commandParameters</param>
         /// <returns>A single value</returns>
-        public U Scalar<U>(FolkeConnection connection, params object[] parameters)
+        public TU Scalar<TU>(FolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = this.CreateCommand(connection, parameters))
+            using (var command = CreateCommand(folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read() || reader.IsDBNull(0))
                     {
-                        return default(U);
+                        return default(TU);
                     }
-                    var ret = reader.GetTypedValue<U>(0);
+                    var ret = reader.GetTypedValue<TU>(0);
                     reader.Close();
                     return ret;
                 }
             }
         }
 
-        // TODO move this elsewhere
-        protected static bool IsReadOnly(PropertyInfo property)
+        public object Scalar(FolkeConnection folkeConnection, params object[] commandParameters)
         {
-            return property.Name == "Id";
-        }
-
-        // TODO move this elsewhere
-        public static bool IsForeign(Type type)
-        {
-            return type.GetInterface("IFolkeTable") != null;
-        }
-
-        // TODO move this elsewhere
-        public static bool IsIgnored(Type type)
-        {
-            return type.IsGenericType && Nullable.GetUnderlyingType(type) == null;
+            using (var command = CreateCommand(folkeConnection, commandParameters))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0))
+                    {
+                        return null;
+                    }
+                    var ret = reader.GetValue(0);
+                    reader.Close();
+                    return ret;
+                }
+            }
         }
 
         public BaseQueryBuilder<T, TMe> Delete()
         {
-            this.currentContext = ContextEnum.Delete;
-            this.noAlias = true;
-            return this.Append("DELETE");
+            currentContext = ContextEnum.Delete;
+            noAlias = true;
+            return Append("DELETE");
         }
 
-        public U Scalar<U>()
+        public TU Scalar<TU>()
         {
-            return this.Scalar<U>(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            return Scalar<TU>(connection, parameters == null ? null : parameters.ToArray());
         }
 
+        public object Scalar()
+        {
+            return Scalar(connection, parameters == null ? null : parameters.ToArray());
+        }
+        
         public IList<T> List()
         {
-            return this.List(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            return List(connection, parameters == null ? null : parameters.ToArray());
         }
 
         public void Execute()
         {
-            this.Execute(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            Execute(connection, parameters == null ? null : parameters.ToArray());
         }
 
         public bool TryExecute()
         {
-            return this.TryExecute(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            return TryExecute(connection, parameters == null ? null : parameters.ToArray());
         }
 
         public T SingleOrDefault()
         {
-            return this.SingleOrDefault(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            return SingleOrDefault(connection, parameters == null ? null : parameters.ToArray());
         }
 
         /// <summary>
@@ -1554,7 +1606,7 @@ namespace Folke.Orm
         /// <returns></returns>
         public T Single()
         {
-            return this.Single(this.connection, this.parameters == null ? null : this.parameters.ToArray());
+            return Single(connection, parameters == null ? null : parameters.ToArray());
         }
     }
 }

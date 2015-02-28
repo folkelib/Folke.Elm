@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Configuration;
+using NUnit.Framework;
 using System;
 
 namespace Folke.Orm.Test
@@ -17,8 +18,8 @@ namespace Folke.Orm.Test
         [SetUp]
         public void Initialize()
         {
-            var driver = new MySqlDriver(new DatabaseSettings { Database = "folkeormtest", Host = "localhost", Password = "test", User = "test" });
-            connection = new FolkeConnection(driver);
+            var driver = new MySqlDriver();
+            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
             connection.CreateTable<FirstClass>(true);
         }
 

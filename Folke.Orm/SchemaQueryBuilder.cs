@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
 
 namespace Folke.Orm
 {
@@ -19,9 +16,7 @@ namespace Folke.Orm
         {
             var attributes = property.GetCustomAttribute<ColumnAttribute>();
             query.Append(beginSymbol);
-            query.Append(attributes == null ? property.Name : (attributes.Name ?? property.Name));
-            if (IsForeign(property.PropertyType))
-                query.Append("_id");
+            query.Append(TableHelpers.GetColumnName(property));
             query.Append(endSymbol);
         }
 
@@ -30,8 +25,11 @@ namespace Folke.Orm
             var attributes = property.GetCustomAttribute<ColumnAttribute>();
             AppendColumnName(property);
             query.Append(" ");
-            if (IsForeign(property.PropertyType))
-                query.Append("INT");
+            if (TableHelpers.IsForeign(property.PropertyType))
+            {
+                var foreignPrimaryKey = TableHelpers.GetKey(property.PropertyType);
+                query.Append(connection.Driver.GetSqlType(foreignPrimaryKey));
+            }
             else if (attributes != null && attributes.MaxLength != 0)
             {
                 if (property.PropertyType == typeof(string))
@@ -46,8 +44,14 @@ namespace Folke.Orm
             }
             else
                 query.Append(connection.Driver.GetSqlType(property));
-            if (property.Name == "Id")
-                query.Append(" PRIMARY KEY AUTO_INCREMENT");
+            if (TableHelpers.IsKey(property))
+            {
+                query.Append(" PRIMARY KEY");
+                if (TableHelpers.IsAutomatic(property))
+                {
+                    query.Append(" AUTO_INCREMENT");
+                }
+            }
         }
 
         private static string GetConstraintEventString(ConstraintEventEnum onWhat)
@@ -105,9 +109,9 @@ namespace Folke.Orm
             return CreateTable(typeof(T));
         }
 
-        private static bool DoesForeignTableExist(PropertyInfo property, IList<string> existingTables)
+        private static bool DoesForeignTableExist(PropertyInfo property, IEnumerable<string> existingTables)
         {
-            return existingTables == null || !IsForeign(property.PropertyType) || existingTables.Any(t => t == property.PropertyType.Name.ToLower());
+            return existingTables == null || !TableHelpers.IsForeign(property.PropertyType) || existingTables.Any(t => t == property.PropertyType.Name.ToLower());
         }
 
         public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
@@ -119,7 +123,7 @@ namespace Folke.Orm
             query.Append(" (");
             foreach (var property in type.GetProperties())
             {
-                if (IsIgnored(property.PropertyType))
+                if (TableHelpers.IsIgnored(property.PropertyType))
                     continue;
 
                 if (!DoesForeignTableExist(property, existingTables))
@@ -140,7 +144,7 @@ namespace Folke.Orm
                     AddComma();
                     AppendIndex(property, attribute.Index);
                 }
-                else if (IsForeign(property.PropertyType))
+                else if (TableHelpers.IsForeign(property.PropertyType))
                 {
                     AddComma();
                     AppendIndex(property, property.Name);
@@ -149,7 +153,7 @@ namespace Folke.Orm
 
             foreach (var property in type.GetProperties())
             {
-                if (IsForeign(property.PropertyType) && DoesForeignTableExist(property, existingTables))
+                if (TableHelpers.IsForeign(property.PropertyType) && DoesForeignTableExist(property, existingTables))
                 {
                     AddComma();
                     AppendForeignKey(property);
@@ -195,7 +199,7 @@ namespace Folke.Orm
             AppendColumn(property);
         }
     
-        private bool commaAdded = false;
+        private bool commaAdded;
 
         internal void AddComma()
         {
@@ -216,14 +220,13 @@ namespace Folke.Orm
             
  	        foreach (var property in type.GetProperties())
             {
-                if (IsIgnored(property.PropertyType))
+                if (TableHelpers.IsIgnored(property.PropertyType))
                     continue;
 
                 var attribute = property.GetCustomAttribute<ColumnAttribute>();
-                var columnName = attribute == null ? property.Name : (attribute.Name ?? property.Name);
-                bool foreign = IsForeign(property.PropertyType);
-                if (foreign)
-                    columnName += "_id";
+                string columnName = TableHelpers.GetColumnName(property);
+                bool foreign = TableHelpers.IsForeign(property.PropertyType);
+                
                 var existingColumn = columns.SingleOrDefault(c => c.COLUMN_NAME == columnName);
                 if (existingColumn == null)
                 {

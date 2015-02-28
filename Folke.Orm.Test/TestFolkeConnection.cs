@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Configuration;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 
@@ -55,8 +56,8 @@ namespace Folke.Orm.Test
         [SetUp]
         public void Initialize()
         {
-            var driver = new MySqlDriver(new DatabaseSettings { Database = "folkeormtest", Host = "localhost", Password = "test", User = "test" });
-            connection = new FolkeConnection(driver);
+            var driver = new MySqlDriver();
+            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
             connection.CreateTable<TestMultiPoco>(drop: true);
@@ -188,7 +189,7 @@ namespace Folke.Orm.Test
 
             connection.Cache.Clear();
 
-            var manies = connection.Query<TestManyPoco>().SelectAll().AndAll(x => x.Poco).From().LeftJoinOn(x => x.Poco).Where(t => t.Toto == "Toto").List();
+            var manies = connection.Query<TestManyPoco>().SelectAll().AndAll(x => x.Poco).From().LeftJoinOnId(x => x.Poco).Where(t => t.Toto == "Toto").List();
             Assert.AreEqual(1, manies.Count);
             Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
             Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
@@ -229,8 +230,7 @@ namespace Folke.Orm.Test
             Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
             Assert.AreEqual(newMany.Toto, manies[0].Many.Toto);
         }
-
-
+        
         [Test]
         public void TestAnonymousWithCriteria()
         {
@@ -363,7 +363,7 @@ namespace Folke.Orm.Test
             var twoPoco = new TestPoco { Name = "Two" };
             connection.Save(twoPoco);
 
-            var result = connection.QueryOver<TestPoco>().Where(x => SqlOperator.Like(x.Name, "On%")).List();
+            var result = connection.QueryOver<TestPoco>().Where(x => x.Name.Like("On%")).List();
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("One", result[0].Name);
         }
@@ -419,7 +419,7 @@ namespace Folke.Orm.Test
         public void TestFromSubQuery()
         {
             var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
-            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t", query.SQL);
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t", query.Sql);
         }
 
         [Test]
@@ -428,7 +428,7 @@ namespace Folke.Orm.Test
             UserInGroup a = null;
             var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group))
                .InnerJoinSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 2), () => a).On(x => a.Group, x => x.Group);
-            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t  INNER JOIN (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item1)) AS t1 ON  t1.`Group_id`= t.`Group_id`", query.SQL);
+            Assert.AreEqual("SELECT  t.`Group_id` FROM (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item0) GROUP BY  t.`Group_id`) AS t  INNER JOIN (SELECT  t.`Group_id` FROM `UserInGroup` as t WHERE( t.`User_id`=@Item1)) AS t1 ON  t1.`Group_id`= t.`Group_id`", query.Sql);
         }
 
         [Test]

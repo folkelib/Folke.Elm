@@ -1,12 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
@@ -19,9 +14,14 @@ namespace Folke.Orm
             Settings = settings;
         }
 
-        public DbConnection CreateConnection()
+        public MySqlDriver()
         {
-            return new MySqlConnection("Server=" + Settings.Host + "; Database=" + Settings.Database + "; Uid=" + Settings.User + "; Pwd=" + Settings.Password);
+        }
+
+        public DbConnection CreateConnection(string connectionString)
+        {
+            return new MySqlConnection(connectionString ?? "Server=" + Settings.Host + "; Database=" + Settings.Database + "; Uid=" + Settings.User +
+                               "; Pwd=" + Settings.Password);
         }
 
         public string GetSqlType(PropertyInfo property)
@@ -82,6 +82,10 @@ namespace Folke.Orm
                 }
                 else
                     return "VARCHAR(255)";
+            }
+            else if (type == typeof(Guid))
+            {
+                return "CHAR(36)";
             }
             else
                 throw new Exception("Unsupported type " + type.Name);

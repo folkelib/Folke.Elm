@@ -16,11 +16,13 @@ namespace Folke.Orm
         QueryBuilder<T> QueryOver<T>() where T : class, new();
         QueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
         QueryBuilder<T> Query<T>() where T : class, new();
-        void Update<T>(T value) where T : class, IFolkeTable, new();
+        void Update<T>(T value) where T : class, new();
+
         /// <summary>
         /// Loads an object by its id. Throws an error if the object can not be found.
         /// </summary>
         /// <typeparam name="T">The object class</typeparam>
+        /// <typeparam name="TU">The key type</typeparam>
         /// <param name="id">The id</param>
         /// <returns>The object</returns>
         T Load<T>(int id) where T : class, IFolkeTable, new();
@@ -33,9 +35,9 @@ namespace Folke.Orm
         /// <returns>The object or null if it can not be found</returns>
         T Get<T>(int id) where T : class, IFolkeTable, new();
         T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
-        void Save<T>(T value) where T : class, IFolkeTable, new();
-        void Delete<T>(T value) where T : class, IFolkeTable, new();
-        T Refresh<T>(T value) where T : class, IFolkeTable, new();
+        void Save<T>(T value) where T : class, new();
+        void Delete<T>(T value) where T : class, new();
+        T Refresh<T>(T value) where T : class, new();
         void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new();
         void CreateTable<T>(bool drop = false) where T : class, new();
         void DropTable<T>() where T : class, new();
@@ -43,7 +45,7 @@ namespace Folke.Orm
         void UpdateSchema(Assembly assembly);
 
         FolkeCommand OpenCommand();
-        IDictionary<string, IDictionary<int, object>> Cache { get; } //TODO
+        IDictionary<string, IDictionary<object, object>> Cache { get; } //TODO
         IDatabaseDriver Driver { get; }
     }
 }

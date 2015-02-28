@@ -1,30 +1,30 @@
-﻿namespace Folke.Orm
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq.Expressions;
+using System.Reflection;
+
+using Folke.Orm.InformationSchema;
+
+namespace Folke.Orm
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Data.Common;
-    using System.Linq.Expressions;
-    using System.Reflection;
-
-    using Folke.Orm.InformationSchema;
-
     public class FolkeConnection : IFolkeConnection
     {
         private readonly DbConnection connection;
         private DbTransaction transaction;
-        private int stackedTransactions = 0;
+        private int stackedTransactions;
         private bool askRollback;
 
-        public FolkeConnection(IDatabaseDriver databaseDriver)
+        public FolkeConnection(IDatabaseDriver databaseDriver, string connectionString = null)
         {
-            Cache = new Dictionary<string, IDictionary<int, object>>();
+            Cache = new Dictionary<string, IDictionary<object, object>>();
             Driver = databaseDriver;
-            Database = databaseDriver.Settings.Database;
-            connection = databaseDriver.CreateConnection();
+            connection = databaseDriver.CreateConnection(connectionString);
+            Database = connection.Database;
             Mapper = new Mapper(Database);
         }
 
-        public IDictionary<string, IDictionary<int, object>> Cache { get; private set; }
+        public IDictionary<string, IDictionary<object, object>> Cache { get; private set; }
 
         public string Database { get; set; }
 
@@ -75,23 +75,34 @@
             return query;
         }
         
-        public void Delete<T>(T value) where T : class, IFolkeTable, new()
+        public void Delete<T>(T value) where T : class, new()
         {
-            new QueryBuilder<T>(this).Delete().From().Where(x => x.Id == value.Id).Execute();
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            new QueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
         }
 
-        public void Update<T>(T value) where T : class, IFolkeTable, new()
+        public void Update<T>(T value) where T : class, new()
         {
-            if (value.Id == 0)
-                throw new Exception("Id must not be 0");
-            new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Id == value.Id).Execute();
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
         }
 
-        public T Refresh<T>(T value) where T : class, IFolkeTable, new()
+        public T Refresh<T>(T value) where T : class, new()
         {
-            if (value.Id == 0)
-                throw new Exception("Id must not be 0");
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == value.Id).Single();
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Single();
+        }
+
+        public T Load<T>(object id) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof (T));
+            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty).Equals(id)).Single();
+        }
+
+        public T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).Single();
         }
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
@@ -114,15 +125,38 @@
             return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).SingleOrDefault();
         }
 
-        public void Save<T>(T value) where T : class, IFolkeTable, new()
+        public T Get<T>(object id) where T : class, new()
         {
-            if (value.Id != 0)
-                throw new Exception("Id must be 0");
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == id).SingleOrDefault();
+        }
+
+        public T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleOrDefault();
+        }
+
+        public void Save<T>(T value) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof (T));
+            bool automatic = TableHelpers.IsAutomatic(keyProperty);
+            if (automatic)
+            {
+                var defaultValue = Activator.CreateInstance(keyProperty.PropertyType);
+                if (!keyProperty.GetValue(value).Equals(defaultValue))
+                    throw new Exception("Id must be 0");
+            } 
+  
             new QueryBuilder<T>(this).InsertInto().Values(value).Execute();
-            value.Id = new QueryBuilder<T>(this).Append("SELECT last_insert_id()").Scalar<int>();
+            if (automatic)
+            {
+                var key = new QueryBuilder<T>(this).Append("SELECT last_insert_id()").Scalar();
+                keyProperty.SetValue(value, Convert.ChangeType(key, keyProperty.PropertyType));
+            }
             if (!Cache.ContainsKey(typeof(T).Name))
-                Cache[typeof(T).Name] = new Dictionary<int, object>();
-            Cache[typeof(T).Name][value.Id] = value;
+                Cache[typeof(T).Name] = new Dictionary<object, object>();
+            Cache[typeof(T).Name][keyProperty.GetValue(value)] = value;
         }
 
         public void CreateTable<T>(bool drop = false) where T : class, new()
@@ -164,13 +198,13 @@
             var typeMap = Mapper.GetTypeMapping(type);
 
             var columns =
-                this.QueryOver<KeyColumnUsage>()
+                QueryOver<KeyColumnUsage>()
                     .Where(c => c.ReferencedTableName == typeMap.TableName && c.ReferencedTableSchema == typeMap.TableSchema)
                     .List();
 
             foreach (var column in columns)
             {
-                using (var command = this.OpenCommand())
+                using (var command = OpenCommand())
                 {
                     command.CommandText = string.Format(
                         "UPDATE `{0}`.`{1}` SET `{2}` = {3} WHERE `{2}` = {4}",
@@ -230,7 +264,7 @@
             new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
         }
 
-        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
+        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             var query = new QueryBuilder<T>(this).SelectAll();
             foreach (var fetch in fetches)

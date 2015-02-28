@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Folke.Orm
+﻿namespace Folke.Orm
 {
-    public interface IFolkeTable
+    public interface IFolkeTable : IFolkeTable<int>
     {
-        int Id { get; set; }
+    }
+
+    public interface IFolkeTable<T>
+    {
+        T Id { get; set; }
     }
 }

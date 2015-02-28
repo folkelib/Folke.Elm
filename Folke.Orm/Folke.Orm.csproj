@@ -48,6 +48,7 @@
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />
     <Compile Include="DbDataReaderExtensions.cs" />
+    <Compile Include="ExpressionHelpers.cs" />
     <Compile Include="FolkeCommand.cs" />
     <Compile Include="FolkeConnection.cs" />
     <Compile Include="FolkeList.cs" />
@@ -71,8 +72,8 @@
     <Compile Include="QueryBuilder.cs" />
     <Compile Include="SchemaQueryBuilder.cs" />
     <Compile Include="SchemaUpdater.cs" />
-    <Compile Include="SqlOperator.cs" />
     <Compile Include="TableAttribute.cs" />
+    <Compile Include="TableHelpers.cs" />
     <Compile Include="TypeMapping.cs" />
   </ItemGroup>
   <ItemGroup>
