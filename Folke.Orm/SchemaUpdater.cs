@@ -42,7 +42,7 @@ namespace Folke.Orm
             using (var transaction = connection.BeginTransaction())
             {
                 var existingTableTables = new QueryBuilder<Tables>(connection).SelectAll().From().Where(t => t.TABLE_SCHEMA == connection.Database).List().Select(t => t.TABLE_NAME.ToLower()).ToList();
-                var tableToCreate = tables.Where(t => existingTableTables.All(y => y != t.Name.ToLower())).ToList();
+                var tableToCreate = tables.Where(t => existingTableTables.All(y => y != TableHelpers.GetTableName(t).ToLower())).ToList();
                 
                 foreach (var table in tableToCreate)
                 {
