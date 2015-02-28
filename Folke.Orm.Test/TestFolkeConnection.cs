@@ -73,6 +73,7 @@ namespace Folke.Orm.Test
             connection.DropTable<TestMultiPoco>();
             connection.DropTable<TestPoco>();
             connection.DropTable<TestManyPoco>();
+            connection.Dispose();
         }
 
 

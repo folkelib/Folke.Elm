@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
-    public interface IFolkeConnection
+    public interface IFolkeConnection : IDisposable
     {
         FolkeTransaction BeginTransaction();
 
@@ -22,7 +18,6 @@ namespace Folke.Orm
         /// Loads an object by its id. Throws an error if the object can not be found.
         /// </summary>
         /// <typeparam name="T">The object class</typeparam>
-        /// <typeparam name="TU">The key type</typeparam>
         /// <param name="id">The id</param>
         /// <returns>The object</returns>
         T Load<T>(int id) where T : class, IFolkeTable, new();
@@ -47,5 +42,9 @@ namespace Folke.Orm
         FolkeCommand OpenCommand();
         IDictionary<string, IDictionary<object, object>> Cache { get; } //TODO
         IDatabaseDriver Driver { get; }
+        T Load<T>(object id) where T : class, new();
+        T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
+        T Get<T>(object id) where T : class, new();
+        T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
     }
 }

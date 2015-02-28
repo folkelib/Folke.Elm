@@ -280,5 +280,13 @@ namespace Folke.Orm
 
             return query;
         }
+
+        public void Dispose()
+        {
+            if (transaction != null)
+                transaction.Dispose();
+            if (connection != null)
+                connection.Dispose();
+        }
     } 
 }

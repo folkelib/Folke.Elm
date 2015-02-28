@@ -27,6 +27,7 @@ namespace Folke.Orm.Test
         public void Cleanup()
         {
             connection.DropTable<FirstClass>();
+            connection.Dispose();
         }
 
         private class AddColumnClass

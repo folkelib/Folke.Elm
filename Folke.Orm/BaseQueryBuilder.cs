@@ -4,7 +4,6 @@ namespace Folke.Orm
 {
     using System;
     using System.Collections.Generic;
-    using System.Data.Common;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
@@ -78,7 +77,7 @@ namespace Folke.Orm
             public string alias;
         }
 
-        protected class FieldAlias
+        public class FieldAlias
         {
             public PropertyInfo propertyInfo;
             public string alias;
@@ -375,14 +374,11 @@ namespace Folke.Orm
             {
                 return true;
             }
-            else
+            var table = GetTable(column);
+            if (table != null)
             {
-                var table = GetTable(column);
-                if (table != null)
-                {
-                    AppendField(table.name, TableHelpers.GetKey(table.type));
-                    return true;
-                }
+                AppendField(table.name, TableHelpers.GetKey(table.type));
+                return true;
             }
             return false;
         }
@@ -522,7 +518,7 @@ namespace Folke.Orm
         {
             if (currentContext == ContextEnum.Select || currentContext == ContextEnum.Delete)
             {
-                baseMappedClass = MapClass(typeof(T));
+                baseMappedClass = MappedClass<T, TMe>.MapClass(selectedFields, typeof(T));
                 Append("FROM");
             }
             else if (currentContext == ContextEnum.From)
@@ -656,7 +652,7 @@ namespace Folke.Orm
             query.Append("@Item" + parameterIndex);
         }
 
-        protected FolkeCommand CreateCommand(IFolkeConnection folkeConnection, object[] commandParameters)
+        protected static FolkeCommand CreateCommand(StringBuilder stringBuilder, IFolkeConnection folkeConnection, object[] commandParameters)
         {
             var command = folkeConnection.OpenCommand();
             if (commandParameters != null)
@@ -683,7 +679,7 @@ namespace Folke.Orm
                     command.Parameters.Add(commandParameter);
                 }
             }
-            command.CommandText = query.ToString();
+            command.CommandText = stringBuilder.ToString();
             return command;
         }
 
@@ -1280,188 +1276,18 @@ namespace Folke.Orm
             return this;
         }
 
-        private class MappedField
-        {
-            public FieldAlias selectedField;
-            public PropertyInfo propertyInfo;
-            public MappedClass mappedClass;
-        }
-
-        private class MappedCollection
-        {
-            public string[] listJoins;
-            public ConstructorInfo listConstructor;
-            public PropertyInfo propertyInfo;
-        }
-
-        private class MappedClass
-        {
-            public readonly IList<MappedField> fields = new List<MappedField>();
-            public IList<MappedCollection> collections;
-            public MappedField idField;
-            public ConstructorInfo constructor;
-
-            public object Construct(IFolkeConnection connection, Type type, object id)
-            {
-                var ret = constructor.Invoke(null);
-                
-                if (idField != null)
-                    idField.propertyInfo.SetValue(ret, id);
-
-                if (collections != null)
-                {
-                    foreach (var collection in collections)
-                    {
-                        collection.propertyInfo.SetValue(ret, collection.listConstructor.Invoke(new[] { connection, type, id, collection.listJoins }));
-                    }
-                }
-                return ret;
-            }
-        }
-
-        private MappedClass baseMappedClass;
-        
-        private MappedClass MapClass(Type type, string alias = null)
-        {
-            if (selectedFields == null)
-                return null;
-
-            var mappedClass = new MappedClass();
-
-            var idProperty = TableHelpers.GetKey(type);
-            mappedClass.constructor = type.GetConstructor(Type.EmptyTypes);
-            if (idProperty != null)
-            {
-                var selectedField = selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == idProperty);
-                mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty };
-            }
-            
-            foreach (var property in type.GetProperties())
-            {
-                if (property == idProperty)
-                    continue;
-
-                var propertyType = property.PropertyType;
-                if (Nullable.GetUnderlyingType(propertyType) != null)
-                {
-                    propertyType = Nullable.GetUnderlyingType(propertyType);
-                }
-
-                
-                if (propertyType.IsGenericType)
-                {
-                    var foreignType = propertyType.GenericTypeArguments[0];
-                    var folkeList = typeof(FolkeList<>).MakeGenericType(foreignType);
-                    if (property.PropertyType.IsAssignableFrom(folkeList))
-                    {
-                        var joins = property.GetCustomAttributes<FolkeListAttribute>().Select(x => x.Join).ToArray();
-                        var constructor = folkeList.GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
-                        var mappedCollection = new MappedCollection { propertyInfo = property, listJoins = joins, listConstructor = constructor };
-                        if (mappedClass.collections == null)
-                            mappedClass.collections = new List<MappedCollection>();
-                        mappedClass.collections.Add(mappedCollection);
-                    }
-                }
-                else if (!TableHelpers.IsIgnored(propertyType))
-                {
-                    var fieldInfo = selectedFields.SingleOrDefault(f => f.alias == alias && f.propertyInfo == property);
-                    bool isForeign = TableHelpers.IsForeign(property.PropertyType);
-                    if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
-                    {
-                        var mappedField = new MappedField { propertyInfo = property, selectedField = fieldInfo };
-
-                        if (TableHelpers.IsForeign(property.PropertyType))
-                        {
-                            mappedField.mappedClass = MapClass(property.PropertyType, alias == null ? property.Name : alias + "." + property.Name);
-                        }
-                        mappedClass.fields.Add(mappedField);
-                    }
-                }
-            }
-            return mappedClass;
-        }
-        
-        private object Read(IFolkeConnection folkeConnection, Type type, DbDataReader reader, MappedClass mappedClass, object expectedId = null)
-        {
-            var cache = folkeConnection.Cache;
-            object value;
-            var idMappedField = mappedClass.idField;
-
-            // If the key field is mapped or if its value is already known, create a new item and
-            // store it in cache
-            if (idMappedField != null && (idMappedField.selectedField != null || expectedId != null))
-            {
-                if (!cache.ContainsKey(type.Name))
-                    cache[type.Name] = new Dictionary<object, object>();
-                var typeCache = cache[type.Name];
-
-                object id;
-
-                if (idMappedField.selectedField != null)
-                {
-                    var index = idMappedField.selectedField.index;
-
-                    if (expectedId == null && reader.IsDBNull(index))
-                        return null;
-
-                    id = reader.GetValue(index);
-                    if (expectedId != null && !id.Equals(expectedId))
-                        throw new Exception("Unexpected id");
-                }
-                else
-                {
-                    id = expectedId;
-                }
-
-                if (typeCache.ContainsKey(id))
-                {
-                    value = typeCache[id];
-                }
-                else
-                {
-                    value = mappedClass.Construct(folkeConnection, type, id);
-                    typeCache[id] = value;
-                }
-            }
-            else
-            {
-                value = mappedClass.Construct(folkeConnection, type, 0);
-            }
-
-            foreach (var mappedField in mappedClass.fields)
-            {
-                var fieldInfo = mappedField.selectedField;
-                
-                if (fieldInfo != null && reader.IsDBNull(fieldInfo.index))
-                    continue;
-                
-                if (mappedField.mappedClass == null)
-                {
-                    if (fieldInfo == null)
-                        throw new Exception("Unknown error");
-                    object field = reader.GetTypedValue(mappedField.propertyInfo.PropertyType, fieldInfo.index);
-                    mappedField.propertyInfo.SetValue(value, field);
-                }
-                else 
-                {
-                    object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.index);
-                    object other = Read(folkeConnection, mappedField.propertyInfo.PropertyType, reader, mappedField.mappedClass, id);
-                    mappedField.propertyInfo.SetValue(value, other);
-                }
-            }
-            return value;
-        }
+        private MappedClass<T, TMe> baseMappedClass;
 
 
         public T Single(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read())
                         throw new Exception("No result found");
-                    var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
+                    var value = baseMappedClass.Read(folkeConnection, typeof(T), reader);
                     reader.Close();
                     return (T)value;
                 }
@@ -1470,13 +1296,13 @@ namespace Folke.Orm
 
         public T SingleOrDefault(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read())
                         return default(T);
-                    var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
+                    var value = baseMappedClass.Read(folkeConnection, typeof(T), reader);
                     reader.Close();
                     return (T)value;
                 }
@@ -1498,7 +1324,7 @@ namespace Folke.Orm
 
         public void Execute(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 command.ExecuteNonQuery();
             }
@@ -1506,14 +1332,14 @@ namespace Folke.Orm
 
         public IList<T> List(IFolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
                     var ret = new List<T>();
                     while (reader.Read())
                     {
-                        var value = Read(folkeConnection, typeof(T), reader, baseMappedClass);
+                        var value = baseMappedClass.Read(folkeConnection, typeof(T), reader);
                         ret.Add((T)value);
                     }
                     reader.Close();
@@ -1531,7 +1357,7 @@ namespace Folke.Orm
         /// <returns>A single value</returns>
         public TU Scalar<TU>(FolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {
@@ -1548,7 +1374,7 @@ namespace Folke.Orm
 
         public object Scalar(FolkeConnection folkeConnection, params object[] commandParameters)
         {
-            using (var command = CreateCommand(folkeConnection, commandParameters))
+            using (var command = CreateCommand(query, folkeConnection, commandParameters))
             {
                 using (var reader = command.ExecuteReader())
                 {

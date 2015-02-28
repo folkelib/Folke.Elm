@@ -26,6 +26,7 @@ namespace Folke.Orm.Test
             connection.DropTable<TableWithGuid>();  
             connection.DropTable<ParentTableWithGuid>();
             transaction.Dispose();
+            connection.Dispose();
         }
 
         [Test]

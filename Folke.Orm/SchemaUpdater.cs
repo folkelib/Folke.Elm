@@ -1,16 +1,13 @@
 ﻿using Folke.Orm.InformationSchema;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
     internal class SchemaUpdater
     {
-        private FolkeConnection connection;
+        private readonly FolkeConnection connection;
 
         public SchemaUpdater(FolkeConnection connection)
         {
@@ -41,11 +38,11 @@ namespace Folke.Orm
 
         public void CreateOrUpdateAll(Assembly assembly)
         {
-            var tables = assembly.DefinedTypes.Where(t => t.IsClass && t.GetInterface("IFolkeTable") != null);
+            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.GetInterface("IFolkeTable") != null || t.GetCustomAttribute<TableAttribute>() != null)).ToList();
             using (var transaction = connection.BeginTransaction())
             {
                 var existingTableTables = new QueryBuilder<Tables>(connection).SelectAll().From().Where(t => t.TABLE_SCHEMA == connection.Database).List().Select(t => t.TABLE_NAME.ToLower()).ToList();
-                var tableToCreate = tables.Where(t => !existingTableTables.Any(y => y == t.Name.ToLower())).ToList();
+                var tableToCreate = tables.Where(t => existingTableTables.All(y => y != t.Name.ToLower())).ToList();
                 
                 foreach (var table in tableToCreate)
                 {

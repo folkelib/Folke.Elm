@@ -60,6 +60,7 @@ namespace Folke.Orm.Test
             connection.DropTable<LinkClass>();
             connection.DropTable<ParentClass>();
             connection.DropTable<ChildClass>();
+            connection.Dispose();
         }
 
         [Test]
