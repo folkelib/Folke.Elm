@@ -38,9 +38,19 @@ namespace Folke.Orm
             return command.ExecuteReader();
         }
 
+        internal async Task<DbDataReader> ExecuteReaderAsync()
+        {
+            return await command.ExecuteReaderAsync();
+        }
+
         internal void ExecuteNonQuery()
         {
             command.ExecuteNonQuery();
+        }
+
+        internal async Task ExecuteNonQueryAsync()
+        {
+            await command.ExecuteNonQueryAsync();
         }
     }
 }

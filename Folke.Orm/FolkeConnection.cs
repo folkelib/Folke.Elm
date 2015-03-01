@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
-
+using System.Threading.Tasks;
 using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm
@@ -81,10 +82,22 @@ namespace Folke.Orm
             new QueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
         }
 
+        public async Task DeleteAsync<T>(T value) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            await new QueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
+        }
+
         public void Update<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
             new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
+        }
+
+        public async Task UpdateAsync<T>(T value) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            await new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
         }
 
         public T Refresh<T>(T value) where T : class, new()
@@ -103,6 +116,12 @@ namespace Folke.Orm
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
             return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).Single();
+        }
+
+        public async Task<T> LoadAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return await CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleAsync();
         }
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
@@ -137,26 +156,52 @@ namespace Folke.Orm
             return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleOrDefault();
         }
 
+        public async Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            return await CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleOrDefaultAsync();
+        }
+
         public void Save<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof (T));
+            var keyProperty = TableHelpers.GetKey(typeof(T));
             bool automatic = TableHelpers.IsAutomatic(keyProperty);
-            if (automatic)
-            {
-                var defaultValue = Activator.CreateInstance(keyProperty.PropertyType);
-                if (!keyProperty.GetValue(value).Equals(defaultValue))
-                    throw new Exception("Id must be 0");
-            } 
-  
-            new QueryBuilder<T>(this).InsertInto().Values(value).Execute();
+            CreateSaveQuery(value, automatic, keyProperty).Execute();
+            UpdateSavedValue(value, automatic, keyProperty);
+        }
+
+        public async Task SaveAsync<T>(T value) where T : class, new()
+        {
+            var keyProperty = TableHelpers.GetKey(typeof(T));
+            bool automatic = TableHelpers.IsAutomatic(keyProperty);
+            await CreateSaveQuery(value, automatic, keyProperty).ExecuteAsync();
+            UpdateSavedValue(value, automatic, keyProperty);
+        }
+
+        private void UpdateSavedValue<T>(T value, bool automatic, PropertyInfo keyProperty) where T : class, new()
+        {
             if (automatic)
             {
                 var key = new QueryBuilder<T>(this).Append("SELECT last_insert_id()").Scalar();
                 keyProperty.SetValue(value, Convert.ChangeType(key, keyProperty.PropertyType));
             }
-            if (!Cache.ContainsKey(typeof(T).Name))
-                Cache[typeof(T).Name] = new Dictionary<object, object>();
-            Cache[typeof(T).Name][keyProperty.GetValue(value)] = value;
+            if (!Cache.ContainsKey(typeof (T).Name))
+                Cache[typeof (T).Name] = new Dictionary<object, object>();
+            Cache[typeof (T).Name][keyProperty.GetValue(value)] = value;
+        }
+
+        private FluentGenericQueryBuilder<T, FolkeTuple> CreateSaveQuery<T>(T value, bool automatic, PropertyInfo keyProperty)
+            where T : class, new()
+        {
+            if (automatic)
+            {
+                var defaultValue = Activator.CreateInstance(keyProperty.PropertyType);
+                if (!keyProperty.GetValue(value).Equals(defaultValue))
+                    throw new Exception("Id must be 0");
+            }
+
+            var query = new QueryBuilder<T>(this).InsertInto().Values(value);
+            return query;
         }
 
         public void CreateTable<T>(bool drop = false) where T : class, new()
@@ -206,7 +251,7 @@ namespace Folke.Orm
             {
                 using (var command = OpenCommand())
                 {
-                    command.CommandText = string.Format(
+                    command.CommandText = String.Format(
                         "UPDATE `{0}`.`{1}` SET `{2}` = {3} WHERE `{2}` = {4}",
                         column.TableSchema,
                         column.TableName,
@@ -264,7 +309,7 @@ namespace Folke.Orm
             new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
         }
 
-        private BaseQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
+        private FluentGenericQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             var query = new QueryBuilder<T>(this).SelectAll();
             foreach (var fetch in fetches)
@@ -287,6 +332,105 @@ namespace Folke.Orm
                 transaction.Dispose();
             if (connection != null)
                 connection.Dispose();
+        }
+
+        public FolkeCommand CreateCommand(string commandText, object[] commandParameters)
+        {
+            var command = OpenCommand();
+            if (commandParameters != null)
+            {
+                for (var i = 0; i < commandParameters.Length; i++)
+                {
+                    var parameterName = "Item" + i.ToString(CultureInfo.InvariantCulture);
+                    var parameter = commandParameters[i];
+                    var commandParameter = command.CreateParameter();
+                    commandParameter.ParameterName = parameterName;
+                    if (parameter == null)
+                        commandParameter.Value = null;
+                    else
+                    {
+                        var parameterType = parameter.GetType();
+                        if (parameterType.IsEnum)
+                            commandParameter.Value = parameterType.GetEnumName(parameter);
+                        else
+                        {
+                            var table = parameter as IFolkeTable;
+                            commandParameter.Value = table != null ? table.Id : parameter;
+                        }
+                    }
+                    command.Parameters.Add(commandParameter);
+                }
+            }
+            command.CommandText = commandText;
+            return command;
+        }
+
+        public TU Scalar<TU>(string query, params object[] commandParameters)
+        {
+            using (var command = CreateCommand(query, commandParameters))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0))
+                    {
+                        return default(TU);
+                    }
+                    var ret = reader.GetTypedValue<TU>(0);
+                    reader.Close();
+                    return ret;
+                }
+            }
+        }
+
+        public async Task<TU> ScalarAsync<TU>(string query, params object[] commandParameters)
+        {
+            using (var command = CreateCommand(query, commandParameters))
+            {
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0))
+                    {
+                        return default(TU);
+                    }
+                    var ret = reader.GetTypedValue<TU>(0);
+                    reader.Close();
+                    return ret;
+                }
+            }
+        }
+
+        public object Scalar(string query, params object[] commandParameters)
+        {
+            using (var command = CreateCommand(query, commandParameters))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0))
+                    {
+                        return null;
+                    }
+                    var ret = reader.GetValue(0);
+                    reader.Close();
+                    return ret;
+                }
+            }
+        }
+
+        public async Task<object> ScalarAsync(string query, params object[] commandParameters)
+        {
+            using (var command = CreateCommand(query, commandParameters))
+            {
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0))
+                    {
+                        return null;
+                    }
+                    var ret = reader.GetValue(0);
+                    reader.Close();
+                    return ret;
+                }
+            }
         }
     } 
 }

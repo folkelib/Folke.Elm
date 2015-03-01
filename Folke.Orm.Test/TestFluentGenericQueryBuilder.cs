@@ -3,35 +3,35 @@
 namespace Folke.Orm.Test
 {
     [TestFixture]
-    public class TestBaseQueryBuilder
+    public class TestFluentGenericQueryBuilder
     {
         private MySqlDriver mySqlDriver;
-        private BaseQueryBuilder<FakeClass, FolkeTuple> queryBuilder;
+        private FluentGenericQueryBuilder<FakeClass, FolkeTuple> queryBuilder;
 
         [SetUp]
         public void Setup()
         {
             mySqlDriver = new MySqlDriver();
-            queryBuilder = new BaseQueryBuilder<FakeClass, FolkeTuple>(mySqlDriver);
+            queryBuilder = new FluentGenericQueryBuilder<FakeClass, FolkeTuple>(mySqlDriver);
             queryBuilder.RegisterTable();
         }
 
         [Test]
-        public void BaseQueryBuilder_AddExpression_EqualOperator()
+        public void FluentGenericQueryBuilder_AddExpression_EqualOperator()
         {
             queryBuilder.AddExpression(x => x.Id == 3);
             Assert.AreEqual("( t.`Id`=@Item0)", queryBuilder.Sql);
         }
 
         [Test]
-        public void BaseQueryBuilder_AddExpression_EqualsMethod()
+        public void FluentGenericQueryBuilder_AddExpression_EqualsMethod()
         {
             queryBuilder.AddExpression(x => x.Id.Equals(3));
             Assert.AreEqual("( t.`Id`=@Item0)", queryBuilder.Sql);
         }
 
         [Test]
-        public void BaseQueryBuilder_AddExpression_PropertyObjectExtension()
+        public void FluentGenericQueryBuilder_AddExpression_PropertyObjectExtension()
         {
             var propertyInfo = typeof (FakeClass).GetProperty("Id");
             queryBuilder.AddExpression(x => x.Property(propertyInfo).Equals(3));
@@ -39,20 +39,20 @@ namespace Folke.Orm.Test
         }
 
         [Test]
-        public void BaseQueryBuilder_AddExpression_LikeExtension()
+        public void FluentGenericQueryBuilder_AddExpression_LikeExtension()
         {
             queryBuilder.AddExpression(x => x.Text.Like("toto"));
             Assert.AreEqual(" t.`Text` LIKE @Item0", queryBuilder.Sql);
         }
 
         [Test]
-        public void BaseQueryBuilder_AddExpression_StringStartsWith()
+        public void FluentGenericQueryBuilder_AddExpression_StringStartsWith()
         {
             queryBuilder.AddExpression(x => x.Text.StartsWith("toto"));
             Assert.AreEqual(" t.`Text` LIKE @Item0", queryBuilder.Sql);
         }
 
-        private class FakeClass : IFolkeTable
+        public class FakeClass : IFolkeTable
         {
             public int Id { get; set; }
             public string Text { get; set; }

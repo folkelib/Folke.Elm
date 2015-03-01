@@ -28,7 +28,7 @@ namespace Folke.Orm
             if (TableHelpers.IsForeign(property.PropertyType))
             {
                 var foreignPrimaryKey = TableHelpers.GetKey(property.PropertyType);
-                query.Append(connection.Driver.GetSqlType(foreignPrimaryKey));
+                query.Append(Connection.Driver.GetSqlType(foreignPrimaryKey));
             }
             else if (attributes != null && attributes.MaxLength != 0)
             {
@@ -43,7 +43,7 @@ namespace Folke.Orm
                     throw new Exception("MaxLength attribute not supported for " + property.PropertyType);
             }
             else
-                query.Append(connection.Driver.GetSqlType(property));
+                query.Append(Connection.Driver.GetSqlType(property));
             if (TableHelpers.IsKey(property))
             {
                 query.Append(" PRIMARY KEY");
@@ -255,8 +255,8 @@ namespace Folke.Orm
                 }
                 else
                 {
-                    var newType = foreign ? "INT" : connection.Driver.GetSqlType(property);
-                    if (!connection.Driver.EquivalentTypes(newType, existingColumn.COLUMN_TYPE))
+                    var newType = foreign ? "INT" : Connection.Driver.GetSqlType(property);
+                    if (!Connection.Driver.EquivalentTypes(newType, existingColumn.COLUMN_TYPE))
                     {
                         AddComma();
                     

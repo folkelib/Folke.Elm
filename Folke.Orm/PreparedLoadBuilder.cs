@@ -10,7 +10,7 @@ namespace Folke.Orm
     public class PreparedLoadBuilder<T>
         where T : class, IFolkeTable, new()
     {
-        protected BaseQueryBuilder<T, FolkeTuple<int>> query;
+        protected FluentGenericQueryBuilder<T, FolkeTuple<int>> query;
         private Expression<Func<T, object>>[] fetches;
 
         public PreparedLoadBuilder()
@@ -22,17 +22,17 @@ namespace Folke.Orm
             this.fetches = fetches;
         }
 
-        private BaseQueryBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver)
+        private FluentGenericQueryBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
                 if (fetches == null)
                 {
-                    query = new BaseQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll().From().Where((x, y) => x.Id == y.Item0);
+                    query = new FluentGenericQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll().From().Where((x, y) => x.Id == y.Item0);
                 }
                 else
                 {
-                    query = new BaseQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll();
+                    query = new FluentGenericQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll();
                     foreach (var fetch in fetches)
                     {
                         query.AndAll(fetch);

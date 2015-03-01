@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Folke.Orm
@@ -76,6 +77,16 @@ namespace Folke.Orm
             if (propertyInfo.DeclaringType.GetInterface("IFolkeTable") != null)
                 return propertyInfo.Name == "Id";
             return false;
+        }
+
+        public static PropertyInfo GetExpressionPropertyInfo<T>(Expression<Func<T, object>> column) where T : class, new()
+        {
+            MemberExpression member;
+            if (column.Body.NodeType == ExpressionType.Convert)
+                member = (MemberExpression)((UnaryExpression)column.Body).Operand;
+            else
+                member = (MemberExpression)column.Body;
+            return member.Member as PropertyInfo;                
         }
     }
 }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
@@ -46,5 +48,10 @@ namespace Folke.Orm
         T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         T Get<T>(object id) where T : class, new();
         T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
+        FolkeCommand CreateCommand(string commandText, object[] commandParameters);
+        Task<T> LoadAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
+        Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
+        Task SaveAsync<T>(T value) where T : class, new();
+        Task DeleteAsync<T>(T value) where T : class, new();
     }
 }

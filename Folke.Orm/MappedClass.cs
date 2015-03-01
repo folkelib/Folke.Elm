@@ -6,11 +6,11 @@ using System.Reflection;
 
 namespace Folke.Orm
 {
-    public class MappedClass<T, TMe> where T : class, new()
+    public class MappedClass
     {
-        public readonly IList<MappedField<T, TMe>> fields = new List<MappedField<T, TMe>>();
+        public readonly IList<MappedField> fields = new List<MappedField>();
         public IList<MappedCollection> collections;
-        public MappedField<T, TMe> idField;
+        public MappedField idField;
         public ConstructorInfo constructor;
 
         public object Construct(IFolkeConnection connection, Type type, object id)
@@ -101,19 +101,19 @@ namespace Folke.Orm
             return value;
         }
 
-        public static MappedClass<T, TMe> MapClass(IList<BaseQueryBuilder<T, TMe>.FieldAlias> fieldAliases, Type type, string alias = null)
+        public static MappedClass MapClass(IList<BaseQueryBuilder.FieldAlias> fieldAliases, Type type, string alias = null)
         {
             if (fieldAliases == null)
                 return null;
 
-            var mappedClass = new MappedClass<T, TMe>();
+            var mappedClass = new MappedClass();
 
             var idProperty = TableHelpers.GetKey(type);
             mappedClass.constructor = type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
                 var selectedField = fieldAliases.SingleOrDefault(f => f.alias == alias && f.propertyInfo == idProperty);
-                mappedClass.idField = new MappedField<T, TMe> { selectedField = selectedField, propertyInfo = idProperty };
+                mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty };
             }
             
             foreach (var property in type.GetProperties())
@@ -148,7 +148,7 @@ namespace Folke.Orm
                     bool isForeign = TableHelpers.IsForeign(property.PropertyType);
                     if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
                     {
-                        var mappedField = new MappedField<T, TMe> { propertyInfo = property, selectedField = fieldInfo };
+                        var mappedField = new MappedField { propertyInfo = property, selectedField = fieldInfo };
 
                         if (TableHelpers.IsForeign(property.PropertyType))
                         {

@@ -1,14 +1,16 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Configuration;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Folke.Orm.Test
 {
-    public class IntegrationTest
+    public class IntegrationTestWithGuid
     {
         private FolkeConnection connection;
         private FolkeTransaction transaction;
+        private TableWithGuid testValue;
 
         [SetUp]
         public void Initialize()
@@ -18,6 +20,13 @@ namespace Folke.Orm.Test
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TableWithGuid>();
             connection.CreateOrUpdateTable<ParentTableWithGuid>();
+
+            testValue = new TableWithGuid
+            {
+                Id = Guid.NewGuid(),
+                Text = "Text"
+            };
+            connection.Save(testValue);
         }
 
         [TearDown]
@@ -101,13 +110,37 @@ namespace Folke.Orm.Test
         [Test]
         public void Get()
         {
+            var result = connection.Get<TableWithGuid>(testValue.Id);
+            Assert.AreEqual(testValue.Id, result.Id);
+            Assert.AreEqual(testValue.Text, result.Text);
+        }
+
+        [Test]
+        public async void LoadAsync()
+        {
+            var result = await connection.LoadAsync<TableWithGuid>(testValue.Id);
+            Assert.AreEqual(testValue.Id, result.Id);
+            Assert.AreEqual(testValue.Text, result.Text);
+        }
+
+        [Test]
+        public async void GetAsync()
+        {
+            var result = await connection.GetAsync<TableWithGuid>(testValue.Id);
+            Assert.AreEqual(testValue.Id, result.Id);
+            Assert.AreEqual(testValue.Text, result.Text);
+        }
+
+        [Test]
+        public async void SaveAsync()
+        {
             var value = new TableWithGuid
             {
                 Id = Guid.NewGuid(),
                 Text = "Text"
             };
-            connection.Save(value);
-            var result = connection.Get<TableWithGuid>(value.Id);
+            await connection.SaveAsync(value);
+            var result = await connection.GetAsync<TableWithGuid>(value.Id);
             Assert.AreEqual(value.Id, result.Id);
             Assert.AreEqual(value.Text, result.Text);
         }
@@ -115,31 +148,37 @@ namespace Folke.Orm.Test
         [Test]
         public void Delete()
         {
-            var value = new TableWithGuid
-            {
-                Id = Guid.NewGuid(),
-                Text = "Text"
-            };
-            connection.Save(value);
-            connection.Delete(value);
-            var result = connection.Get<TableWithGuid>(value.Id);
+            connection.Delete(testValue);
+            var result = connection.Get<TableWithGuid>(testValue.Id);
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task DeleteAsync()
+        {
+            await connection.DeleteAsync(testValue);
+            var result = connection.Get<TableWithGuid>(testValue.Id);
             Assert.IsNull(result);
         }
 
         [Test]
         public void Update()
         {
-            var value = new TableWithGuid
-            {
-                Id = Guid.NewGuid(),
-                Text = "Text"
-            };
-            connection.Save(value);
-            value.Text = "Brocoli";
-            connection.Update(value);
-            var result = connection.Get<TableWithGuid>(value.Id);
-            Assert.AreEqual(value.Id, result.Id);
-            Assert.AreEqual(value.Text, result.Text);
+            testValue.Text = "Brocoli";
+            connection.Update(testValue);
+            var result = connection.Get<TableWithGuid>(testValue.Id);
+            Assert.AreEqual(testValue.Id, result.Id);
+            Assert.AreEqual(testValue.Text, result.Text);
+        }
+
+        [Test]
+        public async Task UpdateAsync()
+        {
+            testValue.Text = "Brocoli";
+            await connection.UpdateAsync(testValue);
+            var result = connection.Get<TableWithGuid>(testValue.Id);
+            Assert.AreEqual(testValue.Id, result.Id);
+            Assert.AreEqual(testValue.Text, result.Text);
         }
 
         [Table("TableWithGuid")]

@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseQueryBuilder.cs" />
+    <Compile Include="FluentGenericQueryBuilder.cs" />
     <Compile Include="ColumnAttribute.cs" />
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />
@@ -73,6 +74,7 @@
     <Compile Include="PreparedLoadBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryBuilder.cs" />
+    <Compile Include="QueryBuilderExtensions.cs" />
     <Compile Include="SchemaQueryBuilder.cs" />
     <Compile Include="SchemaUpdater.cs" />
     <Compile Include="TableAttribute.cs" />

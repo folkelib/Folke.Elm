@@ -1,12 +1,11 @@
 ﻿using System.Configuration;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 
 namespace Folke.Orm.Test
 {
     [TestFixture]
-    public class TestFolkeConnection
+    public class IntegrationTestWithFolkeTable
     {
         public class TestPoco : IFolkeTable
         {

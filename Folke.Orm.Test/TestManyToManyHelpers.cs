@@ -3,15 +3,13 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm.Test
 {
     [TestFixture]
     public class TestManyToManyHelpers
     {
-        private class ParentClass : IFolkeTable
+        public class ParentClass : IFolkeTable
         {
             public int Id { get; set; }
 
@@ -19,19 +17,19 @@ namespace Folke.Orm.Test
             public IReadOnlyList<LinkClass> Children { get; set; }
         }
 
-        private class ChildClass : IFolkeTable
+        public class ChildClass : IFolkeTable
         {
             public int Id { get; set; }
             public string Test { get; set; }
         }
 
-        private class ChildDto : IFolkeTable
+        public class ChildDto : IFolkeTable
         {
             public int Id { get; set; }
             public string Test { get; set; }
         }
 
-        private class LinkClass : IManyToManyTable<ParentClass, ChildClass>
+        public class LinkClass : IManyToManyTable<ParentClass, ChildClass>
         {
             public ParentClass Parent { get; set; }
 
@@ -41,7 +39,7 @@ namespace Folke.Orm.Test
         }
 
         private IFolkeConnection connection;
-        private Func<ChildDto, ChildClass> mapper = dto => new ChildClass { Test = dto.Test };
+        private readonly Func<ChildDto, ChildClass> mapper = dto => new ChildClass { Test = dto.Test };
         private ParentClass parent;
 
         [SetUp]
@@ -81,6 +79,7 @@ namespace Folke.Orm.Test
                 Assert.AreEqual(2, newParent.Children.Count);
                 Assert.IsTrue(newParent.Children.Any(c => c.Child.Test == "First"));
                 Assert.IsTrue(newParent.Children.Any(c => c.Child.Test == "Second"));
+                transaction.Rollback();
             }
         }
 
@@ -111,6 +110,7 @@ namespace Folke.Orm.Test
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "First"));
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Third"));
+                transaction.Rollback();
             }
         }
 
@@ -139,6 +139,7 @@ namespace Folke.Orm.Test
                 var final = connection.Load<ParentClass>(parent.Id);
                 Assert.AreEqual(1, final.Children.Count);
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
+                transaction.Rollback();
             }
         }
 

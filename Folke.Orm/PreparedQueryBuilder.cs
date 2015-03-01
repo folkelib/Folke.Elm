@@ -10,19 +10,19 @@ namespace Folke.Orm
     public class PreparedQueryBuilder<T>
         where T : class, new()
     {
-        protected BaseQueryBuilder<T, FolkeTuple> query;
-        private readonly Func<BaseQueryBuilder<T, FolkeTuple>, BaseQueryBuilder<T, FolkeTuple>> prepare;
+        protected FluentGenericQueryBuilder<T, FolkeTuple> query;
+        private readonly Func<FluentGenericQueryBuilder<T, FolkeTuple>, FluentGenericQueryBuilder<T, FolkeTuple>> prepare;
 
-        public PreparedQueryBuilder(Func<BaseQueryBuilder<T, FolkeTuple>, BaseQueryBuilder<T, FolkeTuple>> prepare)
+        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple>, FluentGenericQueryBuilder<T, FolkeTuple>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private BaseQueryBuilder<T, FolkeTuple> GetQuery(IDatabaseDriver driver)
+        private FluentGenericQueryBuilder<T, FolkeTuple> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new BaseQueryBuilder<T, FolkeTuple>(driver);
+                query = new FluentGenericQueryBuilder<T, FolkeTuple>(driver);
                 prepare.Invoke(query);
             }
             return query;
@@ -37,19 +37,19 @@ namespace Folke.Orm
     public class PreparedQueryBuilder<T, U>
         where T : class, new()
     {
-        protected BaseQueryBuilder<T, FolkeTuple<U>> query;
-        private readonly Func<BaseQueryBuilder<T, FolkeTuple<U>>, BaseQueryBuilder<T, FolkeTuple<U>>> prepare;
+        protected FluentGenericQueryBuilder<T, FolkeTuple<U>> query;
+        private readonly Func<FluentGenericQueryBuilder<T, FolkeTuple<U>>, FluentGenericQueryBuilder<T, FolkeTuple<U>>> prepare;
 
-        public PreparedQueryBuilder(Func<BaseQueryBuilder<T, FolkeTuple<U>>, BaseQueryBuilder<T, FolkeTuple<U>>> prepare)
+        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple<U>>, FluentGenericQueryBuilder<T, FolkeTuple<U>>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private BaseQueryBuilder<T, FolkeTuple<U>> GetQuery(IDatabaseDriver driver)
+        private FluentGenericQueryBuilder<T, FolkeTuple<U>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new BaseQueryBuilder<T, FolkeTuple<U>>(driver);
+                query = new FluentGenericQueryBuilder<T, FolkeTuple<U>>(driver);
                 prepare.Invoke(query);
             }
             return query;
@@ -69,19 +69,19 @@ namespace Folke.Orm
     public class PreparedQueryBuilder<T, U, V>
         where T : class, new()
     {
-        protected BaseQueryBuilder<T, FolkeTuple<U, V>> query;
-        private Func<BaseQueryBuilder<T, FolkeTuple<U, V>>, BaseQueryBuilder<T, FolkeTuple<U, V>>> prepare;
+        protected FluentGenericQueryBuilder<T, FolkeTuple<U, V>> query;
+        private Func<FluentGenericQueryBuilder<T, FolkeTuple<U, V>>, FluentGenericQueryBuilder<T, FolkeTuple<U, V>>> prepare;
 
-        public PreparedQueryBuilder(Func<BaseQueryBuilder<T, FolkeTuple<U, V>>, BaseQueryBuilder<T, FolkeTuple<U, V>>> prepare)
+        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple<U, V>>, FluentGenericQueryBuilder<T, FolkeTuple<U, V>>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private BaseQueryBuilder<T, FolkeTuple<U, V>> GetQuery(IDatabaseDriver driver)
+        private FluentGenericQueryBuilder<T, FolkeTuple<U, V>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new BaseQueryBuilder<T, FolkeTuple<U, V>>(driver);
+                query = new FluentGenericQueryBuilder<T, FolkeTuple<U, V>>(driver);
                 prepare.Invoke(query);
             }
             return query;

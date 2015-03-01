@@ -2,10 +2,10 @@ using System.Reflection;
 
 namespace Folke.Orm
 {
-    public class MappedField<T, TMe> where T : class, new()
+    public class MappedField
     {
-        public BaseQueryBuilder<T, TMe>.FieldAlias selectedField;
+        public BaseQueryBuilder.FieldAlias selectedField;
         public PropertyInfo propertyInfo;
-        public MappedClass<T, TMe> mappedClass;
+        public MappedClass mappedClass;
     }
 }
