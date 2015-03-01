@@ -53,5 +53,6 @@ namespace Folke.Orm
         Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         Task SaveAsync<T>(T value) where T : class, new();
         Task DeleteAsync<T>(T value) where T : class, new();
+        Task UpdateAsync<T>(T value) where T : class, new();
     }
 }
