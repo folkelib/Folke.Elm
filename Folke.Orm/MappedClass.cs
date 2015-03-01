@@ -112,7 +112,7 @@ namespace Folke.Orm
             mappedClass.constructor = type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
-                var selectedField = fieldAliases.SingleOrDefault(f => f.alias == alias && f.propertyInfo == idProperty);
+                var selectedField = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.propertyInfo == idProperty);
                 mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty };
             }
             
@@ -126,7 +126,6 @@ namespace Folke.Orm
                 {
                     propertyType = Nullable.GetUnderlyingType(propertyType);
                 }
-
                 
                 if (propertyType.IsGenericType)
                 {
@@ -144,7 +143,7 @@ namespace Folke.Orm
                 }
                 else if (!TableHelpers.IsIgnored(propertyType))
                 {
-                    var fieldInfo = fieldAliases.SingleOrDefault(f => f.alias == alias && f.propertyInfo == property);
+                    var fieldInfo = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.propertyInfo == property);
                     bool isForeign = TableHelpers.IsForeign(property.PropertyType);
                     if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
                     {

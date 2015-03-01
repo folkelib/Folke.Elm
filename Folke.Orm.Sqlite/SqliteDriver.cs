@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Reflection;
+using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm.Sqlite
 {
@@ -107,15 +109,47 @@ namespace Folke.Orm.Sqlite
             return false;
         }
 
-
-        public char BeginSymbol
+        public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            get { return '`'; }
+            var list = new List<ColumnDefinition>();
+            using (var command = connection.OpenCommand())
+            {
+                command.CommandText = string.Format("PRAGMA table_info({0})", typeMap.TableName);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new ColumnDefinition
+                        {
+                            ColumnName = reader.GetString(1),
+                            ColumnType = reader.GetString(2)
+                        });
+                    }
+                }
+            }
+            return list;
         }
 
-        public char EndSymbol
+        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
         {
-            get { return '`'; }
+            var list = new List<TableDefinition>();
+            using (var command = connection.OpenCommand())
+            {
+                command.CommandText = ".tables";
+                using (var reader = command.ExecuteReader())
+                {
+                    list.Add(new TableDefinition
+                    {
+                        Name = reader.GetString(0)
+                    });
+                }
+            }
+            return list;
+        }
+
+        public SqlStringBuilder CreateSqlStringBuilder()
+        {
+            return new SqliteStringBuilder();
         }
     }
 }

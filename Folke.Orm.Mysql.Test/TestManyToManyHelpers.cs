@@ -78,8 +78,9 @@ namespace Folke.Orm.Test
                 var newParent = connection.Load<ParentClass>(parent.Id);
 
                 Assert.AreEqual(2, newParent.Children.Count);
-                Assert.IsTrue(newParent.Children.Any(c => c.Child.Test == "First"));
-                Assert.IsTrue(newParent.Children.Any(c => c.Child.Test == "Second"));
+                var children = newParent.Children;
+                Assert.IsTrue(children.Any(c => c.Child.Test == "First"));
+                Assert.IsTrue(children.Any(c => c.Child.Test == "Second"));
                 transaction.Rollback();
             }
         }

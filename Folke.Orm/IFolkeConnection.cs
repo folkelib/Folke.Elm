@@ -11,9 +11,9 @@ namespace Folke.Orm
     {
         FolkeTransaction BeginTransaction();
 
-        QueryBuilder<T> QueryOver<T>() where T : class, new();
-        QueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
-        QueryBuilder<T> Query<T>() where T : class, new();
+        FluentGenericQueryBuilder<T> QueryOver<T>() where T : class, new();
+        FluentGenericQueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
+        FluentGenericQueryBuilder<T> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
 
         /// <summary>

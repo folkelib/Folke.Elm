@@ -9,8 +9,8 @@ namespace Folke.Orm
 {
     public class FolkeCommand: IDisposable
     {
-        private DbCommand command;
-        private FolkeConnection connection;
+        private readonly DbCommand command;
+        private readonly FolkeConnection connection;
 
         public FolkeCommand(FolkeConnection connection, DbCommand command)
         {

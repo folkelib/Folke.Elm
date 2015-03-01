@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
-    public static class QueryBuilderExtensions
+    public static class BaseQueryBuilderExtensions
     {
         public static object Scalar(this BaseQueryBuilder baseQueryBuilder, FolkeConnection folkeConnection, params object[] commandParameters)
         {

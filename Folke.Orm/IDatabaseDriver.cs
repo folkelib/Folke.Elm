@@ -1,5 +1,7 @@
-﻿using System.Data.Common;
+﻿using System.Collections.Generic;
+using System.Data.Common;
 using System.Reflection;
+using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm
 {
@@ -9,7 +11,11 @@ namespace Folke.Orm
         IDatabaseSettings Settings { get; }
         string GetSqlType(PropertyInfo property);
         bool EquivalentTypes(string firstType, string secondType);
-        char BeginSymbol { get; }
-        char EndSymbol { get; }
+
+        IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap);
+
+        IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p);
+
+        SqlStringBuilder CreateSqlStringBuilder();
     }
 }

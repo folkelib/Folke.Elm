@@ -40,6 +40,8 @@ namespace Folke.Orm
             {
                 case MemberTypes.Property:
                     return ((PropertyInfo) memberInfo).PropertyType;
+                case MemberTypes.Field:
+                    return ((FieldInfo) memberInfo).FieldType;
                 default:
                     throw new Exception("Insupported member info");
             }

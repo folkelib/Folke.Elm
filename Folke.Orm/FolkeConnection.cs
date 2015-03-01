@@ -52,21 +52,21 @@ namespace Folke.Orm
             return new FolkeTransaction(this);
         }
 
-        public QueryBuilder<T> Query<T>() where T : class, new()
+        public FluentGenericQueryBuilder<T> Query<T>() where T : class, new()
         {
-            return new QueryBuilder<T>(this);
+            return new FluentGenericQueryBuilder<T>(this);
         }
 
-        public QueryBuilder<T> QueryOver<T>() where T : class, new()
+        public FluentGenericQueryBuilder<T> QueryOver<T>() where T : class, new()
         {
-            var ret = new QueryBuilder<T>(this);
+            var ret = new FluentGenericQueryBuilder<T>(this);
             ret.SelectAll().From();
             return ret;
         }
 
-        public QueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
+        public FluentGenericQueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var query = new QueryBuilder<T>(this);
+            var query = new FluentGenericQueryBuilder<T>(this);
             query.SelectAll();
             foreach (var fetch in fetches)
                 query.AndAll(fetch);
@@ -79,37 +79,37 @@ namespace Folke.Orm
         public void Delete<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            new QueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
+            new FluentGenericQueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
         }
 
         public async Task DeleteAsync<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            await new QueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
+            await new FluentGenericQueryBuilder<T>(this).Delete().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
         }
 
         public void Update<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
+            new FluentGenericQueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
         }
 
         public async Task UpdateAsync<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            await new QueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
+            await new FluentGenericQueryBuilder<T>(this).Update().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
         }
 
         public T Refresh<T>(T value) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Single();
+            return new FluentGenericQueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Single();
         }
 
         public T Load<T>(object id) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof (T));
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty).Equals(id)).Single();
+            return new FluentGenericQueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty).Equals(id)).Single();
         }
 
         public T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
@@ -126,7 +126,7 @@ namespace Folke.Orm
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
         {
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).Single();
+            return new FluentGenericQueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).Single();
         }
 
         public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
@@ -136,7 +136,7 @@ namespace Folke.Orm
 
         public T Get<T>(int id) where T : class, IFolkeTable, new()
         {
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).SingleOrDefault();
+            return new FluentGenericQueryBuilder<T>(this).SelectAll().From().Where(x => x.Id == id).SingleOrDefault();
         }
 
         public T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
@@ -147,7 +147,7 @@ namespace Folke.Orm
         public T Get<T>(object id) where T : class, new()
         {
             var keyProperty = TableHelpers.GetKey(typeof(T));
-            return new QueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == id).SingleOrDefault();
+            return new FluentGenericQueryBuilder<T>(this).SelectAll().From().Where(x => x.Property(keyProperty) == id).SingleOrDefault();
         }
 
         public T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
@@ -182,7 +182,7 @@ namespace Folke.Orm
         {
             if (automatic)
             {
-                var key = new QueryBuilder<T>(this).Append("SELECT last_insert_id()").Scalar();
+                var key = new FluentGenericQueryBuilder<FolkeTuple<int>>(this).SelectAs(x => SqlFunctions.LastInsertedId(), x => x.Item0).Scalar();
                 keyProperty.SetValue(value, Convert.ChangeType(key, keyProperty.PropertyType));
             }
             if (!Cache.ContainsKey(typeof (T).Name))
@@ -200,7 +200,7 @@ namespace Folke.Orm
                     throw new Exception("Id must be 0");
             }
 
-            var query = new QueryBuilder<T>(this).InsertInto().Values(value);
+            var query = new FluentGenericQueryBuilder<T>(this).InsertInto().Values(value);
             return query;
         }
 
@@ -311,7 +311,7 @@ namespace Folke.Orm
 
         private FluentGenericQueryBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var query = new QueryBuilder<T>(this).SelectAll();
+            var query = new FluentGenericQueryBuilder<T>(this).SelectAll();
             foreach (var fetch in fetches)
             {
                 query.AndAll(fetch);

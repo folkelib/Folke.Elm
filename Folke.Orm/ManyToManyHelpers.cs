@@ -52,7 +52,7 @@ namespace Folke.Orm
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto)
             {
                 var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id).ToArray();
-                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().WhereIn(c => c.Id, existingChildrenIds).List() : null;
+                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().Where(c => c.Id.In(existingChildrenIds)).List() : null;
             }
 
             public void UpdateDto(TDto dto, TChild child)
@@ -96,7 +96,7 @@ namespace Folke.Orm
                 var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => !helper.AreEqual(cv.Child, nv))).ToArray();
                 if (valuesToRemove.Any())
                 {
-                    connection.Query<T>().Delete().From().WhereIn(c => c.Id, valuesToRemove.Select(s => s.Id)).Execute();
+                    connection.Query<T>().Delete().From().Where(c => c.Id.In(valuesToRemove.Select(s => s.Id))).Execute();
                     foreach (var value in valuesToRemove)
                         newValues.Remove(value);
                 }

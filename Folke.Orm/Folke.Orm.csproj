@@ -58,7 +58,9 @@
     <Compile Include="IFolkeConnection.cs" />
     <Compile Include="IFolkeTable.cs" />
     <Compile Include="InformationSchema\Columns.cs" />
+    <Compile Include="InformationSchema\ColumnDefinition.cs" />
     <Compile Include="InformationSchema\KeyColumnUsage.cs" />
+    <Compile Include="InformationSchema\TableDefinition.cs" />
     <Compile Include="InformationSchema\Tables.cs" />
     <Compile Include="IManyToManyTable.cs" />
     <Compile Include="ManyToManyHelpers.cs" />
@@ -69,10 +71,12 @@
     <Compile Include="PreparedQueryBuilder.cs" />
     <Compile Include="PreparedLoadBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueryBuilder.cs" />
-    <Compile Include="QueryBuilderExtensions.cs" />
+    <Compile Include="BaseQueryBuilderExtensions.cs" />
     <Compile Include="SchemaQueryBuilder.cs" />
     <Compile Include="SchemaUpdater.cs" />
+    <Compile Include="SqlFunctions.cs" />
+    <Compile Include="SqlStringBuilder.cs" />
+    <Compile Include="SubQueryBuilder.cs" />
     <Compile Include="TableAttribute.cs" />
     <Compile Include="TableHelpers.cs" />
     <Compile Include="TypeMapping.cs" />

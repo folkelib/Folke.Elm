@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Folke.Orm
 {
@@ -12,6 +14,11 @@ namespace Folke.Orm
         public static bool Like(this string a, string pattern)
         {
             return a == pattern;
+        }
+
+        public static bool In<T>(this T a, IEnumerable<T> collection)
+        {
+            return collection.Contains(a);
         }
     }
 }

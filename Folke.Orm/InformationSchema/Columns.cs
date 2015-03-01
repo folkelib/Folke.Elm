@@ -1,12 +1,13 @@
 ﻿namespace Folke.Orm.InformationSchema
 {
     [Table("COLUMNS", Schema = "INFORMATION_SCHEMA")]
-    internal class Columns
+    internal class Columns : ColumnDefinition
     {
         public string TABLE_CATALOG { get; set; }
         public string TABLE_SCHEMA { get; set; }
         public string TABLE_NAME { get; set; }
-        public string COLUMN_NAME { get; set; }
+        [Column("COLUMN_NAME")]
+        public override string ColumnName { get; set; }
         public int ORDINAL_POSITION { get; set; }
         public string COLUMN_DEFAULT { get;set; }
         public string IS_NULLABLE { get; set; }
@@ -18,7 +19,8 @@
        // public int? DATETIME_PRECISION { get; set; }
         public string CHARACTER_SET_NAME { get; set; }
         public string COLLATION_NAME { get; set; }
-        public string COLUMN_TYPE { get; set; }
+        [Column("COLUMN_TYPE")]
+        public override string ColumnType { get; set; }
         public string COLUMN_KEY { get; set; }
         public string EXTRA { get; set; }
         public string PRIVILEGES { get; set; }

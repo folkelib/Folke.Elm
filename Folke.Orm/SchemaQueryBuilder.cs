@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm
 {
-    public class SchemaQueryBuilder<T> : QueryBuilder<T> where T : class, new()
+    public class SchemaQueryBuilder<T> : BaseQueryBuilder where T : class, new()
     {
         public SchemaQueryBuilder(FolkeConnection connection):base(connection)
         {
@@ -14,10 +15,7 @@ namespace Folke.Orm
 
         private void AppendColumnName(PropertyInfo property)
         {
-            var attributes = property.GetCustomAttribute<ColumnAttribute>();
-            query.Append(beginSymbol);
-            query.Append(TableHelpers.GetColumnName(property));
-            query.Append(endSymbol);
+            query.AppendSymbol(TableHelpers.GetColumnName(property));
         }
 
         private void AppendColumn(PropertyInfo property)
@@ -49,7 +47,7 @@ namespace Folke.Orm
                 query.Append(" PRIMARY KEY");
                 if (TableHelpers.IsAutomatic(property))
                 {
-                    query.Append(" AUTO_INCREMENT");
+                    query.AppendAutoIncrement();
                 }
             }
         }
@@ -98,9 +96,7 @@ namespace Folke.Orm
         private void AppendIndex(PropertyInfo column, string name)
         {
             query.Append(" INDEX ");
-            query.Append(beginSymbol);
-            query.Append(name);
-            query.Append(endSymbol);
+            query.AppendSymbol(name);
             query.Append(" (");
             AppendColumnName(column);
             query.Append(")");            
@@ -119,9 +115,7 @@ namespace Folke.Orm
         public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
         {
             query.Append("CREATE TABLE ");
-            query.Append(beginSymbol);
-            query.Append(TableHelpers.GetTableName(type));
-            query.Append(endSymbol);
+            query.AppendSymbol(TableHelpers.GetTableName(type));
             query.Append(" (");
             foreach (var property in type.GetProperties())
             {
@@ -175,9 +169,7 @@ namespace Folke.Orm
         {
             query.Append("SET FOREIGN_KEY_CHECKS = 0 ;");// TODO pas propre
             query.Append("DROP TABLE ");
-            query.Append(beginSymbol);
-            query.Append(type.Name);
-            query.Append(endSymbol);
+            query.AppendSymbol(type.Name);
             return this;
         }
 
@@ -189,9 +181,7 @@ namespace Folke.Orm
         internal SchemaQueryBuilder<T> AlterTable(Type type)
         {
             query.Append("ALTER TABLE ");
-            query.Append(beginSymbol);
-            query.Append(TableHelpers.GetTableName(type));
-            query.Append(endSymbol);
+            query.AppendSymbol(TableHelpers.GetTableName(type));
             return this;
         }
 
@@ -211,12 +201,12 @@ namespace Folke.Orm
                 commaAdded = true;
         }
 
-        internal bool AlterColumns(IList<InformationSchema.Columns> columns)
+        internal bool AlterColumns(IList<ColumnDefinition> columns)
         {
             return AlterColumns(typeof(T), columns);
         }
 
-        internal bool AlterColumns(Type type, IList<InformationSchema.Columns> columns)
+        internal bool AlterColumns(Type type, IList<ColumnDefinition> columns)
         {
             bool changes = false;
             
@@ -229,7 +219,7 @@ namespace Folke.Orm
                 string columnName = TableHelpers.GetColumnName(property);
                 bool foreign = TableHelpers.IsForeign(property.PropertyType);
                 
-                var existingColumn = columns.SingleOrDefault(c => c.COLUMN_NAME == columnName);
+                var existingColumn = columns.SingleOrDefault(c => c.ColumnName == columnName);
                 if (existingColumn == null)
                 {
                     AddComma();
@@ -258,7 +248,7 @@ namespace Folke.Orm
                 else
                 {
                     var newType = foreign ? "INT" : Connection.Driver.GetSqlType(property);
-                    if (!Connection.Driver.EquivalentTypes(newType, existingColumn.COLUMN_TYPE))
+                    if (!Connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
                         AddComma();
                     

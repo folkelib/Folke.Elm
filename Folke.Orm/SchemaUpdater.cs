@@ -23,7 +23,7 @@ namespace Folke.Orm
         public void CreateOrUpdate(Type tableType)
         {
             var typeMap = connection.Mapper.GetTypeMapping(tableType);
-            var columns = new QueryBuilder<Columns>(connection).SelectAll().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List();
+            var columns = connection.Driver.GetColumnDefinitions(connection, typeMap);
             if (columns.Count == 0)
             {
                 connection.CreateTable(tableType);
@@ -41,7 +41,7 @@ namespace Folke.Orm
             var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.GetInterface("IFolkeTable") != null || t.GetCustomAttribute<TableAttribute>() != null)).ToList();
             using (var transaction = connection.BeginTransaction())
             {
-                var existingTableTables = new QueryBuilder<Tables>(connection).SelectAll().From().Where(t => t.TABLE_SCHEMA == connection.Database).List().Select(t => t.TABLE_NAME.ToLower()).ToList();
+                var existingTableTables = connection.Driver.GetTableDefinitions(connection, connection.Database).Select(t => t.Name.ToLower()).ToList();
                 var tableToCreate = tables.Where(t => existingTableTables.All(y => y != TableHelpers.GetTableName(t).ToLower())).ToList();
                 
                 foreach (var table in tableToCreate)

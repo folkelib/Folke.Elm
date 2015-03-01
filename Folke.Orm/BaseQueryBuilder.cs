@@ -1,9 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Folke.Orm
 {
@@ -29,109 +29,6 @@ namespace Folke.Orm
 
     public class BaseQueryBuilder
     {
-        protected StringBuilder query = new StringBuilder();
-        protected IList<object> parameters;
-        protected readonly FolkeConnection connection;
-        protected MappedClass baseMappedClass;
-        protected IDatabaseDriver driver;
-        protected char beginSymbol;
-        protected char endSymbol;
-        protected IList<FieldAlias> selectedFields;
-        protected IList<TableAlias> tables;
-        protected TableAlias parameterTable;
-        protected Type defaultType;
-        protected Type parametersType;
-        protected ContextEnum currentContext = ContextEnum.Unknown;
-        protected bool noAlias;
-
-        public BaseQueryBuilder(FolkeConnection connection):this(connection.Driver)
-        {
-            this.connection = connection;
-        }
-
-        public BaseQueryBuilder(IDatabaseDriver databaseDriver, Type defaultType, Type parametersType = null)
-            : this(databaseDriver)
-        {
-            this.defaultType = defaultType;
-            this.parametersType = parametersType;
-        }
-
-        public BaseQueryBuilder(IDatabaseDriver databaseDriver):this()
-        {
-            driver = databaseDriver;
-            beginSymbol = driver.BeginSymbol;
-            endSymbol = driver.EndSymbol;
-        }
-
-        public BaseQueryBuilder()
-        {
-            tables = new List<TableAlias>();
-        }
-
-        public string Sql
-        {
-            get
-            {
-                return query.ToString();
-            }
-        }
-
-        internal FolkeConnection Connection
-        {
-            get { return connection; }
-        }
-
-        public object[] Parameters
-        {
-            get { return parameters == null ? null : parameters.ToArray(); }
-        }
-
-        public MappedClass MappedClass
-        {
-            get { return baseMappedClass; }
-        }
-
-        public class TableAlias
-        {
-            public Type type;
-            public string name;
-            public string alias;
-        }
-
-        public class FieldAlias
-        {
-            public PropertyInfo propertyInfo;
-            public string alias;
-            public int index;
-        }
-
-        protected void AppendTableName(Type type)
-        {
-            if (query.Length != 0)
-                query.Append(' ');
-            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
-            if (tableAttribute != null)
-            {
-                if (tableAttribute.Schema != null)
-                {
-                    query.Append(beginSymbol);
-                    query.Append(tableAttribute.Schema);
-                    query.Append(endSymbol);
-                    query.Append('.');
-                }
-
-                query.Append(beginSymbol);
-                query.Append(tableAttribute.Name);
-                query.Append(endSymbol);
-            }
-            else
-            {
-                query.Append(beginSymbol);
-                query.Append(type.Name);
-                query.Append(endSymbol);
-            }
-        }
-
         protected enum ContextEnum
         {
             /// <summary>
@@ -185,127 +82,179 @@ namespace Folke.Orm
             GroupBy
         }
 
-        protected string GetTableAlias(MemberExpression tableAlias)
+        protected SqlStringBuilder query;
+        protected IList<object> parameters;
+        protected readonly FolkeConnection connection;
+        protected MappedClass baseMappedClass;
+        protected IDatabaseDriver driver;
+        protected IList<FieldAlias> selectedFields;
+        protected IList<TableAlias> tables;
+        protected TableAlias defaultTable;
+        protected Type defaultType;
+        protected Type parametersType;
+        protected ContextEnum currentContext = ContextEnum.Unknown;
+        protected bool noAlias;
+
+        internal TableAlias DefaultTable { get { return defaultTable; } }
+        internal IList<FieldAlias> SelectedFields { get { return selectedFields; } }
+
+#warning réordonner méthodes
+        public BaseQueryBuilder(FolkeConnection connection):this(connection.Driver)
         {
-            if (tableAlias == null || tableAlias.Expression == null)
-                return null;
+            this.connection = connection;
+        }
 
-            string aliasValue = null;
-            while (true)
+        public BaseQueryBuilder(IDatabaseDriver databaseDriver, Type defaultType, Type parametersType = null)
+            : this(databaseDriver)
+        {
+            this.defaultType = defaultType;
+            this.parametersType = parametersType;
+        }
+
+        public BaseQueryBuilder(IDatabaseDriver databaseDriver):this()
+        {
+            driver = databaseDriver;
+            query = driver.CreateSqlStringBuilder();
+        }
+
+        public BaseQueryBuilder()
+        {
+            tables = new List<TableAlias>();
+        }
+
+        public string Sql
+        {
+            get
             {
-                if (aliasValue != null)
-                    aliasValue = tableAlias.Member.Name + "." + aliasValue;
-                else
-                    aliasValue = tableAlias.Member.Name;
+                return query.ToString();
+            }
+        }
 
-                if (tableAlias.Expression is ParameterExpression)
-                    break;
+        internal FolkeConnection Connection
+        {
+            get { return connection; }
+        }
 
-                if (tableAlias.Expression.NodeType != ExpressionType.MemberAccess)
+        public object[] Parameters
+        {
+            get { return parameters == null ? null : parameters.ToArray(); }
+        }
+
+        internal MappedClass MappedClass
+        {
+            get { return baseMappedClass; }
+        }
+
+        protected void AppendTableName(Type type)
+        {
+            query.AppendSpace();
+            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
+            if (tableAttribute != null)
+            {
+                if (tableAttribute.Schema != null)
                 {
-                    aliasValue = tableAlias.Expression + "." + aliasValue;
-                    break;
+                    query.AppendSymbol(tableAttribute.Schema);
+                    query.Append('.');
                 }
-                tableAlias = (MemberExpression)tableAlias.Expression;
+
+                query.AppendSymbol(tableAttribute.Name);
+            }
+            else
+            {
+                query.AppendSymbol(type.Name);
+            }
+        }
+        
+        protected string GetTableAlias(Expression tableExpression)
+        {
+            if (tableExpression.NodeType == ExpressionType.Parameter)
+            {
+                if (tableExpression.Type != defaultType)
+                    throw new Exception("Internal error");
+                return null;
+            }
+            
+            var tableAlias = tableExpression;
+            string aliasValue = null;
+            while (tableAlias != null && tableAlias.NodeType != ExpressionType.Parameter)
+            {
+                switch (tableAlias.NodeType)
+                {
+                    case ExpressionType.MemberAccess:
+                        var memberExpression = (MemberExpression) tableAlias;
+                        if (aliasValue != null)
+                            aliasValue = memberExpression.Member.Name + "." + aliasValue;
+                        else
+                            aliasValue = memberExpression.Member.Name;
+                        tableAlias = memberExpression.Expression;
+                        break;
+                    case ExpressionType.Constant:
+                        if (aliasValue != null)
+                            aliasValue = tableAlias + "." + aliasValue;
+                        else
+                            aliasValue = tableAlias.ToString();
+                        return aliasValue;
+                    case ExpressionType.Call:
+                        var callExpression = (MethodCallExpression) tableAlias;
+                        if (aliasValue != null)
+                            aliasValue = callExpression.Method.Name + "()." + aliasValue;
+                        else
+                            aliasValue = callExpression.Method.Name + "()";
+                        tableAlias = callExpression.Object;
+                        break;
+                    default:
+                        throw new Exception("Unexpected node type " + tableAlias.NodeType);
+                }
             }
             return aliasValue;
         }
 
-        protected TableAlias GetTable(string tableAlias)
+        internal protected TableAlias GetTable(string tableAlias)
         {
             return tables.SingleOrDefault(t => t.alias == tableAlias);
         }
 
-        protected TableAlias GetTable(MemberExpression alias)
+        internal protected TableAlias GetTable(Expression alias)
         {
             return GetTable(GetTableAlias(alias));
+        }
+
+        internal protected TableAlias GetTable(Expression aliasExpression, bool register)
+        {
+            var alias = GetTableAlias(aliasExpression);
+            if (register)
+                return RegisterTable(aliasExpression.Type, alias);
+            return GetTable(alias);
         }
 
         /// <summary>
         /// Add a field name to the query. Very low level.
         /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="propertyInfo"></param>
-        protected void AppendField(string tableName, MemberInfo propertyInfo)
+        /// <param name="tableName">The table alias</param>
+        /// <param name="propertyInfo">The property info of the column</param>
+        protected void AppendColumn(string tableName, MemberInfo propertyInfo)
         {
             query.Append(' ');
             if (tableName != null && !noAlias)
             {
-                query.Append(tableName);
+                query.AppendSymbol(tableName);
                 query.Append(".");
             }
-            query.Append(beginSymbol);
-            query.Append(TableHelpers.GetColumnName(propertyInfo));
-            query.Append(endSymbol);
+            query.AppendSymbol(TableHelpers.GetColumnName(propertyInfo));
         }
 
-        protected bool TryColumn(Expression tableExpression, MemberInfo propertyInfo)
+        internal void AppendColumn(TableColumn tableColumn)
         {
-            if (currentContext == ContextEnum.Select)
-                throw new Exception("Do not call TryColumn in a Select context");
-
-            if (tableExpression is MemberExpression)
-            {
-                var accessTo = tableExpression as MemberExpression;
-                var table = GetTable(accessTo);
-                if (table != null)
-                {
-                    AppendField(table.name, propertyInfo);
-                    return true;
-                }
-                if (propertyInfo.Name == "Id" && TryColumn(accessTo))
-                    return true;
-            }
-            else if (tableExpression is ParameterExpression && tableExpression.Type == defaultType && parameterTable != null)
-            {
-                AppendField(parameterTable.name, propertyInfo);
-                return true;
-            }
-            else if (tableExpression is ParameterExpression && tableExpression.Type == parametersType)
-            {
-                query.Append("@" + propertyInfo.Name);
-                return true;
-            }
-            return false;
+            AppendColumn(tableColumn.Table.name, tableColumn.Column);
         }
 
-        /// <summary>
-        /// Try to append a column name to the query. If the table is not selected, returns false.
-        /// Do not call it from the select part of a query.
-        /// </summary>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        protected bool TryColumn(MemberExpression column)
+        internal void AppendColumn(Expression expression, bool registerTable = false)
         {
-            if (currentContext == ContextEnum.Select)
-                throw new Exception("Do not call TryColumn in a Select context");
-
-            if (TryColumn(column.Expression, column.Member))
-            {
-                return true;
-            }
-            var table = GetTable(column);
-            if (table != null)
-            {
-                AppendField(table.name, TableHelpers.GetKey(table.type));
-                return true;
-            }
-            return false;
+            AppendColumn(ExpressionToColumn(expression, registerTable));
         }
 
-        public void Parameter(object parameter)
+        internal void AppendParameter(object parameter)
         {
-            if (parameter == null && currentContext != ContextEnum.Set && currentContext != ContextEnum.Values)
-            {
-                var toChange = query.ToString().TrimEnd(' ');
-                if (toChange.LastIndexOf('=') != toChange.Length - 1)
-                    throw new Exception("Compare to null must be =");
-                query.Clear();
-                query.Append(toChange.Substring(0, toChange.Length - 1));
-                query.Append(" IS NULL");
-                return;
-            }
-
             if (parameters == null)
                 parameters = new List<object>();
 
@@ -328,6 +277,462 @@ namespace Folke.Orm
             parameters.Add(parameter);
             
             query.Append("@Item" + parameterIndex);
+        }
+
+        internal void AddExpression(Expression expression)
+        {
+            if (expression is UnaryExpression)
+            {
+                var unary = expression as UnaryExpression;
+                switch (unary.NodeType)
+                {
+                    case ExpressionType.Negate:
+                        query.Append('-');
+                        break;
+                    case ExpressionType.Not:
+                        query.Append(" NOT ");
+                        break;
+                    case ExpressionType.Convert:
+                        break;
+                    default:
+                        throw new Exception("ExpressionType in UnaryExpression not supported");
+                }
+                AddExpression(unary.Operand);
+                return;
+            }
+            
+            if (expression is BinaryExpression)
+            {
+                var binary = expression as BinaryExpression;
+                query.Append('(');
+                
+                AddExpression(binary.Left);
+
+                if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
+                {
+                    if (binary.NodeType == ExpressionType.Equal)
+                        query.Append(" IS NULL");
+                    else if (binary.NodeType == ExpressionType.NotEqual)
+                        query.Append(" IS NOT NULL");
+                    else
+                        throw new Exception("Operator not supported with null right member in " + binary);
+                    query.Append(")");
+                    return;
+                }
+
+                switch (binary.NodeType)
+                {
+                    case ExpressionType.Add:
+                        query.Append("+");
+                        break;
+                    case ExpressionType.AndAlso:
+                        query.Append(" AND ");
+                        break;
+                    case ExpressionType.Divide:
+                        query.Append("/");
+                        break;
+                    case ExpressionType.Equal:
+                        query.Append('=');
+                        break;
+                    case ExpressionType.GreaterThan:
+                        query.Append(">");
+                        break;
+                    case ExpressionType.GreaterThanOrEqual:
+                        query.Append(">=");
+                        break;
+                    case ExpressionType.LessThan:
+                        query.Append("<");
+                        break;
+                    case ExpressionType.LessThanOrEqual:
+                        query.Append("<=");
+                        break;
+                    case ExpressionType.Modulo:
+                        query.Append("%");
+                        break;
+                    case ExpressionType.Multiply:
+                        query.Append('*');
+                        break;
+                    case ExpressionType.OrElse:
+                        query.Append(" OR ");
+                        break;
+                    case ExpressionType.Subtract:
+                        query.Append('-');
+                        break;
+                    default:
+                        throw new Exception("Expression type not supported");
+                }
+
+                if (binary.Right.NodeType == ExpressionType.Constant && binary.Left.NodeType == ExpressionType.Convert
+                    && ((UnaryExpression)binary.Left).Operand.Type.IsEnum)
+                {
+                    var enumType = ((UnaryExpression)binary.Left).Operand.Type;
+                    var enumIndex = (int) ((ConstantExpression)binary.Right).Value;
+                    AppendParameter(enumType.GetEnumValues().GetValue(enumIndex));
+                }
+                else
+                {
+                    AddExpression(binary.Right);
+                }
+                query.Append(')');
+                return;
+            }
+
+            if (expression is ConstantExpression)
+            {
+                var constant = expression as ConstantExpression;
+                AppendParameter(constant.Value);
+                return;
+            }
+
+            if (expression.NodeType == ExpressionType.MemberAccess)
+            {
+                var memberExpression = (MemberExpression) expression;
+                if (memberExpression.Expression.Type == parametersType)
+                {
+                    query.Append("@" + memberExpression.Member.Name);
+                    return;
+                }
+            }
+
+            var column = ExpressionToColumn(expression);
+            if (column != null)
+            {
+                AppendColumn(column);
+                return;
+            }
+
+            if (expression.NodeType == ExpressionType.Call)
+            {
+                var call = (MethodCallExpression)expression;
+                
+                if (call.Method.DeclaringType == typeof (ExpressionHelpers))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case "Like":
+                            AddExpression(call.Arguments[0]);
+                            query.Append(" LIKE ");
+                            AddExpression(call.Arguments[1]);
+                            break;
+                        case "In":
+                            AddExpression(call.Arguments[0]);
+                            query.Append(" IN ");
+                            AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
+                            break;
+                        default:
+                            throw new Exception("Unsupported expression helper");
+                    }
+                    return;
+                }
+
+                if (call.Method.DeclaringType == typeof (SqlFunctions))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case "LastInsertedId":
+                            query.AppendLastInsertedId();
+                            break;
+                        case "Max":
+                            query.Append(" MAX(");
+                            AddExpression(call.Arguments[0]);
+                            query.Append(")");
+                            break;
+                        default:
+                            throw new Exception("Unsupported sql function");
+                    }
+                    return;
+                }
+
+                if (call.Method.DeclaringType == typeof (string))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case "StartsWith":
+                            AddExpression(call.Object);
+                            query.Append(" LIKE ");
+                            var text = (string) Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
+                            text = text.Replace("\\", "\\\\").Replace("%","\\%") + "%";
+                            AppendParameter(text);
+                            break;
+                        default:
+                            throw new Exception("Unsupported string method");
+                    }
+                    return;
+                }
+
+                if (call.Method.Name == "Equals")
+                {
+                    query.Append('(');
+                    AddExpression(call.Object);
+                    query.Append('=');
+                    AddExpression(call.Arguments[0]);
+                    query.Append(')');
+                    return;
+                }
+            }
+
+            var value = Expression.Lambda(expression).Compile().DynamicInvoke();
+            AppendParameter(value);
+        }
+
+        private void AppendValues(IEnumerable values)
+        {
+            query.Append("(");
+            bool first = true;
+            foreach (var value in values)
+            {
+                if (first)
+                    first = false;
+                else
+                    query.Append(',');
+                AppendParameter(value);
+            }
+            query.Append(')');
+        }
+
+        internal TableAlias RegisterTable(Type type, string tableAlias)
+        {
+            if (tableAlias == null)
+            {
+                if (defaultTable == null)
+                {
+                    defaultTable = new TableAlias { name = "t", alias = null, type = defaultType };
+                    tables.Add(defaultTable);
+                }
+                return defaultTable;
+            }
+
+            var table = tables.SingleOrDefault(t => t.alias == tableAlias);
+            if (table == null)
+            {
+                table = new TableAlias { name = "t" + tables.Count, alias = tableAlias, type = type };
+                tables.Add(table);
+            }
+            return table;
+        }
+
+        protected internal void SelectField(TableColumn column)
+        {
+            if (selectedFields == null)
+                selectedFields = new List<FieldAlias>();
+            selectedFields.Add(new FieldAlias {propertyInfo = column.Column, tableAlias = column.Table == null ? null : column.Table.alias, index = selectedFields.Count});
+        }
+
+        protected void SelectField(Expression column)
+        {
+            SelectField(ExpressionToColumn(column, registerDefaultTable: true));
+        }
+
+        protected TableColumn ExpressionToColumn(Expression columnExpression, bool registerDefaultTable = false)
+        {
+            if (columnExpression.NodeType == ExpressionType.Convert)
+            {
+                columnExpression = ((UnaryExpression) columnExpression).Operand;
+            }
+
+            if (columnExpression.NodeType == ExpressionType.Parameter)
+            {
+                return new TableColumn {Column = TableHelpers.GetKey(defaultType), Table = defaultTable };
+            }
+
+            if (columnExpression.NodeType == ExpressionType.Call)
+            {
+                var callExpression = (MethodCallExpression)columnExpression;
+                if (callExpression.Method.DeclaringType == typeof (ExpressionHelpers) &&
+                    callExpression.Method.Name == "Property")
+                {
+                    var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
+                    return new TableColumn {Column = propertyInfo, Table = GetTable(callExpression.Arguments[0])};
+                }
+                return null;
+            }
+
+            
+            if (columnExpression.NodeType != ExpressionType.MemberAccess)
+            {
+                return null;
+            }
+
+            var columnMember = (MemberExpression)columnExpression;
+            
+            var memberExpression = columnMember.Expression as MemberExpression;
+            if (memberExpression != null)
+            {
+                var table = GetTable(memberExpression, registerDefaultTable);
+                if (table == null)
+                {
+                    if (columnMember.Member == TableHelpers.GetKey(memberExpression.Type))
+                    {
+                        return ExpressionToColumn(memberExpression);
+                    }
+                    return null;
+                }
+
+                return new TableColumn {Column = columnMember.Member, Table = table };
+            }
+
+            var parameterExpression = columnMember.Expression as ParameterExpression;
+            if (parameterExpression != null && parameterExpression.Type == defaultType)
+            {
+                if (defaultTable == null)
+                {
+                    if (registerDefaultTable)
+                        RegisterTable(defaultType, null);
+                    else
+                    {
+                        var table = GetTable(columnExpression);
+                        if (table != null)
+                        {
+                            return new TableColumn { Column = TableHelpers.GetKey(table.type), Table = table };
+                        }
+                        return null;
+                    }
+                }
+                return new TableColumn {Column = columnMember.Member, Table = defaultTable};
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get the key column from a table expression.
+        /// Example: x => x.Identity will returns the Id column from the Identity table
+        /// </summary>
+        /// <param name="tableExpression">The expression</param>
+        /// <returns></returns>
+        protected TableColumn GetTableKey(MemberExpression tableExpression)
+        {
+            var table = GetTable(tableExpression);
+            return new TableColumn {Column = TableHelpers.GetKey(table.type), Table = table};
+        }
+        
+        protected void AppendSelectedColumn(TableColumn column)
+        {
+            SelectField(column);
+            AppendColumn(column);
+        }
+
+        /// <summary>
+        /// Append the selected columns of a table to a select expression
+        /// </summary>
+        /// <param name="tableType"></param>
+        /// <param name="tableAlias"></param>
+        /// <param name="columns"></param>
+        /// <returns></returns>
+        internal TableAlias AppendSelectedColumns(Type tableType, string tableAlias, IEnumerable<PropertyInfo> columns)
+        {
+            var table = RegisterTable(tableType, tableAlias);
+            query.AppendSpace();
+            bool first = true;
+            if (selectedFields == null)
+                selectedFields = new List<FieldAlias>();
+
+            foreach (var column in columns)
+            {
+                if (TableHelpers.IsIgnored(column.PropertyType))
+                    continue;
+
+                selectedFields.Add(new FieldAlias { propertyInfo = column, tableAlias = table.alias, index = selectedFields.Count });
+
+                if (first)
+                    first = false;
+                else
+                    query.Append(',');
+                AppendColumn(table.name, column);
+            }
+            return table;
+        }
+
+        protected void AppendFrom()
+        {
+            if (currentContext == ContextEnum.Select || currentContext == ContextEnum.Delete)
+            {
+                baseMappedClass = MappedClass.MapClass(selectedFields, defaultType);
+                query.Append(" FROM");
+            }
+            else if (currentContext == ContextEnum.From)
+                query.Append(",");
+            currentContext = ContextEnum.From;
+        }
+
+        internal void Append(string sql)
+        {
+            query.AppendSpace();
+            query.Append(sql);
+        }
+
+        protected void Where()
+        {
+            Append(currentContext == ContextEnum.Where ? "AND" : "WHERE");
+            currentContext = ContextEnum.Where;
+        }
+
+        protected void AppendAllSelects(Type tableType, string tableAlias)
+        {
+            AppendSelectedColumns(tableType, tableAlias, tableType.GetProperties());
+        }
+
+        /// <summary>
+        /// Begins a select command
+        /// </summary>
+        /// <returns>The query builder</returns>
+        internal void AppendSelect()
+        {
+            if (currentContext == ContextEnum.Select)
+            {
+                Append(",");
+            }
+            else
+            {
+                currentContext = ContextEnum.Select;
+                Append("SELECT");
+            }
+        }
+
+        public class TableAlias
+        {
+            public Type type;
+            public string name;
+            public string alias;
+        }
+
+        public class FieldAlias
+        {
+            public MemberInfo propertyInfo;
+            public string tableAlias;
+            public int index;
+        }
+
+        public class TableColumn
+        {
+            public TableAlias Table { get; set; }
+            public MemberInfo Column { get; set; }
+        }
+
+        protected void AppendTable(Expression tableExpression)
+        {
+            AppendTable(tableExpression.Type, tableExpression);
+        }
+
+        protected void AppendTable(Type tableType, Expression tableAlias)
+        {
+            AppendTable(tableType, GetTableAlias(tableAlias));
+        }
+
+        internal void AppendTable(Type tableType, string tableAlias)
+        {
+            var table = RegisterTable(tableType, tableAlias);
+            
+            AppendTableName(tableType);
+            if (!noAlias)
+            {
+                query.Append(" as ");
+                query.Append(table.name);
+            }
+        }
+
+        internal TableAlias RegisterTable()
+        {
+            return RegisterTable(null, null);
         }
     }
 }

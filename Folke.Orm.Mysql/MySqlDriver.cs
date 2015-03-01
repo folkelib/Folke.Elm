@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Reflection;
+using Folke.Orm.InformationSchema;
 using MySql.Data.MySqlClient;
 
 namespace Folke.Orm.Mysql
@@ -113,15 +116,19 @@ namespace Folke.Orm.Mysql
             return false;
         }
 
-
-        public char BeginSymbol
+        public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            get { return '`'; }
+            return new FluentGenericQueryBuilder<Columns>(connection).SelectAll().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List().Cast<ColumnDefinition>().ToList();
         }
 
-        public char EndSymbol
+        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
         {
-            get { return '`'; }
+            return new FluentGenericQueryBuilder<Tables>(connection).SelectAll().From().Where(t => t.Name == connection.Database).List().Cast<TableDefinition>().ToList();
+        }
+
+        public SqlStringBuilder CreateSqlStringBuilder()
+        {
+            return new MysqlStringBuilder();
         }
     }
 }

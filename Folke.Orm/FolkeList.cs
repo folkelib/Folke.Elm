@@ -30,25 +30,38 @@ namespace Folke.Orm
                 if (results == null)
                 {
                     var query = this.connection.Query<T>().SelectAll();
+                    var joinTables = new List<BaseQueryBuilder.TableAlias>();
                     foreach (var join in joins)
                     {
                         var property = typeof(T).GetProperty(join);
-                        query.AndAll(property.PropertyType, join);
+                        query.AppendSelect();
+                        joinTables.Add(query.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
                     }
 
                     query.From();
 
-                    foreach (var join in joins)
+                    foreach (var joinTable in joinTables)
                     {
-                        var property = typeof(T).GetProperty(join);
-                        query.LeftJoin(property.PropertyType, join).On(property, null, property.PropertyType.GetProperty("Id"), join);
+                        var property = typeof(T).GetProperty(joinTable.alias);
+                        var joinKeyProperty = TableHelpers.GetKey(joinTable.type);
+                        query.Append(" LEFT JOIN ");
+                        query.AppendTable(joinTable.type, joinTable.alias);
+                        query.Append(" ON ");
+                        query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
+                        query.Append(" = ");
+                        query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = query.DefaultTable });
                     }
 
+                    bool first = true;
                     foreach (var property in typeof(T).GetProperties())
                     {
                         if (property.PropertyType == parent)
                         {
-                            query.OrWhere().Column(property).Equals().Parameter(parentId);
+                            query.Append(first ? " WHERE " : " OR ");
+                            first = false;
+                            query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = query.DefaultTable });
+                            query.Append(" = ");
+                            query.AppendParameter(parentId);
                         }
                     }
                     results = query.List();
