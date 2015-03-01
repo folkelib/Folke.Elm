@@ -4,7 +4,7 @@ using System.Configuration;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace Folke.Orm.Test
+namespace Folke.Orm.Mysql.Test
 {
     public class IntegrationTestWithGuid
     {

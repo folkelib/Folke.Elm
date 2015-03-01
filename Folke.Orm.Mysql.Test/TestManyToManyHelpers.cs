@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using Folke.Orm.Mysql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

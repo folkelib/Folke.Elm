@@ -51,13 +51,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="IntegrationTestWithGuid.cs" />
-    <Compile Include="TestFluentGenericQueryBuilder.cs" />
-    <Compile Include="IntegrationTestWithFolkeTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestManyToManyHelpers.cs" />
-    <Compile Include="TestQueryBuilderExtensions.cs" />
-    <Compile Include="TestSchemaUpdater.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Folke.Orm\Folke.Orm.csproj">

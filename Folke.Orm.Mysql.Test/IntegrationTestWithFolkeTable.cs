@@ -1,8 +1,8 @@
-﻿using System.Configuration;
+﻿using System.Collections.Generic;
+using System.Configuration;
 using NUnit.Framework;
-using System.Collections.Generic;
 
-namespace Folke.Orm.Test
+namespace Folke.Orm.Mysql.Test
 {
     [TestFixture]
     public class IntegrationTestWithFolkeTable

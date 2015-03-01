@@ -1,9 +1,9 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
 using System.Data.Common;
 using System.Reflection;
+using MySql.Data.MySqlClient;
 
-namespace Folke.Orm
+namespace Folke.Orm.Mysql
 {
     public class MySqlDriver : IDatabaseDriver
     {

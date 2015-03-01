@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace Folke.Orm.Test
+namespace Folke.Orm.Mysql.Test
 {
     [TestFixture]
     public class TestFluentGenericQueryBuilder

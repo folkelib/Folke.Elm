@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{1589542C-1A8B-4DB6-A08A-7E446327C5C9}</ProjectGuid>
+    <ProjectGuid>{5081B5FE-A2B0-4588-AD0F-CD1525C3A0BF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Folke.Orm</RootNamespace>
-    <AssemblyName>Folke.Orm</AssemblyName>
+    <RootNamespace>Folke.Orm.Mysql.Test</RootNamespace>
+    <AssemblyName>Folke.Orm.Mysql.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,8 +30,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -40,47 +44,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BaseQueryBuilder.cs" />
-    <Compile Include="FluentGenericQueryBuilder.cs" />
-    <Compile Include="ColumnAttribute.cs" />
-    <Compile Include="ConstraintEventEnum.cs" />
-    <Compile Include="DatabaseSettings.cs" />
-    <Compile Include="DbDataReaderExtensions.cs" />
-    <Compile Include="ExpressionHelpers.cs" />
-    <Compile Include="FolkeCommand.cs" />
-    <Compile Include="FolkeConnection.cs" />
-    <Compile Include="FolkeList.cs" />
-    <Compile Include="FolkeListAttribute.cs" />
-    <Compile Include="FolkeTransaction.cs" />
-    <Compile Include="FolkeTuple.cs" />
-    <Compile Include="IDatabaseDriver.cs" />
-    <Compile Include="IDatabaseSettings.cs" />
-    <Compile Include="IFolkeConnection.cs" />
-    <Compile Include="IFolkeTable.cs" />
-    <Compile Include="InformationSchema\Columns.cs" />
-    <Compile Include="InformationSchema\KeyColumnUsage.cs" />
-    <Compile Include="InformationSchema\Tables.cs" />
-    <Compile Include="IManyToManyTable.cs" />
-    <Compile Include="ManyToManyHelpers.cs" />
-    <Compile Include="MappedClass.cs" />
-    <Compile Include="MappedCollection.cs" />
-    <Compile Include="MappedField.cs" />
-    <Compile Include="Mapper.cs" />
-    <Compile Include="PreparedQueryBuilder.cs" />
-    <Compile Include="PreparedLoadBuilder.cs" />
+    <Compile Include="IntegrationTestWithFolkeTable.cs" />
+    <Compile Include="IntegrationTestWithGuid.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueryBuilder.cs" />
-    <Compile Include="QueryBuilderExtensions.cs" />
-    <Compile Include="SchemaQueryBuilder.cs" />
-    <Compile Include="SchemaUpdater.cs" />
-    <Compile Include="TableAttribute.cs" />
-    <Compile Include="TableHelpers.cs" />
-    <Compile Include="TypeMapping.cs" />
+    <Compile Include="TestFluentGenericQueryBuilder.cs" />
+    <Compile Include="TestManyToManyHelpers.cs" />
+    <Compile Include="TestQueryBuilderExtensions.cs" />
+    <Compile Include="TestSchemaUpdater.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Folke.Orm.nuspec">
-      <SubType>Designer</SubType>
-    </None>
+    <ProjectReference Include="..\Folke.Orm.Mysql\Folke.Orm.Mysql.csproj">
+      <Project>{b4948c9d-975d-43c0-8569-d7dd56793125}</Project>
+      <Name>Folke.Orm.Mysql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Folke.Orm\Folke.Orm.csproj">
+      <Project>{1589542c-1a8b-4db6-a08a-7e446327c5c9}</Project>
+      <Name>Folke.Orm</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

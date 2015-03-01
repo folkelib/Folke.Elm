@@ -1,12 +1,12 @@
 ﻿using System.Configuration;
 using NUnit.Framework;
 
-namespace Folke.Orm.Test
+namespace Folke.Orm.Mysql.Test
 {
     [TestFixture]
     public class TestSchemaUpdater
     {
-        private class FirstClass
+        public class FirstClass
         {
             public int Id { get; set; }
             public string Text { get; set; }
@@ -29,8 +29,9 @@ namespace Folke.Orm.Test
             connection.Dispose();
         }
 
-        private class AddColumnClass
+        public class AddColumnClass
         {
+// ReSharper disable once MemberHidesStaticFromOuterClass
             public class FirstClass
             {
                 public int Id { get; set; }
@@ -45,8 +46,9 @@ namespace Folke.Orm.Test
             connection.CreateOrUpdateTable<AddColumnClass.FirstClass>();
         }
 
-        private class ChangeColumnTypeClass
+        public class ChangeColumnTypeClass
         {
+// ReSharper disable once MemberHidesStaticFromOuterClass
             public class FirstClass
             {
                 public int Id { get; set; }
