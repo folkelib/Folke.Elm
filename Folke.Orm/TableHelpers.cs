@@ -8,6 +8,12 @@ namespace Folke.Orm
 {
     public static class TableHelpers
     {
+        public static string GetTableName(Type type)
+        {
+            var attribute = type.GetCustomAttribute<TableAttribute>();
+            return attribute != null ? attribute.Name : type.Name;
+        }
+
         public static bool IsReadOnly(PropertyInfo property)
         {
             return IsAutomatic(property);

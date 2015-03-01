@@ -80,7 +80,9 @@ namespace Folke.Orm
             AppendColumnName(column);
             query.Append(") REFERENCES ");
             AppendTableName(column.PropertyType);
-            query.Append("(Id)");
+            query.Append("(");
+            query.Append(TableHelpers.GetKeyColumName(column.PropertyType));
+            query.Append(")");
             if (attribute!=null && attribute.OnDelete!= ConstraintEventEnum.Restrict)
             {
                 query.Append(" ON DELETE ");
@@ -118,7 +120,7 @@ namespace Folke.Orm
         {
             query.Append("CREATE TABLE ");
             query.Append(beginSymbol);
-            query.Append(type.Name);
+            query.Append(TableHelpers.GetTableName(type));
             query.Append(endSymbol);
             query.Append(" (");
             foreach (var property in type.GetProperties())
@@ -188,7 +190,7 @@ namespace Folke.Orm
         {
             query.Append("ALTER TABLE ");
             query.Append(beginSymbol);
-            query.Append(type.Name);
+            query.Append(TableHelpers.GetTableName(type));
             query.Append(endSymbol);
             return this;
         }
