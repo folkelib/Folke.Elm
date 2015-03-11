@@ -97,10 +97,9 @@ namespace Folke.Orm
         internal TableAlias DefaultTable { get { return defaultTable; } }
         internal IList<FieldAlias> SelectedFields { get { return selectedFields; } }
 
-#warning réordonner méthodes
         public BaseQueryBuilder(FolkeConnection connection, Type type = null):this(connection.Driver)
         {
-            this.defaultType = type;
+            defaultType = type;
             this.connection = connection;
         }
 
@@ -297,7 +296,7 @@ namespace Folke.Orm
             query.Append(" @Item" + parameterIndex);
         }
 
-        internal void AddExpression(Expression expression)
+        internal void AddExpression(Expression expression, bool registerTable = false)
         {
             if (expression is UnaryExpression)
             {
@@ -315,7 +314,7 @@ namespace Folke.Orm
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
-                AddExpression(unary.Operand);
+                AddExpression(unary.Operand, registerTable);
                 return;
             }
             
@@ -323,8 +322,8 @@ namespace Folke.Orm
             {
                 var binary = expression as BinaryExpression;
                 query.Append('(');
-                
-                AddExpression(binary.Left);
+
+                AddExpression(binary.Left, registerTable);
 
                 if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
                 {
@@ -389,7 +388,7 @@ namespace Folke.Orm
                 }
                 else
                 {
-                    AddExpression(binary.Right);
+                    AddExpression(binary.Right, registerTable);
                 }
                 query.Append(')');
                 return;
@@ -412,7 +411,7 @@ namespace Folke.Orm
                 }
             }
 
-            var column = ExpressionToColumn(expression);
+            var column = ExpressionToColumn(expression, registerTable);
             if (column != null)
             {
                 AppendColumn(column);
@@ -428,12 +427,12 @@ namespace Folke.Orm
                     switch (call.Method.Name)
                     {
                         case "Like":
-                            AddExpression(call.Arguments[0]);
+                            AddExpression(call.Arguments[0], registerTable);
                             query.Append(" LIKE");
-                            AddExpression(call.Arguments[1]);
+                            AddExpression(call.Arguments[1], registerTable);
                             break;
                         case "In":
-                            AddExpression(call.Arguments[0]);
+                            AddExpression(call.Arguments[0], registerTable);
                             query.Append(" IN");
                             AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
                             break;
@@ -452,7 +451,7 @@ namespace Folke.Orm
                             break;
                         case "Max":
                             query.Append(" MAX(");
-                            AddExpression(call.Arguments[0]);
+                            AddExpression(call.Arguments[0], registerTable);
                             query.Append(")");
                             break;
                         default:
@@ -466,7 +465,7 @@ namespace Folke.Orm
                     switch (call.Method.Name)
                     {
                         case "StartsWith":
-                            AddExpression(call.Object);
+                            AddExpression(call.Object, registerTable);
                             query.Append(" LIKE");
                             var text = (string) Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
                             text = text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
@@ -481,9 +480,9 @@ namespace Folke.Orm
                 if (call.Method.Name == "Equals")
                 {
                     query.Append('(');
-                    AddExpression(call.Object);
+                    AddExpression(call.Object, registerTable);
                     query.Append('=');
-                    AddExpression(call.Arguments[0]);
+                    AddExpression(call.Arguments[0], registerTable);
                     query.Append(')');
                     return;
                 }
@@ -529,14 +528,14 @@ namespace Folke.Orm
             return table;
         }
 
-        protected internal void SelectField(TableColumn column)
+        internal void SelectField(TableColumn column)
         {
             if (selectedFields == null)
                 selectedFields = new List<FieldAlias>();
             selectedFields.Add(new FieldAlias {propertyInfo = column.Column, tableAlias = column.Table == null ? null : column.Table.alias, index = selectedFields.Count});
         }
 
-        protected void SelectField(Expression column)
+        internal void SelectField(Expression column)
         {
             SelectField(ExpressionToColumn(column, registerDefaultTable: true));
         }
@@ -560,7 +559,7 @@ namespace Folke.Orm
                     callExpression.Method.Name == "Property")
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
-                    return new TableColumn {Column = propertyInfo, Table = GetTable(callExpression.Arguments[0])};
+                    return new TableColumn {Column = propertyInfo, Table = GetTable(callExpression.Arguments[0], registerDefaultTable)};
                 }
                 return null;
             }
@@ -764,40 +763,40 @@ namespace Folke.Orm
 
         internal void AppendOrderBy()
         {
-            if (this.currentContext != ContextEnum.OrderBy)
+            if (currentContext != ContextEnum.OrderBy)
             {
-                this.Append("ORDER BY ");
+                Append("ORDER BY ");
             }
             else
             {
-                this.query.Append(',');
+                query.Append(',');
             }
-            this.currentContext = ContextEnum.OrderBy;
+            currentContext = ContextEnum.OrderBy;
         }
 
         internal void AppendGroupBy()
         {
-            if (this.currentContext != ContextEnum.GroupBy)
+            if (currentContext != ContextEnum.GroupBy)
             {
-                this.Append("GROUP BY ");
+                Append("GROUP BY ");
             }
             else
             {
-                this.query.Append(',');
+                query.Append(',');
             }
-            this.currentContext = ContextEnum.GroupBy;
+            currentContext = ContextEnum.GroupBy;
         }
 
         internal void AppendSet()
         {
-            if (this.currentContext == ContextEnum.Set)
+            if (currentContext == ContextEnum.Set)
             {
-                this.Append(", ");
+                Append(", ");
             }
             else
             {
-                this.Append("SET ");
-                this.currentContext = ContextEnum.Set;
+                Append("SET ");
+                currentContext = ContextEnum.Set;
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Folke.Orm.Fluent;
 using NUnit.Framework;
 
 namespace Folke.Orm.Mysql.Test
@@ -7,27 +8,28 @@ namespace Folke.Orm.Mysql.Test
     public class TestFluentGenericQueryBuilder
     {
         private MySqlDriver mySqlDriver;
-        private FluentGenericQueryBuilder<FakeClass, FolkeTuple> queryBuilder;
+        private FluentSelectBuilder<FakeClass, FolkeTuple> fluentSelectBuilder;
+        private BaseQueryBuilder queryBuilder;
 
         [SetUp]
         public void Setup()
         {
             mySqlDriver = new MySqlDriver();
-            queryBuilder = new FluentGenericQueryBuilder<FakeClass, FolkeTuple>(mySqlDriver);
-            queryBuilder.RegisterTable();
+            fluentSelectBuilder = new FluentSelectBuilder<FakeClass, FolkeTuple>(mySqlDriver);
+            queryBuilder = fluentSelectBuilder.QueryBuilder;
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_EqualOperator()
         {
-            queryBuilder.Select(x => x.Id == 3);
+            fluentSelectBuilder.Values(x => x.Id == 3);
             Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_EqualsMethod()
         {
-            queryBuilder.Select(x => x.Id.Equals(3));
+            fluentSelectBuilder.Values(x => x.Id.Equals(3));
             Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
@@ -35,28 +37,28 @@ namespace Folke.Orm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_PropertyObjectExtension()
         {
             var propertyInfo = typeof (FakeClass).GetProperty("Id");
-            queryBuilder.Select(x => x.Property(propertyInfo).Equals(3));
+            fluentSelectBuilder.Values(x => x.Property(propertyInfo).Equals(3));
             Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_LikeExtension()
         {
-            queryBuilder.Select(x => x.Text.Like("toto"));
+            fluentSelectBuilder.Values(x => x.Text.Like("toto"));
             Assert.AreEqual("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_StringStartsWith()
         {
-            queryBuilder.Select(x => x.Text.StartsWith("toto"));
+            fluentSelectBuilder.Values(x => x.Text.StartsWith("toto"));
             Assert.AreEqual("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTable()
         {
-            queryBuilder.Select(x => x.Id, x => x.Text);
+            fluentSelectBuilder.Values(x => x.Id, x => x.Text);
             Assert.AreEqual("SELECT `t`.`Id` , `t`.`Text`", queryBuilder.Sql);
             Assert.AreEqual(2, queryBuilder.SelectedFields.Count);
             Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Id")));
@@ -66,7 +68,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTableAndJoin()
         {
-            queryBuilder.Select(x => x.Id, x => x.Text, x => x.Child.Value);
+            fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
             Assert.AreEqual("SELECT `t`.`Id` , `t`.`Text` , `t1`.`Value`", queryBuilder.Sql);
             Assert.AreEqual(3, queryBuilder.SelectedFields.Count);
             Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Id")));
@@ -77,7 +79,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public void FluentGenericQueryBuilder_Select_Max()
         {
-            queryBuilder.Select(x => SqlFunctions.Max(x.Id));
+            fluentSelectBuilder.Values(x => SqlFunctions.Max(x.Id));
             Assert.AreEqual("SELECT MAX( `t`.`Id`)", queryBuilder.Sql);
         }
 

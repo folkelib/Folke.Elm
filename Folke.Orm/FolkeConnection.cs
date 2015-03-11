@@ -203,7 +203,7 @@ namespace Folke.Orm
         {
             if (automatic)
             {
-                var key = new FluentGenericQueryBuilder<FolkeTuple<int>>(this).SelectAs(x => SqlFunctions.LastInsertedId(), x => x.Item0).Scalar();
+                var key = Select<FolkeTuple<int>>().SelectAs(x => SqlFunctions.LastInsertedId(), x => x.Item0).Scalar();
                 keyProperty.SetValue(value, Convert.ChangeType(key, keyProperty.PropertyType));
             }
 

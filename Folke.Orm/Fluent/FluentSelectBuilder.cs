@@ -35,7 +35,7 @@
                 var tableColumn = QueryBuilder.ExpressionToColumn(column.Body, true);
                 if (tableColumn == null)
                 {
-                    QueryBuilder.AddExpression(column.Body);
+                    QueryBuilder.AddExpression(column.Body, true);
                 }
                 else
                 {
@@ -131,6 +131,15 @@
         {
             QueryBuilder.AppendSelect();
             QueryBuilder.Append(" COUNT(*)");
+            return this;
+        }
+
+        public FluentSelectBuilder<T, TMe> SelectAs<TU>(Expression<Func<T, TU>> valueExpression,
+           Expression<Func<T, TU>> targetExpression)
+        {
+            QueryBuilder.AppendSelect();
+            QueryBuilder.AddExpression(valueExpression.Body);
+            QueryBuilder.SelectField(targetExpression.Body);
             return this;
         }
     }

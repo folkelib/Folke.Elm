@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Configuration;
 using NUnit.Framework;
+using Folke.Orm.Fluent;
 
 namespace Folke.Orm.Mysql.Test
 {
-    using Folke.Orm.Fluent;
-
     [TestFixture]
     public class IntegrationTestWithFolkeTable
     {
@@ -480,7 +479,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public void FromSubQuery()
         {
-            var query = connection.Query<UserInGroup>().Select(x => x.Group).FromSubQuery(q => q.Select(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
+            var query = connection.Query<UserInGroup>().Values(x => x.Group).FromSubQuery(q => q.Values(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
             Assert.AreEqual("SELECT `t`.`Group_id` FROM (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item0) GROUP BY  `t`.`Group_id`) AS t", query.QueryBuilder.Sql);
         }
 
@@ -587,7 +586,7 @@ namespace Folke.Orm.Mysql.Test
             }
 
             // Act
-            var result = connection.Query<TestPoco>().SelectCountAll().From().Scalar<int>();
+            var result = connection.Query<TestPoco>().CountAll().From().Scalar<int>();
 
             // Assert
             Assert.AreEqual(10, result);

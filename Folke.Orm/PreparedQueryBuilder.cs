@@ -1,28 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+using Folke.Orm.Fluent;
 
 namespace Folke.Orm
 {
     public class PreparedQueryBuilder<T>
         where T : class, new()
     {
-        protected FluentGenericQueryBuilder<T, FolkeTuple> query;
-        private readonly Func<FluentGenericQueryBuilder<T, FolkeTuple>, FluentGenericQueryBuilder<T, FolkeTuple>> prepare;
+        protected FluentSelectBuilder<T, FolkeTuple> query;
+        private readonly Func<FluentSelectBuilder<T, FolkeTuple>, FluentQueryableBuilder<T, FolkeTuple>> prepare;
 
-        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple>, FluentGenericQueryBuilder<T, FolkeTuple>> prepare)
+        public PreparedQueryBuilder(Func<FluentSelectBuilder<T, FolkeTuple>, FluentQueryableBuilder<T, FolkeTuple>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private FluentGenericQueryBuilder<T, FolkeTuple> GetQuery(IDatabaseDriver driver)
+        private FluentSelectBuilder<T, FolkeTuple> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new FluentGenericQueryBuilder<T, FolkeTuple>(driver);
+                query = new FluentSelectBuilder<T, FolkeTuple>(driver);
                 prepare.Invoke(query);
             }
             return query;
@@ -34,65 +31,65 @@ namespace Folke.Orm
         }
     }
 
-    public class PreparedQueryBuilder<T, U>
+    public class PreparedQueryBuilder<T, TU>
         where T : class, new()
     {
-        protected FluentGenericQueryBuilder<T, FolkeTuple<U>> query;
-        private readonly Func<FluentGenericQueryBuilder<T, FolkeTuple<U>>, FluentGenericQueryBuilder<T, FolkeTuple<U>>> prepare;
+        protected FluentSelectBuilder<T, FolkeTuple<TU>> query;
+        private readonly Func<FluentSelectBuilder<T, FolkeTuple<TU>>, FluentQueryableBuilder<T, FolkeTuple<TU>>> prepare;
 
-        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple<U>>, FluentGenericQueryBuilder<T, FolkeTuple<U>>> prepare)
+        public PreparedQueryBuilder(Func<FluentSelectBuilder<T, FolkeTuple<TU>>, FluentQueryableBuilder<T, FolkeTuple<TU>>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private FluentGenericQueryBuilder<T, FolkeTuple<U>> GetQuery(IDatabaseDriver driver)
+        private FluentSelectBuilder<T, FolkeTuple<TU>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new FluentGenericQueryBuilder<T, FolkeTuple<U>>(driver);
+                query = new FluentSelectBuilder<T, FolkeTuple<TU>>(driver);
                 prepare.Invoke(query);
             }
             return query;
         }
 
-        public IList<T> List(IFolkeConnection connection, U param0)
+        public IList<T> List(IFolkeConnection connection, TU param0)
         {
             return GetQuery(connection.Driver).List(connection, param0);
         }
 
-        public T SingleOrDefault(IFolkeConnection connection, U param0)
+        public T SingleOrDefault(IFolkeConnection connection, TU param0)
         {
             return GetQuery(connection.Driver).SingleOrDefault(connection, param0);
         }
     }
 
-    public class PreparedQueryBuilder<T, U, V>
+    public class PreparedQueryBuilder<T, TU, TV>
         where T : class, new()
     {
-        protected FluentGenericQueryBuilder<T, FolkeTuple<U, V>> query;
-        private Func<FluentGenericQueryBuilder<T, FolkeTuple<U, V>>, FluentGenericQueryBuilder<T, FolkeTuple<U, V>>> prepare;
+        protected FluentSelectBuilder<T, FolkeTuple<TU, TV>> query;
+        private readonly Func<FluentSelectBuilder<T, FolkeTuple<TU, TV>>, FluentQueryableBuilder<T, FolkeTuple<TU, TV>>> prepare;
 
-        public PreparedQueryBuilder(Func<FluentGenericQueryBuilder<T, FolkeTuple<U, V>>, FluentGenericQueryBuilder<T, FolkeTuple<U, V>>> prepare)
+        public PreparedQueryBuilder(Func<FluentSelectBuilder<T, FolkeTuple<TU, TV>>, FluentQueryableBuilder<T, FolkeTuple<TU, TV>>> prepare)
         {
             this.prepare = prepare;
         }
 
-        private FluentGenericQueryBuilder<T, FolkeTuple<U, V>> GetQuery(IDatabaseDriver driver)
+        private FluentQueryableBuilder<T, FolkeTuple<TU, TV>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
-                query = new FluentGenericQueryBuilder<T, FolkeTuple<U, V>>(driver);
+                query = new FluentSelectBuilder<T, FolkeTuple<TU, TV>>(driver);
                 prepare.Invoke(query);
             }
             return query;
         }
 
-        public IList<T> List(IFolkeConnection connection, U param0, V param1)
+        public IList<T> List(IFolkeConnection connection, TU param0, TV param1)
         {
             return GetQuery(connection.Driver).List(connection, param0, param1);
         }
 
-        public T SingleOrDefault(IFolkeConnection connection, U param0, V param1)
+        public T SingleOrDefault(IFolkeConnection connection, TU param0, TV param1)
         {
             return GetQuery(connection.Driver).SingleOrDefault(connection, param0, param1);
         }
