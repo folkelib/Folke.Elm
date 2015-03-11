@@ -21,14 +21,14 @@ namespace Folke.Orm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_EqualOperator()
         {
             queryBuilder.Select(x => x.Id == 3);
-            Assert.AreEqual("SELECT( `t`.`Id`=@Item0)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_Select_EqualsMethod()
         {
             queryBuilder.Select(x => x.Id.Equals(3));
-            Assert.AreEqual("SELECT( `t`.`Id`=@Item0)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Folke.Orm.Mysql.Test
         {
             var propertyInfo = typeof (FakeClass).GetProperty("Id");
             queryBuilder.Select(x => x.Property(propertyInfo).Equals(3));
-            Assert.AreEqual("SELECT( `t`.`Id`=@Item0)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]

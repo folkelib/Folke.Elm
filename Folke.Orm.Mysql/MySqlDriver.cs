@@ -118,12 +118,12 @@ namespace Folke.Orm.Mysql
 
         public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            return new FluentGenericQueryBuilder<Columns>(connection).SelectAll().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List().Cast<ColumnDefinition>().ToList();
+            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List().Cast<ColumnDefinition>().ToList();
         }
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
         {
-            return new FluentGenericQueryBuilder<Tables>(connection).SelectAll().From().Where(t => t.Name == connection.Database).List().Cast<TableDefinition>().ToList();
+            return connection.Select<Tables>().All().From().Where(t => t.Name == connection.Database).List().Cast<TableDefinition>().ToList();
         }
 
         public SqlStringBuilder CreateSqlStringBuilder()

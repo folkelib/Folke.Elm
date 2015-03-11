@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
+    using Folke.Orm.Fluent;
+
     public class PreparedLoadBuilder<T>
         where T : class, IFolkeTable, new()
     {
-        protected FluentGenericQueryBuilder<T, FolkeTuple<int>> query;
-        private Expression<Func<T, object>>[] fetches;
+        protected FluentQueryableBuilder<T, FolkeTuple<int>> query;
+
+        private readonly Expression<Func<T, object>>[] fetches;
 
         public PreparedLoadBuilder()
         {
@@ -22,29 +21,33 @@ namespace Folke.Orm
             this.fetches = fetches;
         }
 
-        private FluentGenericQueryBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver)
+        private FluentQueryableBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver)
         {
             if (query == null)
             {
                 if (fetches == null)
                 {
-                    query = new FluentGenericQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll().From().Where((x, y) => x.Id == y.Item0);
+                    query = new FluentSelectBuilder<T, FolkeTuple<int>>(driver).All().From().Where((x, y) => x.Id == y.Item0);
                 }
                 else
                 {
-                    query = new FluentGenericQueryBuilder<T, FolkeTuple<int>>(driver).SelectAll();
+                    var selectQuery = new FluentSelectBuilder<T, FolkeTuple<int>>(driver).All();
                     foreach (var fetch in fetches)
                     {
-                        query.AndAll(fetch);
+                        selectQuery.All(fetch);
                     }
-                    query.From();
+
+                    var fromQuery = selectQuery.From();
                     foreach (var fetch in fetches)
                     {
-                        query.LeftJoinOnId(fetch);
+                        fromQuery.LeftJoinOnId(fetch);
                     }
-                    query.Where((x, y) => x.Id == y.Item0);
+
+                    fromQuery.Where((x, y) => x.Id == y.Item0);
+                    query = fromQuery;
                 }
             }
+
             return query;
         }
 

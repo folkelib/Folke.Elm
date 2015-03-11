@@ -51,7 +51,7 @@ namespace Folke.Orm.Mysql.Test
                 Id = Guid.NewGuid(),
                 Text = "Text"
             };
-            connection.Query<TableWithGuid>().InsertInto().Values(value).Execute();
+            connection.InsertInto<TableWithGuid>().Values(value).Execute();
         }
 
         [Test]
@@ -62,9 +62,9 @@ namespace Folke.Orm.Mysql.Test
                 Id = Guid.NewGuid(),
                 Text = "Text"
             };
-            connection.Query<TableWithGuid>().InsertInto().Values(value).Execute();
+            connection.InsertInto<TableWithGuid>().Values(value).Execute();
             transaction.Commit();
-            var values = connection.Query<TableWithGuid>().SelectAll().From().Where(x => x.Id == value.Id).List();
+            var values = connection.Select<TableWithGuid>().All().From().Where(x => x.Id == value.Id).List();
             Assert.IsNotEmpty(values);
             Assert.AreEqual(value.Id, values[0].Id);
             Assert.AreEqual(value.Text, values[0].Text);

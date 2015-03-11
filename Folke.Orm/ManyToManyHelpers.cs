@@ -96,7 +96,7 @@ namespace Folke.Orm
                 var valuesToRemove = currentValues.Where(cv => newDtos.All(nv => !helper.AreEqual(cv.Child, nv))).ToArray();
                 if (valuesToRemove.Any())
                 {
-                    connection.Query<T>().Delete().From().Where(c => c.Id.In(valuesToRemove.Select(s => s.Id))).Execute();
+                    connection.Delete<T>().From().Where(c => c.Id.In(valuesToRemove.Select(s => s.Id))).Execute();
                     foreach (var value in valuesToRemove)
                         newValues.Remove(value);
                 }

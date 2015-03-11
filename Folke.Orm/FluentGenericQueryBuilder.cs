@@ -23,7 +23,7 @@ namespace Folke.Orm
     {
         public FluentGenericQueryBuilder(FolkeConnection connection):base(connection)
         {
-            parametersType = typeof (TMe);
+            parametersType = typeof(TMe);
         }
 
         public FluentGenericQueryBuilder(IDatabaseDriver driver):base(driver)
@@ -261,22 +261,14 @@ namespace Folke.Orm
 
         public FluentGenericQueryBuilder<T, TMe> GroupBy<TU>(Expression<Func<T, TU>> column)
         {
-            if (currentContext != ContextEnum.GroupBy)
-                Append("GROUP BY ");
-            else
-                query.Append(',');
-            currentContext = ContextEnum.GroupBy;
+            this.AppendGroupBy();
             AppendColumn(column.Body);
             return this;
         }
 
         public FluentGenericQueryBuilder<T, TMe> OrderBy<TU>(Expression<Func<T, TU>> column)
         {
-            if (currentContext != ContextEnum.OrderBy)
-                Append("ORDER BY ");
-            else
-                query.Append(',');
-            currentContext = ContextEnum.OrderBy;
+            this.AppendOrderBy();
             AppendColumn(column.Body);
             return this;
         }
@@ -372,15 +364,7 @@ namespace Folke.Orm
 
         public FluentGenericQueryBuilder<T, TMe> Set<TU>(Expression<Func<T, TU>> column, Expression<Func<T, TU>> value)
         {
-            if (currentContext == ContextEnum.Set)
-            {
-                Append(", ");
-            }
-            else
-            {
-                Append("SET ");
-                currentContext = ContextEnum.Set;
-            }
+            this.AppendSet();
 
             AppendColumn(column.Body, registerTable: true);
             Append("=");

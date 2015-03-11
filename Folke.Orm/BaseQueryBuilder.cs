@@ -10,9 +10,8 @@ namespace Folke.Orm
     public class BaseQueryBuilder<T> : BaseQueryBuilder
     {
         public BaseQueryBuilder(FolkeConnection connection)
-            : base(connection)
+            : base(connection, typeof(T))
         {
-            defaultType = typeof(T);
         }
 
         public BaseQueryBuilder()
@@ -99,8 +98,9 @@ namespace Folke.Orm
         internal IList<FieldAlias> SelectedFields { get { return selectedFields; } }
 
 #warning réordonner méthodes
-        public BaseQueryBuilder(FolkeConnection connection):this(connection.Driver)
+        public BaseQueryBuilder(FolkeConnection connection, Type type = null):this(connection.Driver)
         {
+            this.defaultType = type;
             this.connection = connection;
         }
 
@@ -115,6 +115,16 @@ namespace Folke.Orm
         {
             driver = databaseDriver;
             query = driver.CreateSqlStringBuilder();
+        }
+
+        public BaseQueryBuilder(BaseQueryBuilder parentBuilder):this(parentBuilder.Driver)
+        {
+            if (parentBuilder.parameters == null)
+                parentBuilder.parameters = new List<object>();
+            parameters = parentBuilder.parameters;
+            tables = parentBuilder.tables;
+            defaultTable = parentBuilder.defaultTable;
+            defaultType = parentBuilder.defaultType;
         }
 
         public BaseQueryBuilder()
@@ -135,6 +145,14 @@ namespace Folke.Orm
             get { return connection; }
         }
 
+        internal IDatabaseDriver Driver
+        {
+            get
+            {
+                return driver;
+            }
+        }
+
         public object[] Parameters
         {
             get { return parameters == null ? null : parameters.ToArray(); }
@@ -145,7 +163,7 @@ namespace Folke.Orm
             get { return baseMappedClass; }
         }
 
-        protected void AppendTableName(Type type)
+        internal void AppendTableName(Type type)
         {
             query.AppendSpace();
             var tableAttribute = type.GetCustomAttribute<TableAttribute>();
@@ -164,8 +182,8 @@ namespace Folke.Orm
                 query.AppendSymbol(type.Name);
             }
         }
-        
-        protected string GetTableAlias(Expression tableExpression)
+
+        internal string GetTableAlias(Expression tableExpression)
         {
             if (tableExpression.NodeType == ExpressionType.Parameter)
             {
@@ -232,7 +250,7 @@ namespace Folke.Orm
         /// </summary>
         /// <param name="tableName">The table alias</param>
         /// <param name="propertyInfo">The property info of the column</param>
-        protected void AppendColumn(string tableName, MemberInfo propertyInfo)
+        internal void AppendColumn(string tableName, MemberInfo propertyInfo)
         {
             query.Append(' ');
             if (tableName != null && !noAlias)
@@ -276,7 +294,7 @@ namespace Folke.Orm
 
             parameters.Add(parameter);
             
-            query.Append("@Item" + parameterIndex);
+            query.Append(" @Item" + parameterIndex);
         }
 
         internal void AddExpression(Expression expression)
@@ -389,7 +407,7 @@ namespace Folke.Orm
                 var memberExpression = (MemberExpression) expression;
                 if (memberExpression.Expression.Type == parametersType)
                 {
-                    query.Append("@" + memberExpression.Member.Name);
+                    query.Append(" @" + memberExpression.Member.Name);
                     return;
                 }
             }
@@ -405,18 +423,18 @@ namespace Folke.Orm
             {
                 var call = (MethodCallExpression)expression;
                 
-                if (call.Method.DeclaringType == typeof (ExpressionHelpers))
+                if (call.Method.DeclaringType == typeof(ExpressionHelpers))
                 {
                     switch (call.Method.Name)
                     {
                         case "Like":
                             AddExpression(call.Arguments[0]);
-                            query.Append(" LIKE ");
+                            query.Append(" LIKE");
                             AddExpression(call.Arguments[1]);
                             break;
                         case "In":
                             AddExpression(call.Arguments[0]);
-                            query.Append(" IN ");
+                            query.Append(" IN");
                             AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
                             break;
                         default:
@@ -425,7 +443,7 @@ namespace Folke.Orm
                     return;
                 }
 
-                if (call.Method.DeclaringType == typeof (SqlFunctions))
+                if (call.Method.DeclaringType == typeof(SqlFunctions))
                 {
                     switch (call.Method.Name)
                     {
@@ -443,15 +461,15 @@ namespace Folke.Orm
                     return;
                 }
 
-                if (call.Method.DeclaringType == typeof (string))
+                if (call.Method.DeclaringType == typeof(string))
                 {
                     switch (call.Method.Name)
                     {
                         case "StartsWith":
                             AddExpression(call.Object);
-                            query.Append(" LIKE ");
+                            query.Append(" LIKE");
                             var text = (string) Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
-                            text = text.Replace("\\", "\\\\").Replace("%","\\%") + "%";
+                            text = text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
                             AppendParameter(text);
                             break;
                         default:
@@ -523,7 +541,7 @@ namespace Folke.Orm
             SelectField(ExpressionToColumn(column, registerDefaultTable: true));
         }
 
-        protected TableColumn ExpressionToColumn(Expression columnExpression, bool registerDefaultTable = false)
+        internal TableColumn ExpressionToColumn(Expression columnExpression, bool registerDefaultTable = false)
         {
             if (columnExpression.NodeType == ExpressionType.Convert)
             {
@@ -577,7 +595,9 @@ namespace Folke.Orm
                 if (defaultTable == null)
                 {
                     if (registerDefaultTable)
-                        RegisterTable(defaultType, null);
+                    {
+                        defaultTable = RegisterTable(defaultType, null);
+                    }
                     else
                     {
                         var table = GetTable(columnExpression);
@@ -599,13 +619,13 @@ namespace Folke.Orm
         /// </summary>
         /// <param name="tableExpression">The expression</param>
         /// <returns></returns>
-        protected TableColumn GetTableKey(MemberExpression tableExpression)
+        internal TableColumn GetTableKey(Expression tableExpression)
         {
             var table = GetTable(tableExpression);
             return new TableColumn {Column = TableHelpers.GetKey(table.type), Table = table};
         }
         
-        protected void AppendSelectedColumn(TableColumn column)
+        internal void AppendSelectedColumn(TableColumn column)
         {
             SelectField(column);
             AppendColumn(column);
@@ -642,7 +662,7 @@ namespace Folke.Orm
             return table;
         }
 
-        protected void AppendFrom()
+        internal void AppendFrom()
         {
             if (currentContext == ContextEnum.Select || currentContext == ContextEnum.Delete)
             {
@@ -660,13 +680,20 @@ namespace Folke.Orm
             query.Append(sql);
         }
 
-        protected void Where()
+        internal void AppendDelete()
+        {
+            noAlias = true;
+            query.Append("DELETE");
+            currentContext = ContextEnum.Delete;
+        }
+
+        internal void Where()
         {
             Append(currentContext == ContextEnum.Where ? "AND" : "WHERE");
             currentContext = ContextEnum.Where;
         }
 
-        protected void AppendAllSelects(Type tableType, string tableAlias)
+        internal void AppendAllSelects(Type tableType, string tableAlias)
         {
             AppendSelectedColumns(tableType, tableAlias, tableType.GetProperties());
         }
@@ -708,12 +735,12 @@ namespace Folke.Orm
             public MemberInfo Column { get; set; }
         }
 
-        protected void AppendTable(Expression tableExpression)
+        internal void AppendTable(Expression tableExpression)
         {
             AppendTable(tableExpression.Type, tableExpression);
         }
 
-        protected void AppendTable(Type tableType, Expression tableAlias)
+        internal void AppendTable(Type tableType, Expression tableAlias)
         {
             AppendTable(tableType, GetTableAlias(tableAlias));
         }
@@ -733,6 +760,52 @@ namespace Folke.Orm
         internal TableAlias RegisterTable()
         {
             return RegisterTable(null, null);
+        }
+
+        internal void AppendOrderBy()
+        {
+            if (this.currentContext != ContextEnum.OrderBy)
+            {
+                this.Append("ORDER BY ");
+            }
+            else
+            {
+                this.query.Append(',');
+            }
+            this.currentContext = ContextEnum.OrderBy;
+        }
+
+        internal void AppendGroupBy()
+        {
+            if (this.currentContext != ContextEnum.GroupBy)
+            {
+                this.Append("GROUP BY ");
+            }
+            else
+            {
+                this.query.Append(',');
+            }
+            this.currentContext = ContextEnum.GroupBy;
+        }
+
+        internal void AppendSet()
+        {
+            if (this.currentContext == ContextEnum.Set)
+            {
+                this.Append(", ");
+            }
+            else
+            {
+                this.Append("SET ");
+                this.currentContext = ContextEnum.Set;
+            }
+        }
+
+        public void AppendInParenthesis(string sql)
+        {
+            query.Append(" (");
+            query.Append(sql);
+            query.Append(')');
         }
     }
 }

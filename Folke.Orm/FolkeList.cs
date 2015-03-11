@@ -29,27 +29,29 @@ namespace Folke.Orm
             {
                 if (results == null)
                 {
-                    var query = this.connection.Query<T>().SelectAll();
+                    var query = this.connection.Query<T>().All();
                     var joinTables = new List<BaseQueryBuilder.TableAlias>();
+                    var queryBuilder = query.QueryBuilder;
                     foreach (var join in joins)
                     {
                         var property = typeof(T).GetProperty(join);
-                        query.AppendSelect();
-                        joinTables.Add(query.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
+                        queryBuilder.AppendSelect();
+                        joinTables.Add(queryBuilder.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
                     }
 
-                    query.From();
+                    queryBuilder.AppendFrom();
+                    queryBuilder.AppendTable(typeof(T), (string)null);
 
                     foreach (var joinTable in joinTables)
                     {
                         var property = typeof(T).GetProperty(joinTable.alias);
                         var joinKeyProperty = TableHelpers.GetKey(joinTable.type);
-                        query.Append(" LEFT JOIN ");
-                        query.AppendTable(joinTable.type, joinTable.alias);
-                        query.Append(" ON ");
-                        query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
-                        query.Append(" = ");
-                        query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = query.DefaultTable });
+                        queryBuilder.Append(" LEFT JOIN ");
+                        queryBuilder.AppendTable(joinTable.type, joinTable.alias);
+                        queryBuilder.Append(" ON ");
+                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
+                        queryBuilder.Append(" = ");
+                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable });
                     }
 
                     bool first = true;
@@ -57,11 +59,11 @@ namespace Folke.Orm
                     {
                         if (property.PropertyType == parent)
                         {
-                            query.Append(first ? " WHERE " : " OR ");
+                            queryBuilder.Append(first ? " WHERE " : " OR ");
                             first = false;
-                            query.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = query.DefaultTable });
-                            query.Append(" = ");
-                            query.AppendParameter(parentId);
+                            queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable });
+                            queryBuilder.Append(" = ");
+                            queryBuilder.AppendParameter(parentId);
                         }
                     }
                     results = query.List();

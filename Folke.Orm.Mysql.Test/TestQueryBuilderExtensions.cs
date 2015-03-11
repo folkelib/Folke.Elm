@@ -35,7 +35,7 @@ namespace Folke.Orm.Mysql.Test
         public async void ExecuteAsync()
         {
             var poco = new TestPoco();
-            var queryBuilder = connection.Query<TestPoco>().InsertInto().Values(poco); // TODO utiliser un fake
+            var queryBuilder = connection.InsertInto<TestPoco>().Values(poco); // TODO utiliser un fake
             await queryBuilder.ExecuteAsync();
         }
 
@@ -70,7 +70,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public async void ScalarAsync()
         {
-            var queryBuilder = connection.Query<TestPoco>().Select(x => x.Name).From().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
+            var queryBuilder = connection.Select<TestPoco>().Values(x => x.Name).From().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.ScalarAsync<string>();
             Assert.AreEqual(testPoco.Name, result);
         }

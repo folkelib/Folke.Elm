@@ -7,13 +7,16 @@ using System.Threading.Tasks;
 
 namespace Folke.Orm
 {
+    using Folke.Orm.Fluent;
+
     public interface IFolkeConnection : IDisposable
     {
         FolkeTransaction BeginTransaction();
 
-        FluentGenericQueryBuilder<T> QueryOver<T>() where T : class, new();
-        FluentGenericQueryBuilder<T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
-        FluentGenericQueryBuilder<T> Query<T>() where T : class, new();
+        FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>() where T : class, new();
+        FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
+
+        FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
 
         /// <summary>
@@ -34,6 +37,8 @@ namespace Folke.Orm
         T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
         void Save<T>(T value) where T : class, new();
         void Delete<T>(T value) where T : class, new();
+
+        FluentDeleteBuilder<T, FolkeTuple> Delete<T>() where T : class, new();
         T Refresh<T>(T value) where T : class, new();
         void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new();
         void CreateTable<T>(bool drop = false) where T : class, new();
