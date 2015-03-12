@@ -19,15 +19,5 @@
             }
             SubQuery(subQuery);
         }
-
-        private void SubQuery(Action<FluentSelectBuilder<T, TMe>> subQuery)
-        {
-            var queryBuilder = new BaseQueryBuilder(QueryBuilder);
-            var builder = new FluentSelectBuilder<T, TMe>(queryBuilder);
-            subQuery(builder);
-            QueryBuilder.Append(" (");
-            QueryBuilder.Append(queryBuilder.Sql);
-            QueryBuilder.Append(")");
-        }
     }
 }

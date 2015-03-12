@@ -50,7 +50,7 @@ namespace Folke.Orm
         public static string GetColumnName(MemberInfo propertyInfo)
         {
             var columnAttribute = propertyInfo.GetCustomAttribute<ColumnAttribute>();
-            if (columnAttribute == null)
+            if (columnAttribute == null || columnAttribute.Name == null)
             {
                 if (IsForeign(GetMemberType(propertyInfo)))
                 {

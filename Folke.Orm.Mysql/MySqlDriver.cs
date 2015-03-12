@@ -10,21 +10,9 @@ namespace Folke.Orm.Mysql
 {
     public class MySqlDriver : IDatabaseDriver
     {
-        public IDatabaseSettings Settings { get; private set; }
-
-        public MySqlDriver(IDatabaseSettings settings)
+        public virtual DbConnection CreateConnection(string connectionString)
         {
-            Settings = settings;
-        }
-
-        public MySqlDriver()
-        {
-        }
-
-        public DbConnection CreateConnection(string connectionString)
-        {
-            return new MySqlConnection(connectionString ?? "Server=" + Settings.Host + "; Database=" + Settings.Database + "; Uid=" + Settings.User +
-                               "; Pwd=" + Settings.Password);
+            return new MySqlConnection(connectionString);
         }
 
         public string GetSqlType(PropertyInfo property)
@@ -123,7 +111,7 @@ namespace Folke.Orm.Mysql
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
         {
-            return connection.Select<Tables>().All().From().Where(t => t.Name == connection.Database).List().Cast<TableDefinition>().ToList();
+            return connection.Select<Tables>().All().From().Where(t => t.Schema == connection.Database).List().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
         }
 
         public SqlStringBuilder CreateSqlStringBuilder()

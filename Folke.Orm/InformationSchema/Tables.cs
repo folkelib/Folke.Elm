@@ -1,11 +1,11 @@
 ﻿namespace Folke.Orm.InformationSchema
 {
     [Table("TABLES", Schema = "INFORMATION_SCHEMA")]
-    internal class Tables : TableDefinition
+    internal class Tables
     {
         [Column("TABLE_NAME")]
-        public override string Name { get; set; }
+        public string Name { get; set; }
         [Column("TABLE_SCHEMA")]
-        public override string Schema { get; set; }
+        public string Schema { get; set; }
     }
 }

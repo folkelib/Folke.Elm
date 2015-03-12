@@ -38,5 +38,12 @@
             QueryBuilder.Append("ASC");
             return this;
         }
+
+        public FluentOrderByBuilder<T, TMe, TU> OrderBy<TV>(Expression<Func<T, TV>> column)
+        {
+            QueryBuilder.AppendOrderBy();
+            QueryBuilder.AppendColumn(column.Body);
+            return this;
+        }
     }
 }

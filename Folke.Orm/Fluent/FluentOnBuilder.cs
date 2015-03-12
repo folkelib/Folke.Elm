@@ -32,5 +32,27 @@
         {
             return new FluentOrderByBuilder<T, TMe, TV>(QueryBuilder, expression);
         }
+
+        public FluentJoinBuilder<T, TMe, TV> InnerJoin<TV>(Expression<Func<T, TV>> tableExpression)
+        {
+            return new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.Inner);
+        }
+
+        public FluentWhereBuilder<T, TMe> Where(Expression<Func<T, bool>> expression)
+        {
+            return new FluentWhereBuilder<T, TMe>(QueryBuilder, expression);
+        }
+
+        public FluentOnBuilder<T, TMe, TU> LeftJoinOnId<TV>(Expression<Func<T, TV>> tableExpression)
+        {
+            var builder = new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.LeftOuter);
+            builder.OnId(tableExpression);
+            return this;
+        }
+
+        public FluentWhereSubQueryBuilder<T, TMe> WhereNotExists(Action<FluentSelectBuilder<T, TMe>> subQuery)
+        {
+            return new FluentWhereSubQueryBuilder<T, TMe>(QueryBuilder, subQuery, SubQueryType.NotExists);
+        }
     }
 }
