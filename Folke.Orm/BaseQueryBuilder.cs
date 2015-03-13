@@ -219,6 +219,10 @@ namespace Folke.Orm
                             aliasValue = callExpression.Method.Name + "()";
                         tableAlias = callExpression.Object;
                         break;
+                    case ExpressionType.Convert:
+                        var convertExpression = (UnaryExpression) tableAlias;
+                        tableAlias = convertExpression.Operand;
+                        break;
                     default:
                         throw new Exception("Unexpected node type " + tableAlias.NodeType);
                 }
