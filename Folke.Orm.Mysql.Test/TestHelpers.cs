@@ -9,7 +9,7 @@ namespace Folke.Orm.Mysql.Test
         {
             get
             {
-                if (Environment.GetEnvironmentVariable("CI") == "True")
+                if (Environment.GetEnvironmentVariable("CI") != null)
                 {
                     return ConfigurationManager.ConnectionStrings["CI"].ConnectionString;
                 }
