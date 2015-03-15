@@ -80,7 +80,7 @@ namespace Folke.Orm.Mysql.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
+            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
             connection.CreateTable<TestMultiPoco>(drop: true);

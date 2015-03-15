@@ -1,11 +1,9 @@
-﻿using System.Configuration;
-using Folke.Orm.Mysql;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 
-namespace Folke.Orm.Test
+namespace Folke.Orm.Mysql.Test
 {
     [TestFixture]
     public class TestManyToManyHelpers
@@ -47,7 +45,7 @@ namespace Folke.Orm.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
+            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
             connection.CreateOrUpdateTable<ParentClass>();
             connection.CreateOrUpdateTable<ChildClass>();
             connection.CreateOrUpdateTable<LinkClass>();

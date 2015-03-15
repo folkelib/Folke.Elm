@@ -14,7 +14,7 @@ namespace Folke.Orm.Mysql.Test
         public void Setup()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
+            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TestPoco>();
             connection.CreateOrUpdateTable<TestManyPoco>();

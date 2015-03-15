@@ -53,7 +53,7 @@
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
+            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestPoco>(drop: true);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestManyPoco>(drop: true);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestMultiPoco>(drop: true);
