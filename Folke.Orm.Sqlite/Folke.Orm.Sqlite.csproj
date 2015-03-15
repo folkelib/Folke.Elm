@@ -50,6 +50,7 @@
     <Compile Include="SqliteStringBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Folke.Orm.Sqlite.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

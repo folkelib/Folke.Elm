@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Folke.Orm.Mysql")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A Mysql adapter for Folke.Orm")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Folke")]
 [assembly: AssemblyProduct("Folke.Orm.Mysql")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]

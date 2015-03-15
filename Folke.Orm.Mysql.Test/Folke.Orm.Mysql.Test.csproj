@@ -49,6 +49,7 @@
     <Compile Include="IntegrationTestWithGuid.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestFluentGenericQueryBuilder.cs" />
+    <Compile Include="TestHelpers.cs" />
     <Compile Include="TestManyToManyHelpers.cs" />
     <Compile Include="TestQueryBuilderExtensions.cs" />
     <Compile Include="TestSchemaUpdater.cs" />
