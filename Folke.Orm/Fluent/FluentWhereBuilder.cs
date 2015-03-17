@@ -24,9 +24,9 @@
             return new FluentGroupByBuilder<T, TMe, TU>(QueryBuilder, column);
         }
 
-        public FluentOrderByBuilder<T, TMe, TV> OrderBy<TV>(Expression<Func<T, TV>> column)
+        public FluentOrderByBuilder<T, TMe> OrderBy<TV>(Expression<Func<T, object>> column)
         {
-            return new FluentOrderByBuilder<T, TMe, TV>(QueryBuilder, column);
+            return new FluentOrderByBuilder<T, TMe>(QueryBuilder, column);
         }
 
         public FluentLimitBuilder<T, TMe> Limit(int offset, int count)

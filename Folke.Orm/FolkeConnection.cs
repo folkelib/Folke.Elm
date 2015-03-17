@@ -9,7 +9,7 @@ using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm
 {
-    using Folke.Orm.Fluent;
+    using Fluent;
 
     public class FolkeConnection : IFolkeConnection
     {
@@ -65,12 +65,12 @@ namespace Folke.Orm
             return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder<T>(this));
         }
 
-        public FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>() where T : class, new()
+        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new()
         {
-            return this.Select<T>().All().From();
+            return Select<T>().All().From();
         }
 
-        public FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
+        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             var query = new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
             query.All();
@@ -142,7 +142,7 @@ namespace Folke.Orm
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
         {
-            return this.Select<T>().All().From().Where(x => x.Id == id).Single();
+            return Select<T>().All().From().Where(x => x.Id == id).Single();
         }
 
         public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
@@ -225,7 +225,7 @@ namespace Folke.Orm
                     throw new Exception("Id must be 0");
             }
 
-            return this.InsertInto<T>().Values(value);
+            return InsertInto<T>().Values(value);
         }
 
         public void CreateTable<T>(bool drop = false) where T : class, new()
@@ -267,7 +267,7 @@ namespace Folke.Orm
             var typeMap = Mapper.GetTypeMapping(type);
 
             var columns =
-                this.QueryOver<KeyColumnUsage>()
+                QueryOver<KeyColumnUsage>()
                     .Where(c => c.ReferencedTableName == typeMap.TableName && c.ReferencedTableSchema == typeMap.TableSchema)
                     .List();
 
@@ -333,7 +333,7 @@ namespace Folke.Orm
             new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
         }
 
-        private FluentFromBuilder<T, FolkeTuple, T> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
+        private FluentFromBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             var query = Select<T>().All();
             foreach (var fetch in fetches)

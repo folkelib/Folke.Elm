@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Configuration;
 using NUnit.Framework;
 using Folke.Orm.Fluent;
 
@@ -412,7 +411,7 @@ namespace Folke.Orm.Mysql.Test
             var twoPoco = new TestPoco { Name = "Two" };
             connection.Save(twoPoco);
 
-            var query = new PreparedQueryBuilder<TestPoco, string>(q => q.SelectAll().From().Where((x, y) => x.Name == y.Item0));
+            var query = new PreparedQueryBuilder<TestPoco, string>(q => q.All().From().Where((x, y) => x.Name == y.Item0));
             var result = query.List(connection, "Two");
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("Two", result[0].Name);
@@ -421,7 +420,7 @@ namespace Folke.Orm.Mysql.Test
             Assert.AreEqual("One", result[0].Name);
         }
 
-        private readonly PreparedQueryBuilder<TestPoco, string> staticQuery = new PreparedQueryBuilder<TestPoco, string>(q => q.SelectAll().From().Where((x, y) => x.Name == y.Item0));
+        private readonly PreparedQueryBuilder<TestPoco, string> staticQuery = new PreparedQueryBuilder<TestPoco, string>(q => q.All().From().Where((x, y) => x.Name == y.Item0));
 
         [Test]
         public void PrepareStatic()

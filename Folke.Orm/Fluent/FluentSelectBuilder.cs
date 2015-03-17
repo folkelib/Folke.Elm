@@ -49,7 +49,7 @@
         [Obsolete("Use Values")]
         public FluentSelectBuilder<T, TMe> Select(params Expression<Func<T, object>>[] columns)
         {
-            return this.Values(columns);
+            return Values(columns);
         }
 
         /// <summary>Select all the columns of a given table </summary>
@@ -77,54 +77,54 @@
         [Obsolete("Use All()")]
         public FluentSelectBuilder<T, TMe> SelectAll()
         {
-            return this.All();
+            return All();
         }
 
         [Obsolete("Use All()")]
         public FluentSelectBuilder<T, TMe> SelectAll<TU>(Expression<Func<T, TU>> tableExpression)
         {
-            return this.All(tableExpression);
+            return All(tableExpression);
         }
 
         [Obsolete("Use All()")]
         public FluentSelectBuilder<T, TMe> AndAll()
         {
-            return this.All();
+            return All();
         }
 
         [Obsolete("Use All()")]
         public FluentSelectBuilder<T, TMe> AndAll<TU>(Expression<Func<T, TU>> tableExpression)
         {
-            return this.All(tableExpression);
+            return All(tableExpression);
         }
 
         /// <summary>Chose the bean table as the table to select from</summary>
-        /// <returns> The <see cref="FluentFromBuilder{T,TMe,TU}"/>. </returns>
-        public FluentFromBuilder<T, TMe, T> From()
+        /// <returns> The <see cref="FluentFromBuilder{T,TMe}"/>. </returns>
+        public FluentFromBuilder<T, TMe> From()
         {
-            return new FluentFromBuilder<T, TMe, T>(QueryBuilder);
+            return new FluentFromBuilder<T, TMe>(QueryBuilder);
         }
 
-        public FluentFromBuilder<T, TMe, TU> From<TU>(Expression<Func<T, TU>> tableAlias)
+        public FluentFromBuilder<T, TMe> From(Expression<Func<T, object>> tableAlias)
         {
-            return new FluentFromBuilder<T, TMe, TU>(QueryBuilder, tableAlias);
+            return new FluentFromBuilder<T, TMe>(QueryBuilder, tableAlias);
         }
 
         [Obsolete("Use From()")]
-        public FluentFromBuilder<T, TMe, TU> AndFrom<TU>(Expression<Func<T, TU>> tableAlias)
+        public FluentFromBuilder<T, TMe> AndFrom(Expression<Func<T, object>> tableAlias)
         {
-            return this.From(tableAlias);
+            return From(tableAlias);
         }
 
-        public FluentFromBuilder<T, TMe, T> FromSubQuery(Action<FluentSelectBuilder<T, TMe>> subQuery)
+        public FluentFromBuilder<T, TMe> FromSubQuery(Action<FluentSelectBuilder<T, TMe>> subQuery)
         {
-            return new FluentFromBuilder<T, TMe, T>(QueryBuilder, subQuery);
+            return new FluentFromBuilder<T, TMe>(QueryBuilder, subQuery);
         }
 
         [Obsolete("Use CountAll()")]
         public FluentSelectBuilder<T, TMe> SelectCountAll()
         {
-            return this.CountAll();
+            return CountAll();
         }
 
         public FluentSelectBuilder<T, TMe> CountAll()

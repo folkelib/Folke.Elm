@@ -3,9 +3,9 @@
     using System;
     using System.Linq.Expressions;
 
-    public class FluentOrderByBuilder<T, TMe, TU> : FluentQueryableBuilder<T, TMe>
+    public class FluentOrderByBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>
     {
-        public FluentOrderByBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, TU>> expression)
+        public FluentOrderByBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, object>> expression)
             : base(queryBuilder)
         {
             queryBuilder.AppendOrderBy();
@@ -27,19 +27,19 @@
             return new FluentLimitBuilder<T, TMe>(QueryBuilder, offset, count);
         }
 
-        public FluentOrderByBuilder<T, TMe, TU> Desc()
+        public FluentOrderByBuilder<T, TMe> Desc()
         {
             QueryBuilder.Append("DESC");
             return this;
         }
 
-        public FluentOrderByBuilder<T, TMe, TU> Asc()
+        public FluentOrderByBuilder<T, TMe> Asc()
         {
             QueryBuilder.Append("ASC");
             return this;
         }
 
-        public FluentOrderByBuilder<T, TMe, TU> OrderBy<TV>(Expression<Func<T, TV>> column)
+        public FluentOrderByBuilder<T, TMe> OrderBy<TV>(Expression<Func<T, TV>> column)
         {
             QueryBuilder.AppendOrderBy();
             QueryBuilder.AppendColumn(column.Body);

@@ -3,21 +3,21 @@
     using System;
     using System.Linq.Expressions;
 
-    public class FluentJoinBuilder<T, TMe, TU> : FluentBaseBuilder<T, TMe>
+    public class FluentJoinBuilder<T, TMe> : FluentBaseBuilder<T, TMe>
     {
-        public FluentJoinBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, TU>> tableExpression, JoinType type) : base(queryBuilder)
+        public FluentJoinBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, object>> tableExpression, JoinType type) : base(queryBuilder)
         {
-            this.AppendJoin(type);
+            AppendJoin(type);
 
             QueryBuilder.AppendTable(tableExpression.Body);
         }
 
-        public FluentJoinBuilder(BaseQueryBuilder queryBuilder, Action<FluentSelectBuilder<T, TMe>> subQuery, Expression<Func<TU>> tableAlias, JoinType type) : base(queryBuilder)
+        public FluentJoinBuilder(BaseQueryBuilder queryBuilder, Action<FluentSelectBuilder<T, TMe>> subQuery, Expression<Func<object>> tableAlias, JoinType type) : base(queryBuilder)
         {
-            this.AppendJoin(type);
+            AppendJoin(type);
             SubQuery(subQuery);
             QueryBuilder.Append("AS");
-            var table = QueryBuilder.RegisterTable(typeof(TU), QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
+            var table = QueryBuilder.RegisterTable(tableAlias.ReturnType, QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
             QueryBuilder.Append(table.name);
         }
 
@@ -26,25 +26,25 @@
             switch (type)
             {
                 case JoinType.LeftOuter:
-                    this.QueryBuilder.Append("LEFT JOIN");
+                    QueryBuilder.Append("LEFT JOIN");
                     break;
                 case JoinType.RightOuter:
-                    this.QueryBuilder.Append("RIGHT JOIN");
+                    QueryBuilder.Append("RIGHT JOIN");
                     break;
                 case JoinType.Inner:
-                    this.QueryBuilder.Append("INNER JOIN");
+                    QueryBuilder.Append("INNER JOIN");
                     break;
             }
         }
 
-        public FluentOnBuilder<T, TMe, TU> On(Expression<Func<T, bool>> expression)
+        public FluentOnBuilder<T, TMe> On(Expression<Func<T, bool>> expression)
         {
-            return new FluentOnBuilder<T, TMe, TU>(QueryBuilder, expression);
+            return new FluentOnBuilder<T, TMe>(QueryBuilder, expression);
         }
 
-        public FluentOnBuilder<T, TMe, TV> OnId<TV>(Expression<Func<T, TV>> expression)
+        public FluentOnBuilder<T, TMe> OnId(Expression<Func<T, object>> expression)
         {
-            return new FluentOnBuilder<T, TMe, TV>(QueryBuilder, expression);
+            return new FluentOnBuilder<T, TMe>(QueryBuilder, expression);
         }
     }
 }

@@ -13,8 +13,8 @@ namespace Folke.Orm
     {
         FolkeTransaction BeginTransaction();
 
-        FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>() where T : class, new();
-        FluentFromBuilder<T, FolkeTuple, T> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
+        FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new();
+        FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
 
         FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();

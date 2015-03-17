@@ -3,7 +3,7 @@
     using System;
     using System.Linq.Expressions;
 
-    public class FluentFromBuilder<T, TMe, TU> : FluentQueryableBuilder<T, TMe>
+    public class FluentFromBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>
     {
         public FluentFromBuilder(BaseQueryBuilder baseQueryBuilder)
             : base(baseQueryBuilder)
@@ -12,7 +12,7 @@
             QueryBuilder.AppendTable(typeof(T), (string)null);
         }
 
-        public FluentFromBuilder(BaseQueryBuilder baseQueryBuilder, Expression<Func<T, TU>> expression)
+        public FluentFromBuilder(BaseQueryBuilder baseQueryBuilder, Expression<Func<T, object>> expression)
             : base(baseQueryBuilder)
         {
             QueryBuilder.AppendFrom();
@@ -23,7 +23,7 @@
             : base(baseQueryBuilder)
         {
             QueryBuilder.AppendFrom();
-            this.SubQuery(subQuery);
+            SubQuery(subQuery);
             QueryBuilder.Append("AS");
 
             var table = QueryBuilder.RegisterTable(typeof(T), null);
@@ -32,9 +32,8 @@
 
         /// <summary> Chose the bean table as the table to select from </summary>
         /// <param name="tableAlias"> The table Alias. </param>
-        /// <typeparam name="TV">The from table type</typeparam>
-        /// <returns> The <see cref="FluentFromBuilder{T,TMe,TU}"/>.  </returns>
-        public FluentFromBuilder<T, TMe, TU> From<TV>(Expression<Func<T, TV>> tableAlias)
+        /// <returns> The <see cref="FluentFromBuilder{T,TMe}"/>.  </returns>
+        public FluentFromBuilder<T, TMe> From(Expression<Func<T, object>> tableAlias)
         {
             QueryBuilder.AppendFrom();
             QueryBuilder.AppendTable(tableAlias.Body);
@@ -42,36 +41,36 @@
         }
 
         [Obsolete("Use From()")]
-        public FluentFromBuilder<T, TMe, TU> AndFrom<TV>(Expression<Func<T, TV>> tableAlias)
+        public FluentFromBuilder<T, TMe> AndFrom(Expression<Func<T, object>> tableAlias)
         {
             return From(tableAlias);
         }
 
-        public FluentJoinBuilder<T, TMe, TV> LeftJoin<TV>(Expression<Func<T, TV>> tableExpression)
+        public FluentJoinBuilder<T, TMe> LeftJoin(Expression<Func<T, object>> tableExpression)
         {
-            return new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.LeftOuter);
+            return new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
         }
 
-        public FluentFromBuilder<T, TMe, TU> LeftJoinOnId<TV>(Expression<Func<T, TV>> tableExpression)
+        public FluentFromBuilder<T, TMe> LeftJoinOnId(Expression<Func<T, object>> tableExpression)
         {
-            var builder = new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.LeftOuter);
+            var builder = new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
             builder.OnId(tableExpression);
             return this;
         }
 
-        public FluentJoinBuilder<T, TMe, TV> RightJoin<TV>(Expression<Func<T, TV>> tableExpression)
+        public FluentJoinBuilder<T, TMe> RightJoin(Expression<Func<T, object>> tableExpression)
         {
-            return new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.RightOuter);
+            return new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.RightOuter);
         }
 
-        public FluentJoinBuilder<T, TMe, TV> InnerJoin<TV>(Expression<Func<T, TV>> tableExpression)
+        public FluentJoinBuilder<T, TMe> InnerJoin(Expression<Func<T, object>> tableExpression)
         {
-            return new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, tableExpression, JoinType.Inner);
+            return new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.Inner);
         }
 
-        public FluentJoinBuilder<T, TMe, TV> InnerJoinSubQuery<TV>(Action<FluentSelectBuilder<T, TMe>> subqueryFactory, Expression<Func<TV>> tableAlias)
+        public FluentJoinBuilder<T, TMe> InnerJoinSubQuery(Action<FluentSelectBuilder<T, TMe>> subqueryFactory, Expression<Func<object>> tableAlias)
         {
-            return new FluentJoinBuilder<T, TMe, TV>(QueryBuilder, subqueryFactory, tableAlias, JoinType.Inner);
+            return new FluentJoinBuilder<T, TMe>(QueryBuilder, subqueryFactory, tableAlias, JoinType.Inner);
         }
 
         public FluentWhereBuilder<T, TMe> Where(Expression<Func<T, bool>> expression)
@@ -94,9 +93,9 @@
             return new FluentWhereSubQueryBuilder<T, TMe>(QueryBuilder, subQuery, SubQueryType.NotExists);
         }
 
-        public FluentOrderByBuilder<T, TMe, TV> OrderBy<TV>(Expression<Func<T, TV>> column)
+        public FluentOrderByBuilder<T, TMe> OrderBy(Expression<Func<T, object>> column)
         {
-            return new FluentOrderByBuilder<T, TMe, TV>(QueryBuilder, column);
+            return new FluentOrderByBuilder<T, TMe>(QueryBuilder, column);
         }
     }
 }

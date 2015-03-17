@@ -11,10 +11,10 @@
         }
 
         /// <summary>Chose the bean table as the table to select from</summary>
-        /// <returns> The <see cref="FluentFromBuilder{T,TMe,TU}"/>. </returns>
-        public FluentFromBuilder<T, TMe, T> From()
+        /// <returns> The <see cref="FluentFromBuilder{T,TMe}"/>. </returns>
+        public FluentFromBuilder<T, TMe> From()
         {
-            return new FluentFromBuilder<T, TMe, T>(baseQueryBuilder);
+            return new FluentFromBuilder<T, TMe>(baseQueryBuilder);
         }
     }
 }
