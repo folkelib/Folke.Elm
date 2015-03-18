@@ -78,7 +78,12 @@ namespace Folke.Orm
             /// <summary>
             /// In a GROUP BY part.
             /// </summary>
-            GroupBy
+            GroupBy,
+
+            /// <summary>
+            /// In the middle of a WhereExpression in parenthesis
+            /// </summary>
+            WhereExpression
         }
 
         protected SqlStringBuilder query;
@@ -690,7 +695,7 @@ namespace Folke.Orm
             currentContext = ContextEnum.Delete;
         }
 
-        internal void Where()
+        internal void AppendWhere()
         {
             Append(currentContext == ContextEnum.Where ? "AND" : "WHERE");
             currentContext = ContextEnum.Where;
@@ -776,6 +781,18 @@ namespace Folke.Orm
                 query.Append(',');
             }
             currentContext = ContextEnum.OrderBy;
+        }
+
+        internal void AppendOr()
+        {
+            if (currentContext == ContextEnum.WhereExpression)
+            {
+                Append("OR ");
+            }
+            else
+            {
+                currentContext = ContextEnum.WhereExpression;
+            }
         }
 
         internal void AppendGroupBy()

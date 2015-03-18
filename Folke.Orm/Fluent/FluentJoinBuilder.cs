@@ -42,6 +42,11 @@
             return new FluentOnBuilder<T, TMe>(QueryBuilder, expression);
         }
 
+        public FluentOnBuilder<T, TMe> On(Expression<Func<T, TMe, bool>> expression)
+        {
+            return new FluentOnBuilder<T, TMe>(QueryBuilder, expression);
+        }
+
         public FluentOnBuilder<T, TMe> OnId(Expression<Func<T, object>> expression)
         {
             return new FluentOnBuilder<T, TMe>(QueryBuilder, expression);

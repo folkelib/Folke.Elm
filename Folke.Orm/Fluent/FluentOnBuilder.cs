@@ -12,6 +12,13 @@
             queryBuilder.AddExpression(expression.Body);
         }
 
+        public FluentOnBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, TMe, bool>> expression)
+            : base(queryBuilder)
+        {
+            queryBuilder.Append("ON ");
+            queryBuilder.AddExpression(expression.Body);
+        }
+
         public FluentOnBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, object>> expression)
             : base(queryBuilder)
         {

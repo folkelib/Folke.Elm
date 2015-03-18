@@ -83,6 +83,25 @@ namespace Folke.Orm.Mysql.Test
             Assert.AreEqual("SELECT MAX( `t`.`Id`)", queryBuilder.Sql);
         }
 
+        [Test]
+        public void FluentGenericQueryBuilder_WhereSubAfterWhere()
+        {
+            fluentSelectBuilder.All()
+                .From()
+                .Where(x => x.Text == "fake")
+                .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Text`= @Item0) AND (( `t`.`Text`= @Item1) OR ( `t`.`Text`= @Item2) )", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_WhereSub()
+        {
+            fluentSelectBuilder.All()
+                .From()
+                .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE (( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1) )", queryBuilder.Sql);
+        }
+
         public class FakeClass : IFolkeTable
         {
             public int Id { get; set; }

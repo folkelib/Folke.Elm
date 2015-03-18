@@ -59,6 +59,7 @@
     <Compile Include="Fluent\FluentQueryableBuilder.cs" />
     <Compile Include="Fluent\FluentUpdateBuilder.cs" />
     <Compile Include="Fluent\FluentWhereBuilder.cs" />
+    <Compile Include="Fluent\FluentWhereExpressionBuilder.cs" />
     <Compile Include="Fluent\FluentWhereSubQueryBuilder.cs" />
     <Compile Include="Fluent\JoinType.cs" />
     <Compile Include="Fluent\SubQueryType.cs" />

@@ -93,5 +93,10 @@ namespace Folke.Orm
         {
             return GetQuery(connection.Driver).SingleOrDefault(connection, param0, param1);
         }
+
+        public T1 Scalar<T1>(FolkeConnection connection, TU param0, TV param1)
+        {
+            return GetQuery(connection.Driver).Scalar<T1>(connection, param0, param1);
+        }
     }
 }

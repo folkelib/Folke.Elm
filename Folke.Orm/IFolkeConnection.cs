@@ -18,6 +18,7 @@ namespace Folke.Orm
 
         FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
+        FluentUpdateBuilder<T, FolkeTuple> Update<T>();
 
         /// <summary>
         /// Loads an object by its id. Throws an error if the object can not be found.

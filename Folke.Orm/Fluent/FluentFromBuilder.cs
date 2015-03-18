@@ -97,5 +97,15 @@
         {
             return new FluentOrderByBuilder<T, TMe>(QueryBuilder, column);
         }
+
+        public FluentFromBuilder<T, TMe> WhereSub(Action<FluentWhereExpressionBuilder<T, TMe>> expression)
+        {
+            QueryBuilder.AppendWhere();
+            QueryBuilder.Append("(");
+            var whereExpressionBuilder = new FluentWhereExpressionBuilder<T, TMe>(QueryBuilder);
+            expression(whereExpressionBuilder);
+            QueryBuilder.Append(")");
+            return this;
+        }
     }
 }

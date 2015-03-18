@@ -7,7 +7,7 @@
         public FluentWhereSubQueryBuilder(BaseQueryBuilder queryBuilder, Action<FluentSelectBuilder<T, TMe>> subQuery, SubQueryType type)
             : base(queryBuilder)
         {
-            QueryBuilder.Where();
+            QueryBuilder.AppendWhere();
             switch (type)
             {
                 case SubQueryType.Exists:
