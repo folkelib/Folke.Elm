@@ -1,7 +1,9 @@
 Folke.Orm
 =========
 
- Object-Relational Mapping library written in C#
+Light Object-Relational Mapping library written in C#.
+
+[![Build status](https://ci.appveyor.com/api/projects/status/8kij487umeteeqes?svg=true)](https://ci.appveyor.com/project/Sidoine/orm)
 
 ##Usage
 
@@ -46,6 +48,6 @@ public class Example
 
 ##Limitations
 
-* Only MySQL
-* Primary key must be int Id
+* Only MySQL and Sqlite
+* In development, not feature complete but usable.
 
