@@ -1,6 +1,8 @@
 Folke.Orm
 =========
 
+[![Join the chat at https://gitter.im/folkelib/orm](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/folkelib/orm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Light Object-Relational Mapping library written in C#.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/8kij487umeteeqes?svg=true)](https://ci.appveyor.com/project/Sidoine/orm)
