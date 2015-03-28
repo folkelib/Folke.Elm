@@ -51,11 +51,10 @@
             return new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
         }
 
-        public FluentFromBuilder<T, TMe> LeftJoinOnId(Expression<Func<T, object>> tableExpression)
+        public FluentOnBuilder<T, TMe> LeftJoinOnId(Expression<Func<T, object>> tableExpression)
         {
             var builder = new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
-            builder.OnId(tableExpression);
-            return this;
+            return builder.OnId(tableExpression);
         }
 
         public FluentJoinBuilder<T, TMe> RightJoin(Expression<Func<T, object>> tableExpression)

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Folke.Orm
+﻿namespace Folke.Orm
 {
     public class FolkeTuple
     {
@@ -26,5 +20,13 @@ namespace Folke.Orm
         public T0 Item0 { get; set; }
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
+    }
+
+    public class FolkeTuple<T0, T1, T2, T3>
+    {
+        public T0 Item0 { get; set; }
+        public T1 Item1 { get; set; }
+        public T2 Item2 { get; set; }
+        public T3 Item3 { get; set; }
     }
 }

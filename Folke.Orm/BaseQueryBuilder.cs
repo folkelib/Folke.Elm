@@ -378,6 +378,9 @@ namespace Folke.Orm
                     case ExpressionType.Multiply:
                         query.Append('*');
                         break;
+                    case ExpressionType.NotEqual:
+                        query.Append("<>");
+                        break;
                     case ExpressionType.OrElse:
                         query.Append(" OR ");
                         break;

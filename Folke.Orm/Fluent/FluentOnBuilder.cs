@@ -35,6 +35,13 @@
             return this;
         }
 
+        public FluentOnBuilder<T, TMe> AndOn(Expression<Func<T, TMe, bool>> expression)
+        {
+            QueryBuilder.Append(" AND ");
+            QueryBuilder.AddExpression(expression.Body);
+            return this;
+        }
+
         public FluentOrderByBuilder<T, TMe> OrderBy(Expression<Func<T, object>> expression)
         {
             return new FluentOrderByBuilder<T, TMe>(QueryBuilder, expression);
@@ -50,6 +57,11 @@
             return new FluentWhereBuilder<T, TMe>(QueryBuilder, expression);
         }
 
+        public FluentWhereBuilder<T, TMe> Where(Expression<Func<T, TMe, bool>> expression)
+        {
+            return new FluentWhereBuilder<T, TMe>(QueryBuilder, expression);
+        }
+
         public FluentOnBuilder<T, TMe> LeftJoinOnId(Expression<Func<T, object>> tableExpression)
         {
             var builder = new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
@@ -57,9 +69,21 @@
             return this;
         }
 
+        public FluentOnBuilder<T, TMe> InnerJoinOnId(Expression<Func<T, object>> tableExpression)
+        {
+            var builder = new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.Inner);
+            builder.OnId(tableExpression);
+            return this;
+        }
+
         public FluentWhereSubQueryBuilder<T, TMe> WhereNotExists(Action<FluentSelectBuilder<T, TMe>> subQuery)
         {
             return new FluentWhereSubQueryBuilder<T, TMe>(QueryBuilder, subQuery, SubQueryType.NotExists);
+        }
+
+        public FluentJoinBuilder<T, TMe> LeftJoin(Expression<Func<T, object>> tableExpression)
+        {
+            return new FluentJoinBuilder<T, TMe>(QueryBuilder, tableExpression, JoinType.LeftOuter);
         }
     }
 }
