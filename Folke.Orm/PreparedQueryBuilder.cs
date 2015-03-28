@@ -173,4 +173,41 @@ namespace Folke.Orm
             return GetQuery(connection.Driver).Scalar<T1>(connection, param0, param1, param2, param3);
         }
     }
+
+    public class PreparedQueryBuilder<T, TU, TV, TW, TX, TY>
+        where T : class, new()
+    {
+        protected FluentSelectBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>> query;
+        private readonly Func<FluentSelectBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>>, FluentQueryableBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>>> prepare;
+
+        public PreparedQueryBuilder(Func<FluentSelectBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>>, FluentQueryableBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>>> prepare)
+        {
+            this.prepare = prepare;
+        }
+
+        private FluentQueryableBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>> GetQuery(IDatabaseDriver driver)
+        {
+            if (query == null)
+            {
+                query = new FluentSelectBuilder<T, FolkeTuple<TU, TV, TW, TX, TY>>(driver);
+                prepare.Invoke(query);
+            }
+            return query;
+        }
+
+        public IList<T> List(IFolkeConnection connection, TU param0, TV param1, TW param2, TX param3, TY param4)
+        {
+            return GetQuery(connection.Driver).List(connection, param0, param1, param2, param3, param4);
+        }
+
+        public T SingleOrDefault(IFolkeConnection connection, TU param0, TV param1, TW param2, TX param3, TY param4)
+        {
+            return GetQuery(connection.Driver).SingleOrDefault(connection, param0, param1, param2, param3, param4);
+        }
+
+        public T1 Scalar<T1>(FolkeConnection connection, TU param0, TV param1, TW param2, TX param3, TY param4)
+        {
+            return GetQuery(connection.Driver).Scalar<T1>(connection, param0, param1, param2, param3, param4);
+        }
+    }
 }
