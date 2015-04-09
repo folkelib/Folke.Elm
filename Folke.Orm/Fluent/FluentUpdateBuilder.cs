@@ -24,18 +24,18 @@
 
         public FluentUpdateBuilder<T, TMe> SetAll(T value)
         {
-            var type = value.GetType();
             var table = QueryBuilder.DefaultTable;
-            foreach (var property in type.GetProperties())
+            var typeMapping = table.Mapping;
+            foreach (var property in typeMapping.Columns.Values)
             {
-                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
+                if (property.Readonly)
                     continue;
 
                 QueryBuilder.AppendSet();
             
                 QueryBuilder.AppendColumn(table.name, property);
                 QueryBuilder.Append("=");
-                QueryBuilder.AppendParameter(property.GetValue(value));
+                QueryBuilder.AppendParameter(property.PropertyInfo.GetValue(value));
             }
 
             return this;

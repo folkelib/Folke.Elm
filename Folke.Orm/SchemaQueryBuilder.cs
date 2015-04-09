@@ -1,51 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Folke.Orm.InformationSchema;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
-    public class SchemaQueryBuilder<T> : BaseQueryBuilder where T : class, new()
+    public class SchemaQueryBuilder<T> : BaseQueryBuilder<T> where T : class, new()
     {
         public SchemaQueryBuilder(FolkeConnection connection):base(connection)
         {
-
         }
 
-        private void AppendColumnName(PropertyInfo property)
+        private void AppendColumnName(PropertyMapping property)
         {
-            query.AppendSymbol(TableHelpers.GetColumnName(property));
+            query.AppendSymbol(property.ColumnName);
         }
 
-        private void AppendColumn(PropertyInfo property)
+        private void AppendColumn(PropertyMapping property)
         {
-            var attributes = property.GetCustomAttribute<ColumnAttribute>();
             AppendColumnName(property);
             query.Append(" ");
-            if (TableHelpers.IsForeign(property.PropertyType))
+
+            if (property.Reference != null)
             {
-                var foreignPrimaryKey = TableHelpers.GetKey(property.PropertyType);
-                query.Append(Connection.Driver.GetSqlType(foreignPrimaryKey));
+                var foreignPrimaryKey = property.Reference.Key;
+                query.Append(Connection.Driver.GetSqlType(foreignPrimaryKey.PropertyInfo, foreignPrimaryKey.MaxLength));
             }
-            else if (attributes != null && attributes.MaxLength != 0)
+            else if (property.MaxLength != 0)
             {
-                if (property.PropertyType == typeof(string))
+                if (property.PropertyInfo.PropertyType == typeof(string))
                 {
-                    if (attributes.MaxLength > 255)
+                    if (property.MaxLength > 255)
                         query.Append("TEXT");
                     else
-                        query.Append("VARCHAR(" + attributes.MaxLength + ")");
+                        query.Append("VARCHAR(" + property.MaxLength + ")");
                 }
                 else
-                    throw new Exception("MaxLength attribute not supported for " + property.PropertyType);
+                    throw new Exception("MaxLength attribute not supported for " + property.PropertyInfo.PropertyType);
             }
             else
-                query.Append(Connection.Driver.GetSqlType(property));
-            if (TableHelpers.IsKey(property))
+                query.Append(Connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength));
+
+            if (property.IsKey)
             {
                 query.Append(" PRIMARY KEY");
-                if (TableHelpers.IsAutomatic(property))
+                if (property.IsAutomatic)
                 {
                     query.AppendAutoIncrement();
                 }
@@ -69,31 +69,29 @@ namespace Folke.Orm
             }
         }
 
-        private void AppendForeignKey(PropertyInfo column)
+        private void AppendForeignKey(PropertyMapping column)
         {
-            var attribute = column.GetCustomAttribute<ColumnAttribute>();
-
             query.Append(" ");
             query.Append("FOREIGN KEY (");
             AppendColumnName(column);
             query.Append(") REFERENCES ");
-            AppendTableName(column.PropertyType);
+            AppendTableName(column.Reference);
             query.Append("(");
-            query.Append(TableHelpers.GetKeyColumName(column.PropertyType));
+            query.Append(column.Reference.Key.ColumnName);
             query.Append(")");
-            if (attribute!=null && attribute.OnDelete!= ConstraintEventEnum.Restrict)
+            if (column.OnDelete!= ConstraintEventEnum.Restrict)
             {
                 query.Append(" ON DELETE ");
-                query.Append(GetConstraintEventString(attribute.OnDelete));
+                query.Append(GetConstraintEventString(column.OnDelete));
             }
-            if (attribute != null && attribute.OnUpdate != ConstraintEventEnum.Restrict)
+            if (column.OnUpdate != ConstraintEventEnum.Restrict)
             {
                 query.Append(" ON UPDATE ");
-                query.Append(GetConstraintEventString(attribute.OnUpdate));
+                query.Append(GetConstraintEventString(column.OnUpdate));
             }
         }
 
-        private void AppendIndex(PropertyInfo column, string name)
+        private void AppendIndex(PropertyMapping column, string name)
         {
             query.Append(" INDEX ");
             query.AppendSymbol(name);
@@ -107,49 +105,47 @@ namespace Folke.Orm
             return CreateTable(typeof(T));
         }
 
-        private static bool DoesForeignTableExist(PropertyInfo property, IEnumerable<string> existingTables)
+        private static bool DoesForeignTableExist(PropertyMapping property, IEnumerable<string> existingTables)
         {
-            return existingTables == null || !TableHelpers.IsForeign(property.PropertyType) || existingTables.Any(t => t == property.PropertyType.Name.ToLower());
+            return existingTables == null || property.Reference == null || existingTables.Any(t => t == property.Reference.TableName.ToLower());
         }
 
         public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
         {
+            var mapping = Mapper.GetTypeMapping(type);
             query.Append("CREATE TABLE ");
-            query.AppendSymbol(TableHelpers.GetTableName(type));
+            query.AppendSymbol(mapping.TableName);
             query.Append(" (");
-            foreach (var property in type.GetProperties())
-            {
-                if (TableHelpers.IsIgnored(property.PropertyType))
-                    continue;
 
-                if (!DoesForeignTableExist(property, existingTables))
+            foreach (var column in mapping.Columns.Values)
+            {
+                if (!DoesForeignTableExist(column, existingTables))
                     continue;
 
                 AddComma();
-                AppendColumn(property);
+                AppendColumn(column);
             }
 
-            foreach (var property in type.GetProperties())
+            foreach (var property in mapping.Columns.Values)
             {
                 if (!DoesForeignTableExist(property, existingTables))
                     continue;
 
-                var attribute = property.GetCustomAttribute<ColumnAttribute>();
-                if (attribute != null && attribute.Index != null)
+                if (property.Index != null)
                 {
                     AddComma();
-                    AppendIndex(property, attribute.Index);
+                    AppendIndex(property, property.Index);
                 }
-                else if (TableHelpers.IsForeign(property.PropertyType))
+                else if (property.Reference != null)
                 {
                     AddComma();
-                    AppendIndex(property, property.Name);
+                    AppendIndex(property, property.ColumnName);
                 }
             }
 
-            foreach (var property in type.GetProperties())
+            foreach (var property in mapping.Columns.Values)
             {
-                if (TableHelpers.IsForeign(property.PropertyType) && DoesForeignTableExist(property, existingTables))
+                if (property.Reference != null && DoesForeignTableExist(property, existingTables))
                 {
                     AddComma();
                     AppendForeignKey(property);
@@ -181,11 +177,11 @@ namespace Folke.Orm
         internal SchemaQueryBuilder<T> AlterTable(Type type)
         {
             query.Append("ALTER TABLE ");
-            query.AppendSymbol(TableHelpers.GetTableName(type));
+            query.AppendSymbol(Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 
-        internal void AddColumn(PropertyInfo property)
+        internal void AddColumn(PropertyMapping property)
         {
             query.Append("ADD COLUMN ");
             AppendColumn(property);
@@ -209,15 +205,12 @@ namespace Folke.Orm
         internal bool AlterColumns(Type type, IList<ColumnDefinition> columns)
         {
             bool changes = false;
+            var mapping = Mapper.GetTypeMapping(type);
             
- 	        foreach (var property in type.GetProperties())
+ 	        foreach (var property in mapping.Columns.Values)
             {
-                if (TableHelpers.IsIgnored(property.PropertyType))
-                    continue;
-
-                var attribute = property.GetCustomAttribute<ColumnAttribute>();
-                string columnName = TableHelpers.GetColumnName(property);
-                bool foreign = TableHelpers.IsForeign(property.PropertyType);
+                string columnName = property.ColumnName;
+                bool foreign = property.Reference != null;
                 
                 var existingColumn = columns.SingleOrDefault(c => c.ColumnName == columnName);
                 if (existingColumn == null)
@@ -225,17 +218,17 @@ namespace Folke.Orm
                     AddComma();
                     AddColumn(property);
                     changes = true;
-                    if (attribute != null && attribute.Index != null)
+                    if (property.Index != null)
                     {
                         AddComma();
                         query.Append("ADD ");
-                        AppendIndex(property, attribute.Index);
+                        AppendIndex(property, property.Index);
                     }
                     else if (foreign)
                     {
                         AddComma();
                         query.Append("ADD ");
-                        AppendIndex(property, property.Name);
+                        AppendIndex(property, property.ColumnName);
                     }
 
                     if (foreign)
@@ -247,7 +240,7 @@ namespace Folke.Orm
                 }
                 else
                 {
-                    var newType = foreign ? "INT" : Connection.Driver.GetSqlType(property);
+                    var newType = foreign ? "INT" : Connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength);
                     if (!Connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
                         AddComma();

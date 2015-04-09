@@ -5,7 +5,7 @@
         public FluentInsertIntoBuilder(BaseQueryBuilder baseQueryBuilder) : base(baseQueryBuilder)
         {
             baseQueryBuilder.Append("INSERT INTO");
-            baseQueryBuilder.AppendTableName(typeof(T));
+            baseQueryBuilder.AppendTableName(baseQueryBuilder.Mapper.GetTypeMapping(typeof(T)));
         }
 
         public FluentInsertIntoBuilder<T, TMe> Values(T value)
@@ -13,9 +13,10 @@
             baseQueryBuilder.Append(" (");
             bool first = true;
             var type = value.GetType();
-            foreach (var property in type.GetProperties())
+            var typeMapping = baseQueryBuilder.Mapper.GetTypeMapping(type);
+            foreach (var property in typeMapping.Columns.Values)
             {
-                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
+                if (/*TableHelpers.IsIgnored(property.PropertyType) || */ property.Readonly)
                     continue;
                 if (first)
                     first = false;
@@ -26,15 +27,15 @@
 
             baseQueryBuilder.Append(") VALUES (");
             first = true;
-            foreach (var property in type.GetProperties())
+            foreach (var property in typeMapping.Columns.Values)
             {
-                if (TableHelpers.IsIgnored(property.PropertyType) || TableHelpers.IsReadOnly(property))
+                if (property.Readonly)
                     continue;
                 if (first)
                     first = false;
                 else
                     baseQueryBuilder.Append(",");
-                baseQueryBuilder.AppendParameter(property.GetValue(value));
+                baseQueryBuilder.AppendParameter(property.PropertyInfo.GetValue(value));
             }
 
             baseQueryBuilder.Append(")");

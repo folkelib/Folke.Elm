@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Folke.Orm.Fluent;
+using Folke.Orm.Mapping;
 using NUnit.Framework;
 
 namespace Folke.Orm.Mysql.Test
@@ -15,7 +16,8 @@ namespace Folke.Orm.Mysql.Test
         public void Setup()
         {
             mySqlDriver = new MySqlDriver();
-            fluentSelectBuilder = new FluentSelectBuilder<FakeClass, FolkeTuple>(mySqlDriver);
+            var mapper = new Mapper();
+            fluentSelectBuilder = new FluentSelectBuilder<FakeClass, FolkeTuple>(mySqlDriver, mapper);
             queryBuilder = fluentSelectBuilder.QueryBuilder;
         }
 
@@ -61,8 +63,8 @@ namespace Folke.Orm.Mysql.Test
             fluentSelectBuilder.Values(x => x.Id, x => x.Text);
             Assert.AreEqual("SELECT `t`.`Id` , `t`.`Text`", queryBuilder.Sql);
             Assert.AreEqual(2, queryBuilder.SelectedFields.Count);
-            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Id")));
-            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Text")));
+            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
+            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
         }
 
         [Test]
@@ -71,9 +73,9 @@ namespace Folke.Orm.Mysql.Test
             fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
             Assert.AreEqual("SELECT `t`.`Id` , `t`.`Text` , `t1`.`Value`", queryBuilder.Sql);
             Assert.AreEqual(3, queryBuilder.SelectedFields.Count);
-            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Id")));
-            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeClass).GetProperty("Text")));
-            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.propertyInfo == typeof(FakeChildClass).GetProperty("Value")));
+            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
+            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
+            Assert.IsTrue(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeChildClass).GetProperty("Value")));
         }
 
         [Test]

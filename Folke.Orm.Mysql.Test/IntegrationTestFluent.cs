@@ -1,4 +1,6 @@
-﻿namespace Folke.Orm.Mysql.Test
+﻿using Folke.Orm.Mapping;
+
+namespace Folke.Orm.Mysql.Test
 {
     using System.Collections.Generic;
     using System.Configuration;
@@ -53,7 +55,8 @@
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
+            var mapper = new Mapper();
+            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestPoco>(drop: true);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestManyPoco>(drop: true);
             connection.CreateTable<IntegrationTestWithFolkeTable.TestMultiPoco>(drop: true);

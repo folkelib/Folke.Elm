@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Folke.Orm
 {
     internal class FolkeList<T> : IReadOnlyList<T>
-        where T : class, IFolkeTable, new()
+        where T : class, new()
     {
         private readonly Type parent;
         private readonly int parentId;
@@ -32,11 +32,15 @@ namespace Folke.Orm
                     var query = this.connection.Query<T>().All();
                     var joinTables = new List<BaseQueryBuilder.TableAlias>();
                     var queryBuilder = query.QueryBuilder;
+                    var type = typeof (T);
+                    var typeMapping = queryBuilder.Mapper.GetTypeMapping(type);
+
                     foreach (var join in joins)
                     {
                         var property = typeof(T).GetProperty(join);
                         queryBuilder.AppendSelect();
-                        joinTables.Add(queryBuilder.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
+                        //joinTables.Add(queryBuilder.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
+                        joinTables.Add(queryBuilder.AppendAllSelects(property.PropertyType, join));
                     }
 
                     queryBuilder.AppendFrom();
@@ -45,19 +49,19 @@ namespace Folke.Orm
                     foreach (var joinTable in joinTables)
                     {
                         var property = typeof(T).GetProperty(joinTable.alias);
-                        var joinKeyProperty = TableHelpers.GetKey(joinTable.type);
+                        var joinKeyProperty = joinTable.Mapping.Key;
                         queryBuilder.Append(" LEFT JOIN ");
-                        queryBuilder.AppendTable(joinTable.type, joinTable.alias);
+                        queryBuilder.AppendTable(joinTable.Mapping.Type, joinTable.alias);
                         queryBuilder.Append(" ON ");
                         queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
                         queryBuilder.Append(" = ");
-                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable });
+                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = queryBuilder.DefaultTable.Mapping.Columns[property.Name], Table = queryBuilder.DefaultTable });
                     }
 
                     bool first = true;
-                    foreach (var property in typeof(T).GetProperties())
+                    foreach (var property in typeMapping.Columns.Values)
                     {
-                        if (property.PropertyType == parent)
+                        if (property.PropertyInfo.PropertyType == parent)
                         {
                             queryBuilder.Append(first ? " WHERE " : " OR ");
                             first = false;

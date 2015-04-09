@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -21,17 +22,17 @@ namespace Folke.Orm
             this.fetches = fetches;
         }
 
-        private FluentQueryableBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver)
+        private FluentQueryableBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver, IMapper mapper)
         {
             if (query == null)
             {
                 if (fetches == null)
                 {
-                    query = new FluentSelectBuilder<T, FolkeTuple<int>>(driver).All().From().Where((x, y) => x.Id == y.Item0);
+                    query = new FluentSelectBuilder<T, FolkeTuple<int>>(driver, mapper).All().From().Where((x, y) => x.Id == y.Item0);
                 }
                 else
                 {
-                    var selectQuery = new FluentSelectBuilder<T, FolkeTuple<int>>(driver).All();
+                    var selectQuery = new FluentSelectBuilder<T, FolkeTuple<int>>(driver, mapper).All();
                     foreach (var fetch in fetches)
                     {
                         selectQuery.All(fetch);
@@ -53,12 +54,12 @@ namespace Folke.Orm
 
         public T Load(IFolkeConnection connection, int id)
         {
-            return GetQuery(connection.Driver).Single(connection, id);
+            return GetQuery(connection.Driver, connection.Mapper).Single(connection, id);
         }
 
         public T Get(IFolkeConnection connection, int id)
         {
-            return GetQuery(connection.Driver).SingleOrDefault(connection, id);
+            return GetQuery(connection.Driver, connection.Mapper).SingleOrDefault(connection, id);
         }
     }
 

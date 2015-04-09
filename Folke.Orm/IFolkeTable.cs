@@ -1,11 +1,7 @@
 ﻿namespace Folke.Orm
 {
-    public interface IFolkeTable : IFolkeTable<int>
+    public interface IFolkeTable
     {
-    }
-
-    public interface IFolkeTable<T>
-    {
-        T Id { get; set; }
+        int Id { get; set; }
     }
 }
