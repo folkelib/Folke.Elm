@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -14,15 +15,9 @@ namespace Folke.Orm
         {
         }
 
-        public BaseQueryBuilder()
+        protected BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper)
+            : base(databaseDriver, mapper, typeof(T))
         {
-            defaultType = typeof(T);
-        }
-
-        protected BaseQueryBuilder(IDatabaseDriver databaseDriver)
-            : base(databaseDriver)
-        {
-            defaultType = typeof(T);
         }
     }
 
@@ -94,7 +89,7 @@ namespace Folke.Orm
         protected IList<FieldAlias> selectedFields;
         protected IList<TableAlias> tables;
         protected TableAlias defaultTable;
-        protected Type defaultType;
+        protected TypeMapping defaultType;
         protected Type parametersType;
         protected ContextEnum currentContext = ContextEnum.Unknown;
         protected bool noAlias;
@@ -102,26 +97,29 @@ namespace Folke.Orm
         internal TableAlias DefaultTable { get { return defaultTable; } }
         internal IList<FieldAlias> SelectedFields { get { return selectedFields; } }
 
-        public BaseQueryBuilder(FolkeConnection connection, Type type = null):this(connection.Driver)
+        public BaseQueryBuilder(FolkeConnection connection, Type type = null, Type parametersType = null)
+            : this(connection.Driver, connection.Mapper, type, parametersType)
         {
-            defaultType = type;
             this.connection = connection;
         }
 
-        public BaseQueryBuilder(IDatabaseDriver databaseDriver, Type defaultType, Type parametersType = null)
-            : this(databaseDriver)
+        public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper, Type defaultType, Type parametersType = null)
+            : this(databaseDriver, mapper)
         {
-            this.defaultType = defaultType;
+            this.defaultType = Mapper.GetTypeMapping(defaultType);
             this.parametersType = parametersType;
         }
 
-        public BaseQueryBuilder(IDatabaseDriver databaseDriver):this()
+        public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper):this()
         {
+            Mapper = mapper;
             driver = databaseDriver;
             query = driver.CreateSqlStringBuilder();
         }
 
-        public BaseQueryBuilder(BaseQueryBuilder parentBuilder):this(parentBuilder.Driver)
+        public IMapper Mapper { get; set; }
+
+        public BaseQueryBuilder(BaseQueryBuilder parentBuilder):this(parentBuilder.Driver, parentBuilder.Mapper)
         {
             if (parentBuilder.parameters == null)
                 parentBuilder.parameters = new List<object>();
@@ -167,31 +165,23 @@ namespace Folke.Orm
             get { return baseMappedClass; }
         }
 
-        internal void AppendTableName(Type type)
+        internal void AppendTableName(TypeMapping type)
         {
             query.AppendSpace();
-            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
-            if (tableAttribute != null)
+            if (type.TableSchema != null)
             {
-                if (tableAttribute.Schema != null)
-                {
-                    query.AppendSymbol(tableAttribute.Schema);
-                    query.Append('.');
-                }
+                query.AppendSymbol(type.TableSchema);
+                query.Append('.');
+            }
 
-                query.AppendSymbol(tableAttribute.Name);
-            }
-            else
-            {
-                query.AppendSymbol(type.Name);
-            }
+            query.AppendSymbol(type.TableName);
         }
 
         internal string GetTableAlias(Expression tableExpression)
         {
             if (tableExpression.NodeType == ExpressionType.Parameter)
             {
-                if (tableExpression.Type != defaultType)
+                if (tableExpression.Type != defaultType.Type)
                     throw new Exception("Internal error");
                 return null;
             }
@@ -257,8 +247,8 @@ namespace Folke.Orm
         /// Add a field name to the query. Very low level.
         /// </summary>
         /// <param name="tableName">The table alias</param>
-        /// <param name="propertyInfo">The property info of the column</param>
-        internal void AppendColumn(string tableName, MemberInfo propertyInfo)
+        /// <param name="propertyMapping">The property info of the column</param>
+        internal void AppendColumn(string tableName, PropertyMapping propertyMapping)
         {
             query.Append(' ');
             if (tableName != null && !noAlias)
@@ -266,7 +256,7 @@ namespace Folke.Orm
                 query.AppendSymbol(tableName);
                 query.Append(".");
             }
-            query.AppendSymbol(TableHelpers.GetColumnName(propertyInfo));
+            query.AppendSymbol(propertyMapping.ColumnName);
         }
 
         internal void AppendColumn(TableColumn tableColumn)
@@ -292,9 +282,10 @@ namespace Folke.Orm
                 {
                     parameter = ((TimeSpan)parameter).TotalSeconds;
                 }
-                else if (TableHelpers.IsForeign(parameterType))
+                else if (Mapper.IsMapped(parameterType))
                 {
-                    parameter = TableHelpers.GetKey(parameterType).GetValue(parameter);
+                    var key = Mapper.GetTypeMapping(parameterType).Key;
+                    parameter = key.PropertyInfo.GetValue(parameter);
                     if (parameter.Equals(0))
                         throw new Exception("Id should not be 0");
                 }
@@ -525,7 +516,7 @@ namespace Folke.Orm
             {
                 if (defaultTable == null)
                 {
-                    defaultTable = new TableAlias { name = "t", alias = null, type = defaultType };
+                    defaultTable = new TableAlias { name = "t", alias = null, Mapping = defaultType };
                     tables.Add(defaultTable);
                 }
                 return defaultTable;
@@ -534,7 +525,7 @@ namespace Folke.Orm
             var table = tables.SingleOrDefault(t => t.alias == tableAlias);
             if (table == null)
             {
-                table = new TableAlias { name = "t" + tables.Count, alias = tableAlias, type = type };
+                table = new TableAlias { name = "t" + tables.Count, alias = tableAlias, Mapping = Mapper.GetTypeMapping(type) };
                 tables.Add(table);
             }
             return table;
@@ -544,7 +535,7 @@ namespace Folke.Orm
         {
             if (selectedFields == null)
                 selectedFields = new List<FieldAlias>();
-            selectedFields.Add(new FieldAlias {propertyInfo = column.Column, tableAlias = column.Table == null ? null : column.Table.alias, index = selectedFields.Count});
+            selectedFields.Add(new FieldAlias {PropertyMapping = column.Column, tableAlias = column.Table == null ? null : column.Table.alias, index = selectedFields.Count});
         }
 
         internal void SelectField(Expression column)
@@ -561,7 +552,7 @@ namespace Folke.Orm
 
             if (columnExpression.NodeType == ExpressionType.Parameter)
             {
-                return new TableColumn {Column = TableHelpers.GetKey(defaultType), Table = defaultTable };
+                return new TableColumn {Column = defaultType.Key, Table = defaultTable };
             }
 
             if (columnExpression.NodeType == ExpressionType.Call)
@@ -571,7 +562,15 @@ namespace Folke.Orm
                     callExpression.Method.Name == "Property")
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
-                    return new TableColumn {Column = propertyInfo, Table = GetTable(callExpression.Arguments[0], registerDefaultTable)};
+                    var table = GetTable(callExpression.Arguments[0], registerDefaultTable);
+                    return new TableColumn {Column = table.Mapping.Columns[propertyInfo.Name], Table = table };
+                }
+
+                if (callExpression.Method.DeclaringType == typeof(ExpressionHelpers) &&
+                    callExpression.Method.Name == "Key")
+                {
+                    var table = GetTable(callExpression.Arguments[0], registerDefaultTable);
+                    return new TableColumn { Column = table.Mapping.Key, Table = table };
                 }
                 return null;
             }
@@ -590,36 +589,38 @@ namespace Folke.Orm
                 var table = GetTable(memberExpression, registerDefaultTable);
                 if (table == null)
                 {
-                    if (columnMember.Member == TableHelpers.GetKey(memberExpression.Type))
+                    // Asking the id of the item pointed by a foreign key is the same as asking the foreign key
+                    var keyOfTable = Mapper.GetKey(memberExpression.Type);
+                    if (keyOfTable !=null && columnMember.Member == keyOfTable.PropertyInfo)
                     {
                         return ExpressionToColumn(memberExpression);
                     }
                     return null;
                 }
 
-                return new TableColumn {Column = columnMember.Member, Table = table };
+                return new TableColumn {Column = table.Mapping.Columns[columnMember.Member.Name], Table = table };
             }
 
             var parameterExpression = columnMember.Expression as ParameterExpression;
-            if (parameterExpression != null && parameterExpression.Type == defaultType)
+            if (parameterExpression != null && parameterExpression.Type == defaultType.Type)
             {
                 if (defaultTable == null)
                 {
                     if (registerDefaultTable)
                     {
-                        defaultTable = RegisterTable(defaultType, null);
+                        defaultTable = RegisterTable(defaultType.Type, null);
                     }
                     else
                     {
                         var table = GetTable(columnExpression);
                         if (table != null)
                         {
-                            return new TableColumn { Column = TableHelpers.GetKey(table.type), Table = table };
+                            return new TableColumn { Column = table.Mapping.Key, Table = table };
                         }
                         return null;
                     }
                 }
-                return new TableColumn {Column = columnMember.Member, Table = defaultTable};
+                return new TableColumn {Column = defaultTable.Mapping.Columns[columnMember.Member.Name], Table = defaultTable};
             }
             return null;
         }
@@ -633,7 +634,7 @@ namespace Folke.Orm
         internal TableColumn GetTableKey(Expression tableExpression)
         {
             var table = GetTable(tableExpression);
-            return new TableColumn {Column = TableHelpers.GetKey(table.type), Table = table};
+            return new TableColumn {Column = table.Mapping.Key, Table = table};
         }
         
         internal void AppendSelectedColumn(TableColumn column)
@@ -649,7 +650,7 @@ namespace Folke.Orm
         /// <param name="tableAlias"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        internal TableAlias AppendSelectedColumns(Type tableType, string tableAlias, IEnumerable<PropertyInfo> columns)
+        internal TableAlias AppendSelectedColumns(Type tableType, string tableAlias, IEnumerable<PropertyMapping> columns)
         {
             var table = RegisterTable(tableType, tableAlias);
             query.AppendSpace();
@@ -659,10 +660,7 @@ namespace Folke.Orm
 
             foreach (var column in columns)
             {
-                if (TableHelpers.IsIgnored(column.PropertyType))
-                    continue;
-
-                selectedFields.Add(new FieldAlias { propertyInfo = column, tableAlias = table.alias, index = selectedFields.Count });
+                selectedFields.Add(new FieldAlias { PropertyMapping = column, tableAlias = table.alias, index = selectedFields.Count });
 
                 if (first)
                     first = false;
@@ -704,9 +702,10 @@ namespace Folke.Orm
             currentContext = ContextEnum.Where;
         }
 
-        internal void AppendAllSelects(Type tableType, string tableAlias)
+        internal TableAlias AppendAllSelects(Type tableType, string tableAlias)
         {
-            AppendSelectedColumns(tableType, tableAlias, tableType.GetProperties());
+            var mapping = Mapper.GetTypeMapping(tableType);
+            return AppendSelectedColumns(tableType, tableAlias, mapping.Columns.Values);
         }
 
         /// <summary>
@@ -728,14 +727,14 @@ namespace Folke.Orm
 
         public class TableAlias
         {
-            public Type type;
+            public TypeMapping Mapping { get; set; }
             public string name;
             public string alias;
         }
 
         public class FieldAlias
         {
-            public MemberInfo propertyInfo;
+            public PropertyMapping PropertyMapping { get; set; }
             public string tableAlias;
             public int index;
         }
@@ -743,7 +742,7 @@ namespace Folke.Orm
         public class TableColumn
         {
             public TableAlias Table { get; set; }
-            public MemberInfo Column { get; set; }
+            public PropertyMapping Column { get; set; }
         }
 
         internal void AppendTable(Expression tableExpression)
@@ -760,7 +759,7 @@ namespace Folke.Orm
         {
             var table = RegisterTable(tableType, tableAlias);
             
-            AppendTableName(tableType);
+            AppendTableName(Mapper.GetTypeMapping(tableType));
             if (!noAlias)
             {
                 query.Append(" as ");

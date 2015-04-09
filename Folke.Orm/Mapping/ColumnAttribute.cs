@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Folke.Orm
+namespace Folke.Orm.Mapping
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class ColumnAttribute : Attribute

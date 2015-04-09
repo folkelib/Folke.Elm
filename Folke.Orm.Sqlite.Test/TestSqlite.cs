@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using Folke.Orm.Mapping;
 using NUnit.Framework;
 
 namespace Folke.Orm.Sqlite.Test
@@ -14,7 +15,8 @@ namespace Folke.Orm.Sqlite.Test
         public void Setup()
         {
             var sqliteDriver = new SqliteDriver();
-            connection = new FolkeConnection(sqliteDriver,
+            var mapper = new Mapper();
+            connection = new FolkeConnection(sqliteDriver, mapper,
                 ConfigurationManager.ConnectionStrings["Test"].ConnectionString);
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TestClass>();

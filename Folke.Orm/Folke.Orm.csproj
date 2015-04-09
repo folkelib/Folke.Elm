@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseQueryBuilder.cs" />
-    <Compile Include="ColumnAttribute.cs" />
+    <Compile Include="Mapping\ColumnAttribute.cs" />
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />
     <Compile Include="DbDataReaderExtensions.cs" />
@@ -66,13 +66,14 @@
     <Compile Include="FolkeCommand.cs" />
     <Compile Include="FolkeConnection.cs" />
     <Compile Include="FolkeList.cs" />
-    <Compile Include="FolkeListAttribute.cs" />
+    <Compile Include="Mapping\FolkeListAttribute.cs" />
     <Compile Include="FolkeTransaction.cs" />
     <Compile Include="FolkeTuple.cs" />
     <Compile Include="IDatabaseDriver.cs" />
     <Compile Include="IDatabaseSettings.cs" />
     <Compile Include="IFolkeConnection.cs" />
     <Compile Include="IFolkeTable.cs" />
+    <Compile Include="Mapping\IMapper.cs" />
     <Compile Include="InformationSchema\Columns.cs" />
     <Compile Include="InformationSchema\ColumnDefinition.cs" />
     <Compile Include="InformationSchema\KeyColumnUsage.cs" />
@@ -81,9 +82,10 @@
     <Compile Include="IManyToManyTable.cs" />
     <Compile Include="ManyToManyHelpers.cs" />
     <Compile Include="MappedClass.cs" />
-    <Compile Include="MappedCollection.cs" />
+    <Compile Include="Mapping\MappedCollection.cs" />
     <Compile Include="MappedField.cs" />
-    <Compile Include="Mapper.cs" />
+    <Compile Include="Mapping\Mapper.cs" />
+    <Compile Include="Mapping\PropertyMapping.cs" />
     <Compile Include="PreparedQueryBuilder.cs" />
     <Compile Include="PreparedLoadBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -94,7 +96,7 @@
     <Compile Include="SqlStringBuilder.cs" />
     <Compile Include="TableAttribute.cs" />
     <Compile Include="TableHelpers.cs" />
-    <Compile Include="TypeMapping.cs" />
+    <Compile Include="Mapping\TypeMapping.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Folke.Orm.nuspec">

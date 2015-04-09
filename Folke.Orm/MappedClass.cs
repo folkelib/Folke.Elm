@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -101,62 +102,50 @@ namespace Folke.Orm
             return value;
         }
 
-        public static MappedClass MapClass(IList<BaseQueryBuilder.FieldAlias> fieldAliases, Type type, string alias = null)
+        public static MappedClass MapClass(IList<BaseQueryBuilder.FieldAlias> fieldAliases, TypeMapping type, string alias = null)
         {
             if (fieldAliases == null)
                 return null;
 
             var mappedClass = new MappedClass();
 
-            var idProperty = TableHelpers.GetKey(type);
-            mappedClass.constructor = type.GetConstructor(Type.EmptyTypes);
+            var idProperty = type.Key;
+            mappedClass.constructor = type.Type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
-                var selectedField = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.propertyInfo == idProperty);
-                mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty };
+                var selectedField = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.PropertyMapping == idProperty);
+                mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty.PropertyInfo };
             }
-            
-            foreach (var property in type.GetProperties())
+
+            foreach (var pair in type.Columns)
             {
-                if (property == idProperty)
+                var propertyMapping = pair.Value;
+                if (idProperty != null && propertyMapping == idProperty)
                     continue;
 
-                var propertyType = property.PropertyType;
-                if (Nullable.GetUnderlyingType(propertyType) != null)
+                var fieldInfo = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.PropertyMapping == propertyMapping);
+                bool isForeign = propertyMapping.Reference != null;
+                if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
                 {
-                    propertyType = Nullable.GetUnderlyingType(propertyType);
-                }
-                
-                if (propertyType.IsGenericType)
-                {
-                    var foreignType = propertyType.GenericTypeArguments[0];
-                    var folkeList = typeof(FolkeList<>).MakeGenericType(foreignType);
-                    if (property.PropertyType.IsAssignableFrom(folkeList))
-                    {
-                        var joins = property.GetCustomAttributes<FolkeListAttribute>().Select(x => x.Join).ToArray();
-                        var constructor = folkeList.GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
-                        var mappedCollection = new MappedCollection { propertyInfo = property, listJoins = joins, listConstructor = constructor };
-                        if (mappedClass.collections == null)
-                            mappedClass.collections = new List<MappedCollection>();
-                        mappedClass.collections.Add(mappedCollection);
-                    }
-                }
-                else if (!TableHelpers.IsIgnored(propertyType))
-                {
-                    var fieldInfo = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.propertyInfo == property);
-                    bool isForeign = TableHelpers.IsForeign(property.PropertyType);
-                    if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
-                    {
-                        var mappedField = new MappedField { propertyInfo = property, selectedField = fieldInfo };
+                    var mappedField = new MappedField { propertyInfo = propertyMapping.PropertyInfo, selectedField = fieldInfo };
 
-                        if (TableHelpers.IsForeign(property.PropertyType))
-                        {
-                            mappedField.mappedClass = MapClass(fieldAliases, property.PropertyType, alias == null ? property.Name : alias + "." + property.Name);
-                        }
-                        mappedClass.fields.Add(mappedField);
+                    if (isForeign)
+                    {
+                        mappedField.mappedClass = MapClass(fieldAliases, propertyMapping.Reference, alias == null ? pair.Key : alias + "." + pair.Key);
                     }
+                    mappedClass.fields.Add(mappedField);
                 }
             }
+
+            if (type.Collections.Any())
+            {
+                mappedClass.collections = new List<MappedCollection>();
+                foreach (var collection in type.Collections.Values)
+                {
+                    mappedClass.collections.Add(collection);
+                }
+            }
+            
             return mappedClass;
         }
     }

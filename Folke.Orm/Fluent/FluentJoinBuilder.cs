@@ -17,7 +17,7 @@
             AppendJoin(type);
             SubQuery(subQuery);
             QueryBuilder.Append("AS");
-            var table = QueryBuilder.RegisterTable(tableAlias.ReturnType, QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
+            var table = QueryBuilder.RegisterTable(tableAlias.Body.Type, QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
             QueryBuilder.Append(table.name);
         }
 

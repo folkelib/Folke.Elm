@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using Folke.Orm.Mapping;
 using NUnit.Framework;
 
 namespace Folke.Orm.Mysql.Test
@@ -18,7 +19,8 @@ namespace Folke.Orm.Mysql.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
+            var mapper = new Mapper();
+            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
             connection.CreateTable<FirstClass>(true);
         }
 

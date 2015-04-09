@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -23,31 +24,36 @@ namespace Folke.Orm
         public void CreateOrUpdate(Type tableType)
         {
             var typeMap = connection.Mapper.GetTypeMapping(tableType);
-            var columns = connection.Driver.GetColumnDefinitions(connection, typeMap);
+            CreateOrUpdate(typeMap);
+        }
+
+        public void CreateOrUpdate(TypeMapping typeMapping)
+        {
+            var columns = connection.Driver.GetColumnDefinitions(connection, typeMapping);
             if (columns.Count == 0)
             {
-                connection.CreateTable(tableType);
+                connection.CreateTable(typeMapping.Type);
                 return;
             }
 
-            var alterTable = new SchemaQueryBuilder<FolkeTuple>(connection).AlterTable(tableType);
-            var changes = alterTable.AlterColumns(tableType, columns);
+            var alterTable = new SchemaQueryBuilder<FolkeTuple>(connection).AlterTable(typeMapping.Type);
+            var changes = alterTable.AlterColumns(typeMapping.Type, columns);
             if (changes)
                 alterTable.Execute();
         }
 
         public void CreateOrUpdateAll(Assembly assembly)
         {
-            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.GetInterface("IFolkeTable") != null || t.GetCustomAttribute<TableAttribute>() != null)).ToList();
+            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.GetInterface("IFolkeTable") != null || t.GetCustomAttribute<TableAttribute>() != null)).Select(x => connection.Mapper.GetTypeMapping(x)).ToList();
             using (var transaction = connection.BeginTransaction())
             {
                 var existingTableTables = connection.Driver.GetTableDefinitions(connection, connection.Database).Select(t => t.Name.ToLower()).ToList();
-                var tableToCreate = tables.Where(t => existingTableTables.All(y => y != TableHelpers.GetTableName(t).ToLower())).ToList();
+                var tableToCreate = tables.Where(t => existingTableTables.All(y => y != t.TableName.ToLower())).ToList();
                 
                 foreach (var table in tableToCreate)
                 {
-                    connection.CreateTable(table, false, existingTableTables);
-                    existingTableTables.Add(table.Name.ToLower());
+                    connection.CreateTable(table.Type, false, existingTableTables);
+                    existingTableTables.Add(table.TableName.ToLower());
                 }
 
                 foreach (var table in tables)

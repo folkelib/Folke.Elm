@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Folke.Orm.Mapping;
 using NUnit.Framework;
 using Folke.Orm.Fluent;
 
@@ -79,7 +80,8 @@ namespace Folke.Orm.Mysql.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
+            var mapper = new Mapper();
+            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
             connection.CreateTable<TestMultiPoco>(drop: true);
@@ -564,7 +566,7 @@ namespace Folke.Orm.Mysql.Test
 
             // Act
             var results =
-                new FluentSelectBuilder<TestPoco, FolkeTuple<int>>(connection.Driver).All()
+                new FluentSelectBuilder<TestPoco, FolkeTuple<int>>(connection.Driver, connection.Mapper).All()
                     .From()
                     .OrderBy(x => x.Name)
                     .Limit((x, y) => y.Item0, 5).List(connection, 5);

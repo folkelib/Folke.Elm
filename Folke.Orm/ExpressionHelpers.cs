@@ -6,6 +6,11 @@ namespace Folke.Orm
 {
     public static class ExpressionHelpers
     {
+        public static object Key(this object o)
+        {
+            return null;
+        }
+
         public static object Property(this object o, PropertyInfo propertyInfo)
         {
             return propertyInfo.GetValue(o);

@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -50,6 +51,7 @@ namespace Folke.Orm
         FolkeCommand OpenCommand();
         IDictionary<string, IDictionary<object, object>> Cache { get; } //TODO
         IDatabaseDriver Driver { get; }
+        IMapper Mapper { get; }
         T Load<T>(object id) where T : class, new();
         T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         T Get<T>(object id) where T : class, new();

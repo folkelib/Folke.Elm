@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using Folke.Orm.InformationSchema;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm
 {
@@ -18,13 +19,13 @@ namespace Folke.Orm
         private int stackedTransactions;
         private bool askRollback;
 
-        public FolkeConnection(IDatabaseDriver databaseDriver, string connectionString = null)
+        public FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, string connectionString = null)
         {
             Cache = new Dictionary<string, IDictionary<object, object>>();
             Driver = databaseDriver;
             connection = databaseDriver.CreateConnection(connectionString);
             Database = connection.Database;
-            Mapper = new Mapper(Database);
+            Mapper = mapper;
         }
 
         public IDictionary<string, IDictionary<object, object>> Cache { get; private set; }
@@ -33,7 +34,7 @@ namespace Folke.Orm
 
         public IDatabaseDriver Driver { get; set; }
 
-        internal Mapper Mapper { get; private set; }
+        public IMapper Mapper { get; private set; }
         
         public FolkeCommand OpenCommand()
         {
@@ -57,12 +58,17 @@ namespace Folke.Orm
 
         public FluentSelectBuilder<T, FolkeTuple> Select<T>() where T : class, new()
         {
-            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder<T>(this));
+            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+        }
+
+        public FluentSelectBuilder<T, TParameters> Select<T, TParameters>() where T : class, new()
+        {
+            return new FluentSelectBuilder<T, TParameters>(new BaseQueryBuilder(this, typeof(T), typeof(TParameters)));
         }
 
         public FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new()
         {
-            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder<T>(this));
+            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
         }
 
         public FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new()
@@ -84,8 +90,8 @@ namespace Folke.Orm
         
         public void Delete<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            Delete<T>().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key.PropertyInfo;
+            Delete<T>().From().Where(x => x.Key() == keyProperty.GetValue(value)).Execute();
         }
 
         public FluentDeleteBuilder<T, FolkeTuple> Delete<T>() where T : class, new()
@@ -95,14 +101,14 @@ namespace Folke.Orm
 
         public async Task DeleteAsync<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            await Delete<T>().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key.PropertyInfo;
+            await Delete<T>().From().Where(x => x.Key() == keyProperty.GetValue(value)).ExecuteAsync();
         }
 
         public void Update<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            Update<T>().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Execute();
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key.PropertyInfo;
+            Update<T>().SetAll(value).Where(x => x.Key() == keyProperty.GetValue(value)).Execute();
         }
 
         public FluentUpdateBuilder<T, FolkeTuple> Update<T>()
@@ -112,32 +118,29 @@ namespace Folke.Orm
 
         public async Task UpdateAsync<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            await Update<T>().SetAll(value).Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).ExecuteAsync();
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key.PropertyInfo;
+            await Update<T>().SetAll(value).Where(x => x.Key() == keyProperty.GetValue(value)).ExecuteAsync();
         }
 
         public T Refresh<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return Select<T>().All().From().Where(x => x.Property(keyProperty) == keyProperty.GetValue(value)).Single();
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key.PropertyInfo;
+            return Select<T>().All().From().Where(x => x.Key() == keyProperty.GetValue(value)).Single();
         }
 
         public T Load<T>(object id) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return Select<T>().All().From().Where(x => x.Property(keyProperty).Equals(id)).Single();
+            return Select<T>().All().From().Where(x => x.Key().Equals(id)).Single();
         }
 
         public T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).Single();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).Single();
         }
 
         public async Task<T> LoadAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return await CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleAsync();
+            return await CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleAsync();
         }
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
@@ -162,41 +165,38 @@ namespace Folke.Orm
 
         public T Get<T>(object id) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return Select<T>().All().From().Where(x => x.Property(keyProperty) == id).SingleOrDefault();
+            return Select<T>().All().From().Where(x => x.Key() == id).SingleOrDefault();
         }
 
         public T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleOrDefault();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleOrDefault();
         }
 
         public async Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            return await CreateLoadOrGetQuery(fetches).Where(x => x.Property(keyProperty) == id).SingleOrDefaultAsync();
+            return await CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleOrDefaultAsync();
         }
 
         public FluentInsertIntoBuilder<T, FolkeTuple> InsertInto<T>() where T : class, new()
         {
-            return new FluentInsertIntoBuilder<T, FolkeTuple>(new BaseQueryBuilder(this));
+            return new FluentInsertIntoBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
         }
 
         public void Save<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            bool automatic = TableHelpers.IsAutomatic(keyProperty);
-            CreateSaveQuery(value, automatic, keyProperty).Execute();
-            UpdateSavedValue(value, automatic, keyProperty);
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key;
+            bool automatic = keyProperty.IsAutomatic;
+            CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).Execute();
+            UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
         }
 
         public async Task SaveAsync<T>(T value) where T : class, new()
         {
-            var keyProperty = TableHelpers.GetKey(typeof(T));
-            bool automatic = TableHelpers.IsAutomatic(keyProperty);
-            await CreateSaveQuery(value, automatic, keyProperty).ExecuteAsync();
-            UpdateSavedValue(value, automatic, keyProperty);
+            var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key;
+            bool automatic = keyProperty.IsAutomatic;
+            await CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).ExecuteAsync();
+            UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
         }
 
         private void UpdateSavedValue<T>(T value, bool automatic, PropertyInfo keyProperty) where T : class, new()
@@ -375,11 +375,17 @@ namespace Folke.Orm
                     {
                         var parameterType = parameter.GetType();
                         if (parameterType.IsEnum)
+                        {
                             commandParameter.Value = parameterType.GetEnumName(parameter);
+                        }
+                        else if (parameterType.IsValueType || parameterType == typeof(string))
+                        {
+                            commandParameter.Value = parameter;
+                        }
                         else
                         {
-                            var table = parameter as IFolkeTable;
-                            commandParameter.Value = table != null ? table.Id : parameter;
+                            commandParameter.Value =
+                                Mapper.GetTypeMapping(parameterType).Key.PropertyInfo.GetValue(parameter);
                         }
                     }
                     command.Parameters.Add(commandParameter);

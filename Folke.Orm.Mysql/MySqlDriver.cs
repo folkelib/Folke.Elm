@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using Folke.Orm.InformationSchema;
+using Folke.Orm.Mapping;
 using MySql.Data.MySqlClient;
 
 namespace Folke.Orm.Mysql
@@ -15,7 +16,7 @@ namespace Folke.Orm.Mysql
             return new MySqlConnection(connectionString);
         }
 
-        public string GetSqlType(PropertyInfo property)
+        public string GetSqlType(PropertyInfo property, int maxLength = 0)
         {
             var type = property.PropertyType;
             if (type.IsGenericType)
@@ -63,13 +64,12 @@ namespace Folke.Orm.Mysql
             }
             else if (type == typeof(string))
             {
-                var attribute = property.GetCustomAttribute<ColumnAttribute>();
-                if (attribute != null && attribute.MaxLength != 0)
+                if (maxLength != 0)
                 {
-                    if (attribute.MaxLength > 255)
+                    if (maxLength > 255)
                         return "TEXT";
                     else
-                        return "VARCHAR(" + attribute.MaxLength + ")";
+                        return "VARCHAR(" + maxLength + ")";
                 }
                 else
                     return "VARCHAR(255)";
@@ -106,7 +106,7 @@ namespace Folke.Orm.Mysql
 
         public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == typeMap.TableSchema).List().Cast<ColumnDefinition>().ToList();
+            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).List().Cast<ColumnDefinition>().ToList();
         }
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)

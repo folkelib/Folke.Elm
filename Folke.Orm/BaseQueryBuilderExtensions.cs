@@ -72,7 +72,6 @@ namespace Folke.Orm
                 }
             }
         }
-
         
         public static IList<T> List<T>(this BaseQueryBuilder<T> baseQueryBuilder)
         {

@@ -1,4 +1,6 @@
-﻿namespace Folke.Orm.InformationSchema
+﻿using Folke.Orm.Mapping;
+
+namespace Folke.Orm.InformationSchema
 {
     [Table("KEY_COLUMN_USAGE", Schema = "INFORMATION_SCHEMA")]
     public class KeyColumnUsage

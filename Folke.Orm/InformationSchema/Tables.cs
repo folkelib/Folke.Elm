@@ -1,4 +1,6 @@
-﻿namespace Folke.Orm.InformationSchema
+﻿using Folke.Orm.Mapping;
+
+namespace Folke.Orm.InformationSchema
 {
     [Table("TABLES", Schema = "INFORMATION_SCHEMA")]
     internal class Tables

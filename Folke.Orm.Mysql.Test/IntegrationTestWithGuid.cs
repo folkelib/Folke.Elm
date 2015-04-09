@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Configuration;
 using System.Threading.Tasks;
+using Folke.Orm.Mapping;
 using NUnit.Framework;
 
 namespace Folke.Orm.Mysql.Test
@@ -16,7 +16,12 @@ namespace Folke.Orm.Mysql.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            connection = new FolkeConnection(driver, TestHelpers.ConnectionString);
+            var mapper = new Mapper();
+            var parentTableWithGuidMapping = new TypeMapping<ParentTableWithGuid>(mapper);
+            parentTableWithGuidMapping.Property(x => x.Key).HasColumnName("KeyColumn");
+            parentTableWithGuidMapping.HasKey(x => x.Key);
+            mapper.AddMapping(parentTableWithGuidMapping);
+            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TableWithGuid>();
             connection.CreateOrUpdateTable<ParentTableWithGuid>();
@@ -65,6 +70,38 @@ namespace Folke.Orm.Mysql.Test
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             transaction.Commit();
             var values = connection.Select<TableWithGuid>().All().From().Where(x => x.Id == value.Id).List();
+            Assert.IsNotEmpty(values);
+            Assert.AreEqual(value.Id, values[0].Id);
+            Assert.AreEqual(value.Text, values[0].Text);
+        }
+
+        [Test]
+        public void SelectInDatabaseWithObject()
+        {
+            var value = new TableWithGuid
+            {
+                Id = Guid.NewGuid(),
+                Text = "Text"
+            };
+            connection.InsertInto<TableWithGuid>().Values(value).Execute();
+            transaction.Commit();
+            var values = connection.Select<TableWithGuid>().All().From().Where(x => x == value).List();
+            Assert.IsNotEmpty(values);
+            Assert.AreEqual(value.Id, values[0].Id);
+            Assert.AreEqual(value.Text, values[0].Text);
+        }
+
+        [Test]
+        public void SelectInDatabaseWithParameters()
+        {
+            var value = new TableWithGuid
+            {
+                Id = Guid.NewGuid(),
+                Text = "Text"
+            };
+            connection.InsertInto<TableWithGuid>().Values(value).Execute();
+            transaction.Commit();
+            var values = connection.Select<TableWithGuid, FolkeTuple<TableWithGuid>>().All().From().Where((x, p) => x == p.Item0).List(connection, value);
             Assert.IsNotEmpty(values);
             Assert.AreEqual(value.Id, values[0].Id);
             Assert.AreEqual(value.Text, values[0].Text);
@@ -191,7 +228,7 @@ namespace Folke.Orm.Mysql.Test
 
         private class ParentTableWithGuid
         {
-            [Key]
+            // [Key]
             public Guid Key { get; set; }
             public string Text { get; set; }
             public TableWithGuid Reference { get; set; }

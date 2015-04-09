@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data.SQLite;
 using System.Reflection;
 using Folke.Orm.InformationSchema;
+using Folke.Orm.Mapping;
 
 namespace Folke.Orm.Sqlite
 {
@@ -20,7 +21,7 @@ namespace Folke.Orm.Sqlite
             return new SQLiteConnection(connectionString);
         }
 
-        public string GetSqlType(PropertyInfo property)
+        public string GetSqlType(PropertyInfo property, int maxLength)
         {
             var type = property.PropertyType;
             if (type.IsGenericType)
@@ -68,13 +69,12 @@ namespace Folke.Orm.Sqlite
             }
             else if (type == typeof(string))
             {
-                var attribute = property.GetCustomAttribute<ColumnAttribute>();
-                if (attribute != null && attribute.MaxLength != 0)
+                if (maxLength != 0)
                 {
-                    if (attribute.MaxLength > 255)
+                    if (maxLength > 255)
                         return "TEXT";
                     else
-                        return "VARCHAR(" + attribute.MaxLength + ")";
+                        return "VARCHAR(" + maxLength + ")";
                 }
                 else
                     return "VARCHAR(255)";

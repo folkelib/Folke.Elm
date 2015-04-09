@@ -1,4 +1,6 @@
-﻿namespace Folke.Orm.Fluent
+﻿using Folke.Orm.Mapping;
+
+namespace Folke.Orm.Fluent
 {
     using System;
     using System.Linq.Expressions;
@@ -19,8 +21,8 @@
         {
         }
 
-        public FluentSelectBuilder(IDatabaseDriver driver)
-            : base(new BaseQueryBuilder(driver, typeof(T), typeof(TMe)))
+        public FluentSelectBuilder(IDatabaseDriver driver, IMapper mapper)
+            : base(new BaseQueryBuilder(driver, mapper, typeof(T), typeof(TMe)))
         {
         }
 
