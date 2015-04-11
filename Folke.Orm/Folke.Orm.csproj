@@ -68,6 +68,7 @@
     <Compile Include="FolkeCommand.cs" />
     <Compile Include="FolkeConnection.cs" />
     <Compile Include="FolkeList.cs" />
+    <Compile Include="Mapping\FluentTypeMapping.cs" />
     <Compile Include="Mapping\FolkeListAttribute.cs" />
     <Compile Include="FolkeTransaction.cs" />
     <Compile Include="FolkeTuple.cs" />
