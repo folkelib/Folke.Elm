@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseQueryBuilder.cs" />
+    <Compile Include="Fluent\IFluentBuilder.cs" />
+    <Compile Include="Fluent\ILimitFluentBuilder.cs" />
     <Compile Include="Mapping\ColumnAttribute.cs" />
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />

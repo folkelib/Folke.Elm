@@ -35,10 +35,7 @@ namespace Folke.Orm.Mapping
 
         private TypeMapping MapType(Type type)
         {
-            var newMapping = new TypeMapping(type, this);
-            typeMappings[type] = newMapping;
-            
-            return newMapping;
+            return new TypeMapping(type, this);
         }
 
         public string GetColumnName(MemberInfo memberInfo)

@@ -3,7 +3,7 @@
     using System;
     using System.Linq.Expressions;
 
-    public class FluentWhereBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>
+    public class FluentWhereBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>, ILimitFluentBuilder<T, TMe>
     {
         public FluentWhereBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, bool>> expression)
             : base(queryBuilder)
@@ -28,12 +28,7 @@
         {
             return new FluentOrderByBuilder<T, TMe>(QueryBuilder, column);
         }
-
-        public FluentLimitBuilder<T, TMe> Limit(int offset, int count)
-        {
-            return new FluentLimitBuilder<T, TMe>(QueryBuilder, offset, count);
-        }
-
+        
         public FluentWhereBuilder<T, TMe> Where(Expression<Func<T, bool>> expression)
         {
             return new FluentWhereBuilder<T, TMe>(QueryBuilder, expression);

@@ -71,6 +71,7 @@ namespace Folke.Orm.Mapping
         public TypeMapping(Type type, IMapper mapper)
         {
             Type = type;
+            mapper.AddMapping(this);
             Columns = new Dictionary<string, PropertyMapping>();
             Collections = new Dictionary<string, MappedCollection>();
             var tableAttribute = type.GetCustomAttribute<TableAttribute>();
