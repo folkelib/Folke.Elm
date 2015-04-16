@@ -416,7 +416,7 @@ namespace Folke.Orm
             if (expression.NodeType == ExpressionType.MemberAccess)
             {
                 var memberExpression = (MemberExpression) expression;
-                if (memberExpression.Expression.Type == parametersType)
+                if (memberExpression.Expression != null && memberExpression.Expression.Type == parametersType)
                 {
                     query.Append(" @" + memberExpression.Member.Name);
                     return;
