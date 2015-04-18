@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using Folke.Orm.InformationSchema;
@@ -40,6 +41,9 @@ namespace Folke.Orm.Mapping
             
             foreach (var propertyInfo in type.GetProperties())
             {
+                if (propertyInfo.GetCustomAttribute<NotMappedAttribute>() != null)
+                    continue;
+                
                 var propertyType = propertyInfo.PropertyType;
                 bool nullable = false;
                 if (Nullable.GetUnderlyingType(propertyType) != null)
