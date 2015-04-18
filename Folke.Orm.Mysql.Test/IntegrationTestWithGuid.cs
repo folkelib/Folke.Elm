@@ -17,10 +17,9 @@ namespace Folke.Orm.Mysql.Test
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
-            var parentTableWithGuidMapping = new TypeMapping<ParentTableWithGuid>(mapper);
+            var parentTableWithGuidMapping = mapper.GetTypeMapping<ParentTableWithGuid>();
             parentTableWithGuidMapping.Property(x => x.Key).HasColumnName("KeyColumn");
             parentTableWithGuidMapping.HasKey(x => x.Key);
-            mapper.AddMapping(parentTableWithGuidMapping);
             connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TableWithGuid>();

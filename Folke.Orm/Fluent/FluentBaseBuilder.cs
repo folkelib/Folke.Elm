@@ -2,7 +2,7 @@
 {
     using System;
 
-    public abstract class FluentBaseBuilder<T, TMe>
+    public abstract class FluentBaseBuilder<T, TMe> : IFluentBuilder
     {
         protected BaseQueryBuilder baseQueryBuilder;
 

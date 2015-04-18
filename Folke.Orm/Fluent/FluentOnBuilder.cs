@@ -3,7 +3,7 @@
     using System;
     using System.Linq.Expressions;
 
-    public class FluentOnBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>
+    public class FluentOnBuilder<T, TMe> : FluentQueryableBuilder<T, TMe>, ILimitFluentBuilder<T, TMe>
     {
         public FluentOnBuilder(BaseQueryBuilder queryBuilder, Expression<Func<T, bool>> expression)
             : base(queryBuilder)

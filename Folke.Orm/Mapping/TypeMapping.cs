@@ -2,58 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
+using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm.Mapping
 {
-    public class TypeMapping<T> : TypeMapping
-    {
-        public TypeMapping(IMapper mapper):base(typeof(T), mapper)
-        {
-        }
-
-        public void ToTable(string name, string schema = null)
-        {
-            TableName = name;
-            TableSchema = schema;
-        }
-
-        public void HasKey(Expression<Func<T, object>> expression)
-        {
-            var propertyInfo = TableHelpers.GetExpressionPropertyInfo(expression);
-            Key = Columns[propertyInfo.Name];
-            Key.IsKey = true;
-            if (propertyInfo.PropertyType == typeof (int) || propertyInfo.PropertyType == typeof(long))
-                Key.IsAutomatic = true;
-        }
-
-        public FluentPropertyMapping Property(Expression<Func<T, object>> expression)
-        {
-            var property = TableHelpers.GetExpressionPropertyInfo(expression);
-            var propertyMapping = Columns[property.Name];
-             return new FluentPropertyMapping(this, propertyMapping);
-        }
-
-        public class FluentPropertyMapping
-        {
-            private readonly TypeMapping typeMapping;
-            private readonly PropertyMapping propertyMapping;
-
-            public FluentPropertyMapping(TypeMapping typeMapping, PropertyMapping propertyMapping)
-            {
-                this.typeMapping = typeMapping;
-                this.propertyMapping = propertyMapping;
-            }
-
-            public FluentPropertyMapping HasColumnName(string name)
-            {
-                propertyMapping.ColumnName = name;
-                return this;
-            }
-        }
-    }
-
     public class TypeMapping
     {
         public Type Type { get; set; }
@@ -71,6 +24,7 @@ namespace Folke.Orm.Mapping
         public TypeMapping(Type type, IMapper mapper)
         {
             Type = type;
+            mapper.AddMapping(this);
             Columns = new Dictionary<string, PropertyMapping>();
             Collections = new Dictionary<string, MappedCollection>();
             var tableAttribute = type.GetCustomAttribute<TableAttribute>();

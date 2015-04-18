@@ -24,6 +24,11 @@ namespace Folke.Orm.Mapping
             return !this.typeMappings.ContainsKey(type) ? this.MapType(type) : this.typeMappings[type];
         }
 
+        public FluentTypeMapping<T> GetTypeMapping<T>()
+        {
+            return new FluentTypeMapping<T>(GetTypeMapping(typeof (T)));
+        }
+
         /// <summary>
         /// Add a new mapping, or replace an existing mapping
         /// </summary>
@@ -35,10 +40,7 @@ namespace Folke.Orm.Mapping
 
         private TypeMapping MapType(Type type)
         {
-            var newMapping = new TypeMapping(type, this);
-            typeMappings[type] = newMapping;
-            
-            return newMapping;
+            return new TypeMapping(type, this);
         }
 
         public string GetColumnName(MemberInfo memberInfo)
