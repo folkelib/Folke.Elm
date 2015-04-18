@@ -43,7 +43,7 @@
     <Compile Include="BaseQueryBuilder.cs" />
     <Compile Include="Fluent\IFluentBuilder.cs" />
     <Compile Include="Fluent\ILimitFluentBuilder.cs" />
-    <Compile Include="Mapping\ColumnAttribute.cs" />
+    <Compile Include="Mapping\ColumnConstraintAttribute.cs" />
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />
     <Compile Include="DbDataReaderExtensions.cs" />
@@ -85,6 +85,7 @@
     <Compile Include="IManyToManyTable.cs" />
     <Compile Include="ManyToManyHelpers.cs" />
     <Compile Include="MappedClass.cs" />
+    <Compile Include="Mapping\IndexAttribute.cs" />
     <Compile Include="Mapping\MappedCollection.cs" />
     <Compile Include="MappedField.cs" />
     <Compile Include="Mapping\Mapper.cs" />
