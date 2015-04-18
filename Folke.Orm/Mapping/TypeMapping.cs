@@ -87,22 +87,37 @@ namespace Folke.Orm.Mapping
                     propertyMapping.Reference = mapper.GetTypeMapping(propertyInfo.PropertyType);
                 }
 
+                var columnConstraintAttribute = propertyInfo.GetCustomAttribute<ColumnConstraintAttribute>();
+                if (columnConstraintAttribute != null)
+                {
+                    propertyMapping.OnDelete = columnConstraintAttribute.OnDelete;
+                    propertyMapping.OnUpdate = columnConstraintAttribute.OnUpdate;
+                }
+
                 var columnAttribute = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                 if (columnAttribute != null)
                 {
                     propertyMapping.ColumnName = columnAttribute.Name;
-                    propertyMapping.MaxLength = columnAttribute.MaxLength;
-                    propertyMapping.Index = columnAttribute.Index;
-                    propertyMapping.OnDelete = columnAttribute.OnDelete;
-                    propertyMapping.OnUpdate = columnAttribute.OnUpdate;
                 }
-                
+
+                var maxLengthAttribute = propertyInfo.GetCustomAttribute<MaxLengthAttribute>();
+                if (maxLengthAttribute != null)
+                {
+                    propertyMapping.MaxLength = maxLengthAttribute.Length;
+                }
+
                 if (propertyMapping.ColumnName == null)
                 {
                     if (propertyMapping.Reference != null)
                         propertyMapping.ColumnName = propertyInfo.Name + "_id";
                     else
                         propertyMapping.ColumnName = propertyInfo.Name;
+                }
+
+                var indexAttribute = propertyInfo.GetCustomAttribute<IndexAttribute>();
+                if (indexAttribute != null)
+                {
+                    propertyMapping.Index = indexAttribute.Name ?? TableName + "_" + propertyMapping.ColumnName;
                 }
 
                 if ((propertyInfo.Name == "Id" && type.GetInterface("IFolkeTable") != null) ||

@@ -3,11 +3,8 @@
 namespace Folke.Orm.Mapping
 {
     [AttributeUsage(AttributeTargets.Property)]
-    public class ColumnAttribute : Attribute
+    public class ColumnConstraintAttribute : Attribute
     {
-        public string Name { get; private set; }
-        public string Index { get; set; }
-        public int MaxLength { get; set; }
         /// <summary>
         /// What to do when the referenced line is deleted
         /// </summary>
@@ -16,14 +13,5 @@ namespace Folke.Orm.Mapping
         /// What to do when the referenced line key is updated
         /// </summary>
         public ConstraintEventEnum OnUpdate { get; set; }
-
-        public ColumnAttribute()
-        {
-        }
-
-        public ColumnAttribute(string name)
-        {
-            Name = name;
-        }
     }
 }

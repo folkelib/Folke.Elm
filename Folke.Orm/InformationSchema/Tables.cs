@@ -1,4 +1,4 @@
-﻿using Folke.Orm.Mapping;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Folke.Orm.InformationSchema
 {
