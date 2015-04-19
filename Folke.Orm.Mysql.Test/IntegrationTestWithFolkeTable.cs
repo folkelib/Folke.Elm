@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Folke.Orm.Mapping;
 using NUnit.Framework;
 using Folke.Orm.Fluent;
@@ -592,5 +593,35 @@ namespace Folke.Orm.Mysql.Test
             // Assert
             Assert.AreEqual(10, result);
         }
+
+        [Test]
+        public void TestLinq()
+        {
+            var newPoco = new TestPoco { Name = Guid.NewGuid().ToString() };
+            connection.Save(newPoco);
+            var otherPoco = new TestPoco {Name = Guid.NewGuid().ToString()};
+            connection.Save(otherPoco);
+
+            FluentWhereBuilder<TestPoco, FolkeTuple> query = from toto in connection.QueryOver<TestPoco>() where toto.Name == newPoco.Name select toto;
+            var result = query.List();
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(newPoco.Name, result[0].Name);
+        }
+
+/*        [Test]
+        public void TestLinqWithJoin()
+        {
+            var newPoco = new TestPoco { Name = Guid.NewGuid().ToString() };
+            connection.Save(newPoco);
+            var linked = new TestManyPoco {Poco = newPoco, Toto = Guid.NewGuid().ToString()};
+            connection.Save(linked);
+
+            FluentWhereBuilder<TestPoco, FolkeTuple> query = from toto in connection.QueryOver<TestPoco>() 
+                                                             join link in toto.
+                                                             where toto.Name == newPoco.Name select toto;
+            var result = query.List();
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(newPoco.Name, result[0].Name);
+        }*/
     }
 }

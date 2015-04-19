@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using Folke.Orm.InformationSchema;
 
 namespace Folke.Orm.Mapping
 {
@@ -57,7 +56,7 @@ namespace Folke.Orm.Mapping
                     if (propertyType.GetInterface("IEnumerable") != null)
                     {
                         var foreignType = propertyType.GenericTypeArguments[0];
-                        if (foreignType.GetInterface("IFolkeTable") != null)
+                        if (mapper.IsMapped(foreignType))
                         {
                             var folkeList = typeof(FolkeList<>).MakeGenericType(foreignType);
                             if (propertyType.IsAssignableFrom(folkeList))
@@ -75,8 +74,8 @@ namespace Folke.Orm.Mapping
                                 Collections[propertyInfo.Name] = mappedCollection;
                             }
                         }
+                        continue;
                     }
-                    continue;
                 }
 
                 var propertyMapping = new PropertyMapping(propertyInfo) {Nullable = nullable};

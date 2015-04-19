@@ -103,7 +103,7 @@ namespace Folke.Orm.Mysql.Test
                 .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
             Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE (( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1) )", queryBuilder.Sql);
         }
-
+        
         public class FakeClass : IFolkeTable
         {
             public int Id { get; set; }

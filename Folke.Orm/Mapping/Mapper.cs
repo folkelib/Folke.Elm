@@ -55,7 +55,7 @@ namespace Folke.Orm.Mapping
 
         public bool IsMapped(Type type)
         {
-            return type.GetInterface("IFolkeTable") != null || type.GetCustomAttribute<TableAttribute>() != null;
+            return typeMappings.ContainsKey(type) || type.GetInterface("IFolkeTable") != null || type.GetCustomAttribute<TableAttribute>() != null;
         }
     }
 }
