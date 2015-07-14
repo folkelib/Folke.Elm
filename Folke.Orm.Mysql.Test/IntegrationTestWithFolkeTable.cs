@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using Folke.Orm.Mapping;
 using NUnit.Framework;
 using Folke.Orm.Fluent;
@@ -52,6 +53,12 @@ namespace Folke.Orm.Mysql.Test
             public string Name { get; set; }
         }
 
+        public class TestDecimal : IFolkeTable
+        {
+            public int Id { get; set; }
+            public decimal Decimal { get; set; }
+        }
+
         public class AnonymousType
         {
             public TestPoco Poco { get; set; }
@@ -88,6 +95,7 @@ namespace Folke.Orm.Mysql.Test
             connection.CreateTable<TestMultiPoco>(drop: true);
             connection.CreateTable<TestCollectionMember>(drop: true);
             connection.CreateTable<TestCollection>(drop: true);
+            connection.CreateTable<TestDecimal>(drop: true);
         }
 
         [TearDown]
@@ -98,6 +106,7 @@ namespace Folke.Orm.Mysql.Test
             connection.DropTable<TestMultiPoco>();
             connection.DropTable<TestPoco>();
             connection.DropTable<TestManyPoco>();
+            connection.DropTable<TestDecimal>();
             connection.Dispose();
         }
 
@@ -606,6 +615,31 @@ namespace Folke.Orm.Mysql.Test
             var result = query.List();
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(newPoco.Name, result[0].Name);
+        }
+
+        [Test]
+        public void WhereWithQuote()
+        {
+            var newPoco = new TestPoco {Name = Guid.NewGuid().ToString() + "'azer'ty"};
+            connection.Save(newPoco);
+
+            var result = connection.QueryOver<TestPoco>().Where(x => x.Name == newPoco.Name).SingleOrDefault();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(newPoco.Name, result.Name);
+        }
+
+        [Test]
+        public void Decimal()
+        {
+            var newDecimal = new TestDecimal { Decimal = new decimal(1.23)};
+            connection.Save(newDecimal);
+            connection.Cache.Clear();
+
+            var result = connection.QueryOver<TestDecimal>().SingleOrDefault();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(newDecimal.Decimal, result.Decimal);
         }
 
 /*        [Test]

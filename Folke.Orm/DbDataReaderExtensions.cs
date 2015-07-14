@@ -30,6 +30,8 @@ namespace Folke.Orm
                 value = reader.GetFloat(index);
             else if (type == typeof(double))
                 value = reader.GetDouble(index);
+            else if (type == typeof (decimal))
+                value = reader.GetDecimal(index);
             else if (type == typeof(TimeSpan))
             {
                 value = new TimeSpan(0, 0, reader.GetInt32(index));
