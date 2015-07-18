@@ -468,12 +468,24 @@ namespace Folke.Orm
                     switch (call.Method.Name)
                     {
                         case "StartsWith":
+                        {
                             AddExpression(call.Object, registerTable);
                             query.Append(" LIKE");
-                            var text = (string) Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
+                            var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
                             text = text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
                             AppendParameter(text);
                             break;
+                        }
+                        case "Contains":
+                        {
+                            AddExpression(call.Object, registerTable);
+                            query.Append(" LIKE");
+                            var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
+                            text = "%" + text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
+                            AppendParameter(text);
+                            break;
+                        }
+                            
                         default:
                             throw new Exception("Unsupported string method");
                     }

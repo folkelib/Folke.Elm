@@ -58,6 +58,13 @@ namespace Folke.Orm.Mysql.Test
         }
 
         [Test]
+        public void FluentGenericQueryBuilder_Select_StringContains()
+        {
+            fluentSelectBuilder.Values(x => x.Text.Contains("toto"));
+            Assert.AreEqual("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
+        }
+
+        [Test]
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTable()
         {
             fluentSelectBuilder.Values(x => x.Id, x => x.Text);
