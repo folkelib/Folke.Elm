@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using Folke.Orm.Mapping;
+﻿using Folke.Orm.Mapping;
 using NUnit.Framework;
 
 namespace Folke.Orm.Mysql.Test
@@ -44,7 +43,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public async void ListAsync()
         {
-            var queryBuilder = connection.QueryOver<TestPoco>(); // TODO utiliser un fake
+            var queryBuilder = connection.SelectAllFrom<TestPoco>(); // TODO utiliser un fake
             var list = await queryBuilder.ListAsync();
             Assert.AreEqual(1, list.Count);
             Assert.AreEqual(testPoco.Id, list[0].Id);
@@ -54,7 +53,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public async void SingleAsync()
         {
-            var queryBuilder = connection.QueryOver<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
+            var queryBuilder = connection.SelectAllFrom<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.SingleAsync();
             Assert.AreEqual(testPoco.Id, result.Id);
             Assert.AreEqual(testPoco.Name, result.Name);
@@ -63,7 +62,7 @@ namespace Folke.Orm.Mysql.Test
         [Test]
         public async void SingleOrDefaultAsync()
         {
-            var queryBuilder = connection.QueryOver<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
+            var queryBuilder = connection.SelectAllFrom<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.SingleOrDefaultAsync();
             Assert.AreEqual(testPoco.Id, result.Id);
             Assert.AreEqual(testPoco.Name, result.Name);

@@ -66,17 +66,31 @@ namespace Folke.Orm
             return new FluentSelectBuilder<T, TParameters>(new BaseQueryBuilder(this, typeof(T), typeof(TParameters)));
         }
 
+        [Obsolete("Use Select")]
         public FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new()
         {
             return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
         }
 
-        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new()
+        public FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>() where T : class, new()
         {
             return Select<T>().All().From();
         }
 
-        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
+        [Obsolete("Use SelectAll")]
+        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new()
+        {
+            return SelectAllFrom<T>();
+        }
+
+        /// <summary>
+        /// Select all the fields from the T type and the properties in parameter
+        /// </summary>
+        /// <typeparam name="T">The type to select on</typeparam>
+        /// <param name="fetches">The other tables to select (using a left join)</param>
+        /// <returns></returns>
+        public FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
+            where T : class, new()
         {
             var query = new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
             query.All();
@@ -86,6 +100,12 @@ namespace Folke.Orm
             foreach (var fetch in fetches)
                 fromQuery.LeftJoinOnId(fetch);
             return fromQuery;
+        }
+
+        [Obsolete("Use SelectAll")]
+        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
+        {
+            return SelectAllFrom<T>(fetches);
         }
         
         public void Delete<T>(T value) where T : class, new()
@@ -203,7 +223,7 @@ namespace Folke.Orm
         {
             if (automatic)
             {
-                var key = Select<FolkeTuple<int>>().SelectAs(x => SqlFunctions.LastInsertedId(), x => x.Item0).Scalar();
+                var key = Select<FolkeTuple<int>>().Value(x => SqlFunctions.LastInsertedId(), x => x.Item0).Scalar();
                 keyProperty.SetValue(value, Convert.ChangeType(key, keyProperty.PropertyType));
             }
 
@@ -267,7 +287,7 @@ namespace Folke.Orm
             var typeMap = Mapper.GetTypeMapping(type);
 
             var columns =
-                QueryOver<KeyColumnUsage>()
+                SelectAllFrom<KeyColumnUsage>()
                     .Where(c => c.ReferencedTableName == typeMap.TableName && c.ReferencedTableSchema == typeMap.TableSchema)
                     .List();
 

@@ -136,7 +136,34 @@ namespace Folke.Orm.Fluent
             return this;
         }
 
-        public FluentSelectBuilder<T, TMe> SelectAs<TU>(Expression<Func<T, TU>> valueExpression,
+        public FluentSelectBuilder<T, TMe> Count<TU>(Expression<Func<T, TU>> valueExpression)
+        {
+            QueryBuilder.AppendSelect();
+            QueryBuilder.Append("COUNT(");
+            QueryBuilder.AddExpression(valueExpression.Body, true);
+            QueryBuilder.Append(")");
+            return this;
+        }
+
+        public FluentSelectBuilder<T, TMe> Sum<TU>(Expression<Func<T, TU>> valueExpression)
+        {
+            QueryBuilder.AppendSelect();
+            QueryBuilder.Append("SUM(");
+            QueryBuilder.AddExpression(valueExpression.Body, true);
+            QueryBuilder.Append(")");
+            return this;
+        }
+
+        public FluentSelectBuilder<T, TMe> Max<TU>(Expression<Func<T, TU>> valueExpression)
+        {
+            QueryBuilder.AppendSelect();
+            QueryBuilder.Append("MAX(");
+            QueryBuilder.AddExpression(valueExpression.Body, true);
+            QueryBuilder.Append(")");
+            return this;
+        }
+
+        public FluentSelectBuilder<T, TMe> Value<TU>(Expression<Func<T, TU>> valueExpression,
            Expression<Func<T, TU>> targetExpression)
         {
             QueryBuilder.AppendSelect();
@@ -144,5 +171,21 @@ namespace Folke.Orm.Fluent
             QueryBuilder.SelectField(targetExpression.Body);
             return this;
         }
+
+        public FluentSelectBuilder<T, TMe> Value<TU>(Expression<Func<T, TU>> column)
+        {
+            QueryBuilder.AppendSelect();
+            var tableColumn = QueryBuilder.ExpressionToColumn(column.Body, true);
+            if (tableColumn == null)
+            {
+                QueryBuilder.AddExpression(column.Body, true);
+            }
+            else
+            {
+                QueryBuilder.AppendSelectedColumn(tableColumn);
+            }
+            return this;
+        }
+
     }
 }

@@ -457,6 +457,11 @@ namespace Folke.Orm
                             AddExpression(call.Arguments[0], registerTable);
                             query.Append(")");
                             break;
+                        case "Sum":
+                            query.Append(" SUM(");
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.Append(")");
+                            break;
                         default:
                             throw new Exception("Unsupported sql function");
                     }

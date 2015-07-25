@@ -15,5 +15,10 @@
         {
             return column;
         }
+
+        public static T Sum<T>(T column)
+        {
+            return column;
+        }
     }
 }

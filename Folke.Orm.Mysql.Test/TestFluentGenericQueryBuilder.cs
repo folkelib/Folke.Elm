@@ -93,6 +93,33 @@ namespace Folke.Orm.Mysql.Test
         }
 
         [Test]
+        public void FluentGenericQueryBuilder_Select_Max2()
+        {
+            fluentSelectBuilder.Max(x => x.Id);
+            Assert.AreEqual("SELECT MAX( `t`.`Id` )", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_Select_Sum()
+        {
+            fluentSelectBuilder.Values(x => SqlFunctions.Sum(x.Id));
+            Assert.AreEqual("SELECT SUM( `t`.`Id`)", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_Select_Sum2()
+        {
+            fluentSelectBuilder.Sum(x => x.Id);
+            Assert.AreEqual("SELECT SUM( `t`.`Id` )", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_Select_Count()
+        {
+            fluentSelectBuilder.Count(x => x.Id);
+            Assert.AreEqual("SELECT COUNT( `t`.`Id` )", queryBuilder.Sql);
+        }
+        [Test]
         public void FluentGenericQueryBuilder_WhereSubAfterWhere()
         {
             fluentSelectBuilder.All()
