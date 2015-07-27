@@ -43,6 +43,7 @@
     <Compile Include="BaseQueryBuilder.cs" />
     <Compile Include="Fluent\IFluentBuilder.cs" />
     <Compile Include="Fluent\ILimitFluentBuilder.cs" />
+    <Compile Include="ManyToOneHelpers.cs" />
     <Compile Include="Mapping\ColumnConstraintAttribute.cs" />
     <Compile Include="ConstraintEventEnum.cs" />
     <Compile Include="DatabaseSettings.cs" />
