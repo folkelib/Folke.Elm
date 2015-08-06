@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
+using Folke.Orm.Fluent;
 using Folke.Orm.Mapping;
 using NUnit.Framework;
-using Folke.Orm.Fluent;
 
 namespace Folke.Orm.Mysql.Test
 {

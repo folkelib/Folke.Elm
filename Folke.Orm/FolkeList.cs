@@ -29,7 +29,7 @@ namespace Folke.Orm
             {
                 if (results == null)
                 {
-                    var query = this.connection.Query<T>().All();
+                    var query = connection.Select<T>().All();
                     var joinTables = new List<BaseQueryBuilder.TableAlias>();
                     var queryBuilder = query.QueryBuilder;
                     var type = typeof (T);

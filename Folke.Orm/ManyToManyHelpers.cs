@@ -53,7 +53,7 @@ namespace Folke.Orm
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto)
             {
                 var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id).ToArray();
-                return existingChildrenIds.Any() ? connection.QueryOver<TChild>().Where(c => c.Id.In(existingChildrenIds)).List() : null;
+                return existingChildrenIds.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(existingChildrenIds)).List() : null;
             }
 
             public void UpdateDto(TDto dto, TChild child)
@@ -85,7 +85,7 @@ namespace Folke.Orm
 
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<int> dto)
             {
-                return dto.Any() ? connection.QueryOver<TChild>().Where(c => c.Id.In(dto)).List() : null;
+                return dto.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(dto)).List() : null;
             }
 
             public void UpdateDto(int dto, TChild child)
@@ -104,7 +104,7 @@ namespace Folke.Orm
 
             // Looking for any value in newDtos that is not in currentValues
             var valuesToAdd = newDtos.Where(v => currentValues == null || !currentValues.Any(cv => helper.AreEqual(cv.Child, v))).ToList();
-            var newValues = currentValues == null ? new List<T>() : currentValues.ToList();
+            var newValues = currentValues?.ToList() ?? new List<T>();
             if (valuesToAdd.Any())
             {
                 // Query from the database the values that needs to be added to the parent
@@ -112,7 +112,7 @@ namespace Folke.Orm
 
                 foreach (var newDto in valuesToAdd)
                 {
-                    var child = existingChildren == null ? null : existingChildren.SingleOrDefault(c => helper.AreEqual(c, newDto));
+                    var child = existingChildren?.SingleOrDefault(c => helper.AreEqual(c, newDto));
                     if (child == null)
                     {
                         // If the element to add does not exist in the database, create it (may fail if helper.Map/helper.UpdateDto is not implemented because one does not want to allow that)

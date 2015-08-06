@@ -14,9 +14,12 @@ namespace Folke.Orm
     {
         FolkeTransaction BeginTransaction();
 
+        [Obsolete("Use SelectAllFrom")]
         FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new();
+        [Obsolete("Use SelectAllFrom")]
         FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
 
+        [Obsolete("Use Select")]
         FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
         FluentUpdateBuilder<T, FolkeTuple> Update<T>();
@@ -28,7 +31,9 @@ namespace Folke.Orm
         /// <param name="id">The id</param>
         /// <returns>The object</returns>
         T Load<T>(int id) where T : class, IFolkeTable, new();
+
         T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
+
         /// <summary>
         /// Gets an object by its id. Returns null if the object can not be found.
         /// </summary>
@@ -36,6 +41,7 @@ namespace Folke.Orm
         /// <param name="id">The id</param>
         /// <returns>The object or null if it can not be found</returns>
         T Get<T>(int id) where T : class, IFolkeTable, new();
+
         T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
         void Save<T>(T value) where T : class, new();
         void Delete<T>(T value) where T : class, new();
@@ -62,5 +68,43 @@ namespace Folke.Orm
         Task SaveAsync<T>(T value) where T : class, new();
         Task DeleteAsync<T>(T value) where T : class, new();
         Task UpdateAsync<T>(T value) where T : class, new();
+
+        /// <summary>
+        /// Create a select expression
+        /// </summary>
+        /// <typeparam name="T">The base table</typeparam>
+        /// <returns>The query</returns>
+        FluentSelectBuilder<T, FolkeTuple> Select<T>() where T : class, new();
+
+        /// <summary>
+        /// Create a select expression with a parameter table
+        /// </summary>
+        /// <typeparam name="T">The table to select from</typeparam>
+        /// <typeparam name="TParameters">The class that holds the parameter for the query</typeparam>
+        /// <returns>The query</returns>
+        FluentSelectBuilder<T, TParameters> Select<T, TParameters>() where T : class, new();
+
+        /// <summary>
+        /// Create a query that selects all the field from the T type
+        /// </summary>
+        /// <typeparam name="T">The table to select on</typeparam>
+        /// <returns>The query</returns>
+        FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>() where T : class, new();
+
+        /// <summary>
+        /// Create a query that selects all the fields from the T type and all the properties in parameter
+        /// </summary>
+        /// <typeparam name="T">The type to select on</typeparam>
+        /// <param name="fetches">The other tables to select (using a left join)</param>
+        /// <returns></returns>
+        FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
+            where T : class, new();
+
+        /// <summary>
+        /// Create a query that insert values in a table
+        /// </summary>
+        /// <typeparam name="T">The table where the values are inserted</typeparam>
+        /// <returns>The query</returns>
+        FluentInsertIntoBuilder<T, FolkeTuple> InsertInto<T>() where T : class, new();
     }
 }

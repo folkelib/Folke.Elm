@@ -46,8 +46,8 @@ namespace Folke.Orm.Mysql.Test
         public void Initialize()
         {
             var driver = new MySqlDriver();
-            var mapper = new Mapper();
-            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
+            var newMapper = new Mapper();
+            connection = new FolkeConnection(driver, newMapper, TestHelpers.ConnectionString);
             connection.CreateOrUpdateTable<ParentClass>();
             connection.CreateOrUpdateTable<ChildClass>();
             connection.CreateOrUpdateTable<LinkClass>();
@@ -98,8 +98,8 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
-                var first = connection.QueryOver<ChildClass>().Where(c => c.Test == "First").Single();
-                var second = connection.QueryOver<ChildClass>().Where(c => c.Test == "Second").Single();
+                var first = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "First").Single();
+                var second = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "Second").Single();
 
                 var newParent = connection.Load<ParentClass>(parent.Id);
                 var modifiedChildren = new[] { new ChildDto { Test = "First", Id = first.Id }, new ChildDto { Test = "Second", Id = second.Id }, new ChildDto { Test = "Third" } };
@@ -129,8 +129,8 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
-                var first = connection.QueryOver<ChildClass>().Where(c => c.Test == "First").Single();
-                var second = connection.QueryOver<ChildClass>().Where(c => c.Test == "Second").Single();
+                var first = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "First").Single();
+                var second = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "Second").Single();
 
                 var newParent = connection.Load<ParentClass>(parent.Id);
                 var modifiedChildren = new[] { new ChildDto { Test = "Second", Id = second.Id } };
@@ -138,6 +138,7 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
+                Assert.IsNotNull(first);
                 var final = connection.Load<ParentClass>(parent.Id);
                 Assert.AreEqual(1, final.Children.Count);
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
@@ -158,8 +159,8 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
-                var first = connection.QueryOver<ChildClass>().Where(c => c.Test == "First").Single();
-                var second = connection.QueryOver<ChildClass>().Where(c => c.Test == "Second").Single();
+                var first = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "First").Single();
+                var second = connection.SelectAllFrom<ChildClass>().Where(c => c.Test == "Second").Single();
 
                 var newParent = connection.Load<ParentClass>(parent.Id);
                 var modifiedChildren = new[] { new ChildDto { Test = "Second", Id = second.Id }, new ChildDto { Test = "Third" } };
@@ -167,10 +168,12 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
+                Assert.IsNotNull(first);
                 var final = connection.Load<ParentClass>(parent.Id);
                 Assert.AreEqual(2, final.Children.Count);
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
                 Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Third"));
+                transaction.Rollback();
             }
         }
     }
