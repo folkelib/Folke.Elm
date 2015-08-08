@@ -9,7 +9,7 @@
             : base(queryBuilder)
         {
             queryBuilder.AppendOrderBy();
-            queryBuilder.AppendColumn(expression.Body);
+            queryBuilder.AddExpression(expression.Body);
         }
 
         public FluentOrderByBuilder<T, TMe> Desc()
