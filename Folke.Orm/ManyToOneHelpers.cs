@@ -16,7 +16,7 @@ namespace Folke.Orm
         /// <param name="newValues">The new values</param>
         /// <param name="factory">A factory that create a new item</param>
         /// <param name="updater">A delegate that updates an existing item</param>
-        public static void UpdateCollection<TChild, TChildView>(this IFolkeConnection connection, IEnumerable<TChild> currentValues, IEnumerable<TChildView> newValues,
+        public static void UpdateCollectionFromViews<TChild, TChildView>(this IFolkeConnection connection, IEnumerable<TChild> currentValues, IEnumerable<TChildView> newValues,
             Func<TChildView, TChild> factory, Func<TChildView, TChild, bool> updater)
             where TChild: class, IFolkeTable, new()
             where TChildView: class, IFolkeTable, new()
@@ -54,8 +54,8 @@ namespace Folke.Orm
         /// <param name="newValues">The new values</param>
         /// <param name="areEqual">Must return true if the two values are equal</param>
         /// <param name="factory">Create a new item</param>
-        public static void UpdateCollection<TChild, TChildView>(this IFolkeConnection connection, IEnumerable<TChild> currentValues, IEnumerable<TChildView> newValues,
-            Func<TChildView, TChild, bool> areEqual, Func<TChildView, TChild> factory)
+        public static void UpdateCollectionFromValues<TChild, TChildView>(this IFolkeConnection connection, IEnumerable<TChild> currentValues, IEnumerable<TChildView> newValues,
+            Func<TChildView, TChild> factory, Func<TChildView, TChild, bool> areEqual)
             where TChild : class, IFolkeTable, new()
         {
             var newValueToAdd = newValues.Where(x => currentValues.All(y => !areEqual(x, y)));
