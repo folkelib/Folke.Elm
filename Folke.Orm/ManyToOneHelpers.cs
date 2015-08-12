@@ -61,8 +61,7 @@ namespace Folke.Orm
             var newValueToAdd = newValues.Where(x => currentValues.All(y => !areEqual(x, y)));
             foreach (var currentValue in currentValues)
             {
-                var newValue = newValues.FirstOrDefault(x => areEqual(x, currentValue));
-                if (newValue == null)
+                if (!newValues.Any(x => areEqual(x, currentValue)))
                 {
                     connection.Delete(currentValue);
                 }
