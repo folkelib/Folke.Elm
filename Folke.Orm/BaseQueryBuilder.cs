@@ -639,6 +639,12 @@ namespace Folke.Orm
                 }
                 return new TableColumn {Column = defaultTable.Mapping.Columns[columnMember.Member.Name], Table = defaultTable};
             }
+
+            var columnAsTable = GetTable(columnExpression, false);
+            if (columnAsTable != null)
+            {
+                return new TableColumn {Column = columnAsTable.Mapping.Key, Table = columnAsTable};
+            }
             return null;
         }
 

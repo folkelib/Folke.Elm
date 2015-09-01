@@ -146,6 +146,39 @@ namespace Folke.Orm.Mysql.Test
             Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
         }
 
+        [Test]
+        public void FluentGenericQueryBuilder_LocalVariableIsTable()
+        {
+            FakeChildClass child = null;
+            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+        }
+
+
+        [Test]
+        public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereNull()
+        {
+            FakeChildClass child = null;
+            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child).Where(x => child == null);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE( `t1`.`Id` IS NULL)", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_LocalVariableIsParameter()
+        {
+            FakeChildClass child = null;
+            fluentSelectBuilder.All().From().Where(x => x.Child == child);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereProperty()
+        {
+            FakeChildClass child = null;
+            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child.Id == child.Id);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+        }
+
         public class FakeClass : IFolkeTable
         {
             public int Id { get; set; }
