@@ -94,8 +94,8 @@ namespace Folke.Orm
         protected ContextEnum currentContext = ContextEnum.Unknown;
         protected bool noAlias;
 
-        internal TableAlias DefaultTable { get { return defaultTable; } }
-        internal IList<FieldAlias> SelectedFields { get { return selectedFields; } }
+        internal TableAlias DefaultTable => defaultTable;
+        internal IList<FieldAlias> SelectedFields => selectedFields;
 
         public BaseQueryBuilder(FolkeConnection connection, Type type = null, Type parametersType = null)
             : this(connection.Driver, connection.Mapper, type, parametersType)
@@ -134,36 +134,15 @@ namespace Folke.Orm
             tables = new List<TableAlias>();
         }
 
-        public string Sql
-        {
-            get
-            {
-                return query.ToString();
-            }
-        }
+        public string Sql => query.ToString();
 
-        internal FolkeConnection Connection
-        {
-            get { return connection; }
-        }
+        internal FolkeConnection Connection => connection;
 
-        internal IDatabaseDriver Driver
-        {
-            get
-            {
-                return driver;
-            }
-        }
+        internal IDatabaseDriver Driver => driver;
 
-        public object[] Parameters
-        {
-            get { return parameters == null ? null : parameters.ToArray(); }
-        }
+        public object[] Parameters => parameters?.ToArray();
 
-        internal MappedClass MappedClass
-        {
-            get { return baseMappedClass; }
-        }
+        internal MappedClass MappedClass => baseMappedClass;
 
         internal void AppendTableName(TypeMapping type)
         {
@@ -300,7 +279,7 @@ namespace Folke.Orm
         {
             if (expression is UnaryExpression)
             {
-                var unary = expression as UnaryExpression;
+                var unary = (UnaryExpression) expression;
                 switch (unary.NodeType)
                 {
                     case ExpressionType.Negate:
@@ -399,7 +378,7 @@ namespace Folke.Orm
 
             if (expression is ConstantExpression)
             {
-                var constant = expression as ConstantExpression;
+                var constant = (ConstantExpression) expression;
                 AppendParameter(constant.Value);
                 return;
             }
@@ -429,12 +408,12 @@ namespace Folke.Orm
                 {
                     switch (call.Method.Name)
                     {
-                        case "Like":
+                        case nameof(ExpressionHelpers.Like):
                             AddExpression(call.Arguments[0], registerTable);
                             query.Append(" LIKE");
                             AddExpression(call.Arguments[1], registerTable);
                             break;
-                        case "In":
+                        case nameof(ExpressionHelpers.In):
                             AddExpression(call.Arguments[0], registerTable);
                             query.Append(" IN");
                             AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
@@ -445,19 +424,43 @@ namespace Folke.Orm
                     return;
                 }
 
+                if (call.Method.DeclaringType == typeof(Math))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case nameof(Math.Abs):
+                            query.Append(" ABS(");
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.Append(")");
+                            break;
+
+                        case nameof(Math.Cos):
+                            query.Append(" COS(");
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.Append(")");
+                            break;
+
+                        case nameof(Math.Sin):
+                            query.Append(" SIN(");
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.Append(")");
+                            break;
+                    }
+                }
+
                 if (call.Method.DeclaringType == typeof(SqlFunctions))
                 {
                     switch (call.Method.Name)
                     {
-                        case "LastInsertedId":
+                        case nameof(SqlFunctions.LastInsertedId):
                             query.AppendLastInsertedId();
                             break;
-                        case "Max":
+                        case nameof(SqlFunctions.Max):
                             query.Append(" MAX(");
                             AddExpression(call.Arguments[0], registerTable);
                             query.Append(")");
                             break;
-                        case "Sum":
+                        case nameof(SqlFunctions.Sum):
                             query.Append(" SUM(");
                             AddExpression(call.Arguments[0], registerTable);
                             query.Append(")");
@@ -472,7 +475,7 @@ namespace Folke.Orm
                 {
                     switch (call.Method.Name)
                     {
-                        case "StartsWith":
+                        case nameof(string.StartsWith):
                         {
                             AddExpression(call.Object, registerTable);
                             query.Append(" LIKE");
@@ -481,7 +484,7 @@ namespace Folke.Orm
                             AppendParameter(text);
                             break;
                         }
-                        case "Contains":
+                        case nameof(string.Contains):
                         {
                             AddExpression(call.Object, registerTable);
                             query.Append(" LIKE");
@@ -497,7 +500,7 @@ namespace Folke.Orm
                     return;
                 }
 
-                if (call.Method.Name == "Equals")
+                if (call.Method.Name == nameof(object.Equals))
                 {
                     query.Append('(');
                     AddExpression(call.Object, registerTable);
@@ -552,7 +555,7 @@ namespace Folke.Orm
         {
             if (selectedFields == null)
                 selectedFields = new List<FieldAlias>();
-            selectedFields.Add(new FieldAlias {PropertyMapping = column.Column, tableAlias = column.Table == null ? null : column.Table.alias, index = selectedFields.Count});
+            selectedFields.Add(new FieldAlias {PropertyMapping = column.Column, tableAlias = column.Table?.alias, index = selectedFields.Count});
         }
 
         internal void SelectField(Expression column)
