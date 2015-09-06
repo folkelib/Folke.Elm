@@ -418,6 +418,13 @@ namespace Folke.Orm
                             query.Append(" IN");
                             AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
                             break;
+                        case nameof(ExpressionHelpers.Between):
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.Append(" BETWEEN ");
+                            AddExpression(call.Arguments[1], registerTable);
+                            query.Append(" AND ");
+                            AddExpression(call.Arguments[2], registerTable);
+                            break;
                         default:
                             throw new Exception("Unsupported expression helper");
                     }

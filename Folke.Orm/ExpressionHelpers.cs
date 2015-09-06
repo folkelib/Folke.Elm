@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -24,6 +25,16 @@ namespace Folke.Orm
         public static bool In<T>(this T a, IEnumerable<T> collection)
         {
             return collection.Contains(a);
+        }
+
+        public static bool Between(this double value, double min, double max)
+        {
+            return value >= min && value <= max;
+        }
+
+        public static bool Between(this int value, int min, int max)
+        {
+            return value >= min && value <= max;
         }
     }
 }

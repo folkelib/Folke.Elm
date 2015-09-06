@@ -126,7 +126,7 @@ namespace Folke.Orm.Mysql.Test
                 .From()
                 .Where(x => x.Text == "fake")
                 .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Text`= @Item0) AND (( `t`.`Text`= @Item1) OR ( `t`.`Text`= @Item2) )", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Text`= @Item0) AND (( `t`.`Text`= @Item1) OR ( `t`.`Text`= @Item2) )", queryBuilder.Sql);
         }
 
         [Test]
@@ -135,7 +135,7 @@ namespace Folke.Orm.Mysql.Test
             fluentSelectBuilder.All()
                 .From()
                 .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE (( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1) )", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t WHERE (( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1) )", queryBuilder.Sql);
         }
 
         [Test]
@@ -143,7 +143,7 @@ namespace Folke.Orm.Mysql.Test
         {
             fluentSelectBuilder.All().From()
                 .OrderBy(x => x.Text + x.Text);
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
         }
 
         [Test]
@@ -151,7 +151,7 @@ namespace Folke.Orm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
         }
 
 
@@ -160,15 +160,15 @@ namespace Folke.Orm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child).Where(x => child == null);
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE( `t1`.`Id` IS NULL)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE( `t1`.`Id` IS NULL)", queryBuilder.Sql);
         }
 
         [Test]
         public void FluentGenericQueryBuilder_LocalVariableIsParameter()
         {
             FakeChildClass child = null;
-            fluentSelectBuilder.All().From().Where(x => x.Child == child);
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
+            fluentSelectBuilder.CountAll().From().Where(x => x.Child == child);
+            Assert.AreEqual("SELECT  COUNT(*) FROM `FakeClass` as t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
         }
 
         [Test]
@@ -176,13 +176,21 @@ namespace Folke.Orm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child.Id == child.Id);
-            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+            Assert.AreEqual("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+        }
+
+        [Test]
+        public void FluentGenericQueryBuilder_Between()
+        {
+            fluentSelectBuilder.CountAll().From().Where(x => x.Value.Between(3, 4));
+            Assert.AreEqual("SELECT  COUNT(*) FROM `FakeClass` as t WHERE `t`.`Value` BETWEEN  @Item0 AND  @Item1", fluentSelectBuilder.QueryBuilder.Sql);
         }
 
         public class FakeClass : IFolkeTable
         {
             public int Id { get; set; }
             public string Text { get; set; }
+            public int Value { get; set; }
             public FakeChildClass Child { get; set; }
         }
 
