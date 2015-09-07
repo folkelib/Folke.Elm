@@ -31,5 +31,11 @@ namespace Folke.Orm
         {
             return value.CompareTo(min) >= 0 && value.CompareTo(max) <= 0;
         }
+
+        public static bool Between<T>(this T? value, T? min, T? max) where T : struct, IComparable
+        {
+            if (!value.HasValue) return false;
+            return value.Value.CompareTo(min) >= 0 && value.Value.CompareTo(max) <= 0;
+        }
     }
 }
