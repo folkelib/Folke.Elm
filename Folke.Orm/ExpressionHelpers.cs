@@ -27,14 +27,9 @@ namespace Folke.Orm
             return collection.Contains(a);
         }
 
-        public static bool Between(this double value, double min, double max)
+        public static bool Between<T>(this T value, T min, T max) where T : IComparable
         {
-            return value >= min && value <= max;
-        }
-
-        public static bool Between(this int value, int min, int max)
-        {
-            return value >= min && value <= max;
+            return value.CompareTo(min) >= 0 && value.CompareTo(max) <= 0;
         }
     }
 }
