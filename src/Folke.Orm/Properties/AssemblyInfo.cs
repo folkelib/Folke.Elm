@@ -32,8 +32,8 @@ using System.Runtime.InteropServices;
 // Vous pouvez spécifier toutes les valeurs ou indiquer les numéros de build et de révision par défaut 
 // en utilisant '*', comme indiqué ci-dessous :
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.*")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 [assembly: InternalsVisibleTo("Folke.Orm.Test")]
 [assembly: InternalsVisibleTo("Folke.Orm.Mysql")]
 [assembly: InternalsVisibleTo("Folke.Orm.Sqlite")]

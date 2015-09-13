@@ -1,0 +1,18 @@
+﻿{
+  "version": "1.1.0-*",
+  "description": "",
+  "authors": [ "" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Folke.Orm": "",
+    "MySql.Data": "6.9.6"
+  },
+
+  "frameworks": {
+    "dnx451": {
+    }
+  }
+}

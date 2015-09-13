@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@ namespace Folke.Orm
 
                     foreach (var join in joins)
                     {
-                        var property = typeof(T).GetProperty(join);
+                        var property = type.GetProperty(join);
                         queryBuilder.AppendSelect();
                         //joinTables.Add(queryBuilder.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
                         joinTables.Add(queryBuilder.AppendAllSelects(property.PropertyType, join));

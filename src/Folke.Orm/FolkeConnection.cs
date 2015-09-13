@@ -372,10 +372,8 @@ namespace Folke.Orm
 
         public void Dispose()
         {
-            if (transaction != null)
-                transaction.Dispose();
-            if (connection != null)
-                connection.Dispose();
+            transaction?.Dispose();
+            connection?.Dispose();
         }
 
         public FolkeCommand CreateCommand(string commandText, object[] commandParameters)
@@ -394,11 +392,11 @@ namespace Folke.Orm
                     else
                     {
                         var parameterType = parameter.GetType();
-                        if (parameterType.IsEnum)
+                        if (parameterType.GetTypeInfo().IsEnum)
                         {
-                            commandParameter.Value = parameterType.GetEnumName(parameter);
+                            commandParameter.Value = Enum.GetName(parameterType, parameter);
                         }
-                        else if (parameterType.IsValueType || parameterType == typeof(string))
+                        else if (parameterType.GetTypeInfo().IsValueType || parameterType == typeof(string))
                         {
                             commandParameter.Value = parameter;
                         }
@@ -426,7 +424,6 @@ namespace Folke.Orm
                         return default(TU);
                     }
                     var ret = reader.GetTypedValue<TU>(0);
-                    reader.Close();
                     return ret;
                 }
             }
@@ -443,7 +440,7 @@ namespace Folke.Orm
                         return default(TU);
                     }
                     var ret = reader.GetTypedValue<TU>(0);
-                    reader.Close();
+                    // reader.Close();
                     return ret;
                 }
             }
@@ -460,7 +457,7 @@ namespace Folke.Orm
                         return null;
                     }
                     var ret = reader.GetValue(0);
-                    reader.Close();
+                    // reader.Close();
                     return ret;
                 }
             }
@@ -477,7 +474,7 @@ namespace Folke.Orm
                         return null;
                     }
                     var ret = reader.GetValue(0);
-                    reader.Close();
+                    // reader.Close();
                     return ret;
                 }
             }

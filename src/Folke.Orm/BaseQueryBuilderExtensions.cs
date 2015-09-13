@@ -14,7 +14,7 @@ namespace Folke.Orm
 
         public static object Scalar(this BaseQueryBuilder baseQueryBuilder)
         {
-            return baseQueryBuilder.Connection.Scalar(baseQueryBuilder.Sql, baseQueryBuilder.Parameters == null ? null : baseQueryBuilder.Parameters.ToArray());
+            return baseQueryBuilder.Connection.Scalar(baseQueryBuilder.Sql, baseQueryBuilder.Parameters?.ToArray());
         }
 
         public static async Task<object> ScalarAsync(this BaseQueryBuilder baseQueryBuilder, FolkeConnection folkeConnection, params object[] commandParameters)
@@ -24,7 +24,7 @@ namespace Folke.Orm
 
         public static async Task<object> ScalarAsync(this BaseQueryBuilder baseQueryBuilder)
         {
-            return await baseQueryBuilder.Connection.ScalarAsync(baseQueryBuilder.Sql, baseQueryBuilder.Parameters == null ? null : baseQueryBuilder.Parameters.ToArray());
+            return await baseQueryBuilder.Connection.ScalarAsync(baseQueryBuilder.Sql, baseQueryBuilder.Parameters?.ToArray());
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Folke.Orm
 
         public static TU Scalar<TU>(this BaseQueryBuilder baseQueryBuilder)
         {
-            return baseQueryBuilder.Connection.Scalar<TU>(baseQueryBuilder.Sql, baseQueryBuilder.Parameters == null ? null : baseQueryBuilder.Parameters.ToArray());
+            return baseQueryBuilder.Connection.Scalar<TU>(baseQueryBuilder.Sql, baseQueryBuilder.Parameters?.ToArray());
         }
 
         public static async Task<TU> ScalarAsync<TU>(this BaseQueryBuilder baseQueryBuilder, FolkeConnection folkeConnection, params object[] commandParameters)
@@ -52,7 +52,7 @@ namespace Folke.Orm
 
         public static async Task<TU> ScalarAsync<TU>(this BaseQueryBuilder baseQueryBuilder)
         {
-            return await baseQueryBuilder.Connection.ScalarAsync<TU>(baseQueryBuilder.Sql, baseQueryBuilder.Parameters == null ? null : baseQueryBuilder.Parameters.ToArray());
+            return await baseQueryBuilder.Connection.ScalarAsync<TU>(baseQueryBuilder.Sql, baseQueryBuilder.Parameters?.ToArray());
         }
 
         public static List<T> List<T>(this BaseQueryBuilder<T> baseQueryBuilder, IFolkeConnection folkeConnection, params object[] commandParameters)
@@ -67,7 +67,7 @@ namespace Folke.Orm
                         var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
                         ret.Add((T)value);
                     }
-                    reader.Close();
+//                    reader..Close();
                     return ret;
                 }
             }
@@ -90,7 +90,7 @@ namespace Folke.Orm
                         var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
                         ret.Add((T)value);
                     }
-                    reader.Close();
+                    //reader.Close();
                     return ret;
                 }
             }
@@ -110,7 +110,7 @@ namespace Folke.Orm
                     if (!reader.Read())
                         throw new Exception("No result found");
                     var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
-                    reader.Close();
+                    //reader.Close();
                     return (T)value;
                 }
             }
@@ -134,7 +134,7 @@ namespace Folke.Orm
                     if (!reader.Read())
                         throw new Exception("No result found");
                     var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
-                    reader.Close();
+                    //reader.Close();
                     return (T)value;
                 }
             }
@@ -158,7 +158,7 @@ namespace Folke.Orm
                     if (!reader.Read())
                         return default(T);
                     var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
-                    reader.Close();
+                    //reader.Close();
                     return (T)value;
                 }
             }
@@ -178,7 +178,7 @@ namespace Folke.Orm
                     if (!reader.Read())
                         return default(T);
                     var value = baseQueryBuilder.MappedClass.Read(folkeConnection, typeof(T), reader);
-                    reader.Close();
+                    //reader.Close();
                     return (T)value;
                 }
             }

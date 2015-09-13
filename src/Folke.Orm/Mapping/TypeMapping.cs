@@ -27,7 +27,7 @@ namespace Folke.Orm.Mapping
             mapper.AddMapping(this);
             Columns = new Dictionary<string, PropertyMapping>();
             Collections = new Dictionary<string, MappedCollection>();
-            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
+            var tableAttribute = type.GetTypeInfo().GetCustomAttribute<TableAttribute>();
             if (tableAttribute != null)
             {
                 TableName = tableAttribute.Name;
@@ -51,9 +51,9 @@ namespace Folke.Orm.Mapping
                     nullable = true;
                 }
 
-                if (propertyType.IsGenericType)
+                if (propertyType.GetTypeInfo().IsGenericType)
                 {
-                    if (propertyType.GetInterface("IEnumerable") != null)
+                    if (propertyType.GetInterfaces().FirstOrDefault(x => x.Name == "IEnumerable") != null)
                     {
                         var foreignType = propertyType.GenericTypeArguments[0];
                         if (mapper.IsMapped(foreignType))
@@ -119,7 +119,7 @@ namespace Folke.Orm.Mapping
                     propertyMapping.Index = indexAttribute.Name ?? TableName + "_" + propertyMapping.ColumnName;
                 }
 
-                if ((propertyInfo.Name == "Id" && type.GetInterface("IFolkeTable") != null) ||
+                if ((propertyInfo.Name == "Id" && type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
                     propertyInfo.GetCustomAttribute<KeyAttribute>() != null)
                 {
                     Key = propertyMapping;

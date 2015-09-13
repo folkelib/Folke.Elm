@@ -1,0 +1,158 @@
+{
+  "locked": false,
+  "version": 1,
+  "targets": {
+    "DNX,Version=v4.5.1": {
+      "Folke.Orm/1.0.0": {
+        "type": "project",
+        "frameworkAssemblies": [
+          "System.ComponentModel.Annotations",
+          "System.ComponentModel.DataAnnotations",
+          "System.Data"
+        ]
+      },
+      "Folke.Orm.Mysql/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "Folke.Orm": null,
+          "MySql.Data": "6.9.6"
+        }
+      },
+      "MySql.Data/6.9.6": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MySql.Data.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MySql.Data.dll": {}
+        }
+      },
+      "NUnit/2.6.4": {
+        "type": "package",
+        "compile": {
+          "lib/nunit.framework.dll": {}
+        },
+        "runtime": {
+          "lib/nunit.framework.dll": {}
+        }
+      },
+      "NUnit.Runners/2.6.4": {
+        "type": "package"
+      }
+    }
+  },
+  "libraries": {
+    "Folke.Orm/1.0.0": {
+      "type": "project",
+      "path": "../Folke.Orm/project.json"
+    },
+    "Folke.Orm.Mysql/1.0.0": {
+      "type": "project",
+      "path": "../Folke.Orm.Mysql/project.json"
+    },
+    "MySql.Data/6.9.6": {
+      "type": "package",
+      "sha512": "o6tQW+M2gCOKjf6OpZixObc+eHZgriHowXRAEZYDKWWf9NtLuqAkCJpSnBSyBbgLEYmGCRILOXtNQg2hSQSUJg==",
+      "files": [
+        "CHANGES",
+        "content/app.config.transform",
+        "content/web.config.transform",
+        "lib/net20/MySql.Data.dll",
+        "lib/net20-cf/MySql.Data.CF.dll",
+        "lib/net40/MySql.Data.dll",
+        "lib/net45/MySql.Data.dll",
+        "MySql.Data.6.9.6.nupkg",
+        "MySql.Data.6.9.6.nupkg.sha512",
+        "MySql.Data.nuspec",
+        "Readme.txt"
+      ]
+    },
+    "NUnit/2.6.4": {
+      "type": "package",
+      "sha512": "cmSPvaCMRSP0DI19FP1Liw9DyJY3E/vOY1OrVaeJBZpZFWHkmT3fB9ngGWnZX/ftvA7zJEbghEaw3Yd+u4YFAw==",
+      "files": [
+        "lib/nunit.framework.dll",
+        "lib/nunit.framework.xml",
+        "license.txt",
+        "NUnit.2.6.4.nupkg",
+        "NUnit.2.6.4.nupkg.sha512",
+        "NUnit.nuspec"
+      ]
+    },
+    "NUnit.Runners/2.6.4": {
+      "type": "package",
+      "sha512": "LZWCxtXCKTa1EV0vod/ovTzExhjEJ9yoLUiORzMydF7aSOHi+NfIuqaQ9QzBYE28qH0fDgqRNkvAO4u0UTFLxw==",
+      "files": [
+        "license.txt",
+        "NUnit.Runners.2.6.4.nupkg",
+        "NUnit.Runners.2.6.4.nupkg.sha512",
+        "NUnit.Runners.nuspec",
+        "tools/agent.conf",
+        "tools/agent.log.conf",
+        "tools/launcher.log.conf",
+        "tools/lib/Images/Tree/Circles/Failure.jpg",
+        "tools/lib/Images/Tree/Circles/Ignored.jpg",
+        "tools/lib/Images/Tree/Circles/Inconclusive.jpg",
+        "tools/lib/Images/Tree/Circles/Skipped.jpg",
+        "tools/lib/Images/Tree/Circles/Success.jpg",
+        "tools/lib/Images/Tree/Classic/Failure.jpg",
+        "tools/lib/Images/Tree/Classic/Ignored.jpg",
+        "tools/lib/Images/Tree/Classic/Inconclusive.jpg",
+        "tools/lib/Images/Tree/Classic/Skipped.jpg",
+        "tools/lib/Images/Tree/Classic/Success.jpg",
+        "tools/lib/Images/Tree/Default/Failure.png",
+        "tools/lib/Images/Tree/Default/Ignored.png",
+        "tools/lib/Images/Tree/Default/Inconclusive.png",
+        "tools/lib/Images/Tree/Default/Skipped.png",
+        "tools/lib/Images/Tree/Default/Success.png",
+        "tools/lib/Images/Tree/Visual Studio/Failure.png",
+        "tools/lib/Images/Tree/Visual Studio/Ignored.png",
+        "tools/lib/Images/Tree/Visual Studio/Inconclusive.png",
+        "tools/lib/Images/Tree/Visual Studio/SeriousWarning.png",
+        "tools/lib/Images/Tree/Visual Studio/Skipped.png",
+        "tools/lib/Images/Tree/Visual Studio/Success.png",
+        "tools/lib/log4net.dll",
+        "tools/lib/nunit.core.dll",
+        "tools/lib/nunit.core.interfaces.dll",
+        "tools/lib/nunit.uiexception.dll",
+        "tools/lib/nunit.uikit.dll",
+        "tools/lib/nunit.util.dll",
+        "tools/lib/nunit-console-runner.dll",
+        "tools/lib/nunit-gui-runner.dll",
+        "tools/nunit.exe",
+        "tools/nunit.exe.config",
+        "tools/nunit.framework.dll",
+        "tools/nunit-agent.exe",
+        "tools/nunit-agent.exe.config",
+        "tools/nunit-agent-x86.exe",
+        "tools/nunit-agent-x86.exe.config",
+        "tools/nunit-console.exe",
+        "tools/nunit-console.exe.config",
+        "tools/nunit-console-x86.exe",
+        "tools/nunit-console-x86.exe.config",
+        "tools/nunit-editor.exe",
+        "tools/nunit-x86.exe",
+        "tools/nunit-x86.exe.config",
+        "tools/pnunit.framework.dll",
+        "tools/pnunit.tests.dll",
+        "tools/pnunit-agent.exe",
+        "tools/pnunit-agent.exe.config",
+        "tools/pnunit-launcher.exe",
+        "tools/pnunit-launcher.exe.config",
+        "tools/runpnunit.bat",
+        "tools/test.conf"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "": [
+      "Folke.Orm.Mysql ",
+      "NUnit >= 2.6.4",
+      "NUnit.Runners >= 2.6.4"
+    ],
+    "DNX,Version=v4.5.1": [
+      "fx/System.Configuration >= 4.0.0.0",
+      "fx/System.ComponentModel.DataAnnotations >= 4.0.0.0"
+    ]
+  }
+}

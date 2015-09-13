@@ -362,11 +362,11 @@ namespace Folke.Orm
                 }
 
                 if (binary.Right.NodeType == ExpressionType.Constant && binary.Left.NodeType == ExpressionType.Convert
-                    && ((UnaryExpression)binary.Left).Operand.Type.IsEnum)
+                    && ((UnaryExpression)binary.Left).Operand.Type.GetTypeInfo().IsEnum)
                 {
                     var enumType = ((UnaryExpression)binary.Left).Operand.Type;
                     var enumIndex = (int) ((ConstantExpression)binary.Right).Value;
-                    AppendParameter(enumType.GetEnumValues().GetValue(enumIndex));
+                    AppendParameter(Enum.GetValues(enumType).GetValue(enumIndex));
                 }
                 else
                 {

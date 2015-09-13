@@ -1,5 +1,4 @@
-﻿using Folke.Orm.InformationSchema;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using Folke.Orm.Mapping;
@@ -44,7 +43,8 @@ namespace Folke.Orm
 
         public void CreateOrUpdateAll(Assembly assembly)
         {
-            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.GetInterface("IFolkeTable") != null || t.GetCustomAttribute<TableAttribute>() != null)).Select(x => connection.Mapper.GetTypeMapping(x)).ToList();
+            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.ImplementedInterfaces.FirstOrDefault(x => x.Name == "IFolkeTable") != null
+                || t.GetCustomAttribute<TableAttribute>() != null)).Select(x => connection.Mapper.GetTypeMapping(x.AsType())).ToList();
             using (var transaction = connection.BeginTransaction())
             {
                 var existingTableTables = connection.Driver.GetTableDefinitions(connection, connection.Database).Select(t => t.Name.ToLower()).ToList();

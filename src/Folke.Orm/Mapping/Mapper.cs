@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Folke.Orm.Mapping
@@ -55,7 +56,8 @@ namespace Folke.Orm.Mapping
 
         public bool IsMapped(Type type)
         {
-            return typeMappings.ContainsKey(type) || type.GetInterface("IFolkeTable") != null || type.GetCustomAttribute<TableAttribute>() != null;
+            return typeMappings.ContainsKey(type) || type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null 
+                || type.GetTypeInfo().GetCustomAttribute<TableAttribute>() != null;
         }
     }
 }

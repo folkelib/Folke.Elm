@@ -1,0 +1,25 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "",
+  "authors": [ "" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Folke.Orm.Mysql": "",
+    "NUnit": "2.6.4",
+    "NUnit.Runners": "2.6.4"
+  },
+  "commands": {
+    "test": "NUnit.Runners"
+  },
+  "frameworks" : {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Configuration": "4.0.0.0",
+        "System.ComponentModel.DataAnnotations": "4.0.0.0"
+      }
+    }
+  }
+}

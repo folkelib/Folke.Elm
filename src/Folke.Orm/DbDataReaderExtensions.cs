@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace Folke.Orm
         public static object GetTypedValue(this DbDataReader reader, Type type, int index)
         {
             object value;
-            if (type.IsGenericType)
+            if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
             if (type == typeof(string))
@@ -43,10 +44,10 @@ namespace Folke.Orm
             }
             else if (type == typeof(bool))
                 value = reader.GetBoolean(index);
-            else if (type.IsEnum)
+            else if (type.GetTypeInfo().IsEnum)
             {
                 var text = reader.GetString(index);
-                var names = type.GetEnumNames();
+                var names = Enum.GetNames(type);
                 var enumIndex = 0;
                 for (var i = 0; i < names.Length; i++)
                 {
@@ -56,7 +57,7 @@ namespace Folke.Orm
                         break;
                     }
                 }
-                value = type.GetEnumValues().GetValue(enumIndex);
+                value = Enum.GetValues(type).GetValue(enumIndex);
             }
             else
                 value = null;
