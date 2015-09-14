@@ -7,7 +7,14 @@ cd .\src\Folke.Orm
 $file = Get-Item "bin\Debug\*-$version.nupkg"
 nuget push $file.FullName 4429cea5-062d-4e73-8b1b-7a593d988f06
 cd ..\..
+
 cd .\src\Folke.Orm.Mysql
+& dnu pack
+$file = Get-Item "bin\Debug\*-$version.nupkg"
+nuget push $file.FullName 4429cea5-062d-4e73-8b1b-7a593d988f06
+cd ..\..
+
+cd .\src\Folke.Orm.Sqlite
 & dnu pack
 $file = Get-Item "bin\Debug\*-$version.nupkg"
 nuget push $file.FullName 4429cea5-062d-4e73-8b1b-7a593d988f06

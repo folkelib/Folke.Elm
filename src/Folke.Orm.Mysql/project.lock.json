@@ -3,7 +3,26 @@
   "version": 1,
   "targets": {
     "DNX,Version=v4.5.1": {
-      "Folke.Orm/1.0.0": {
+      "Folke.Orm/1.1.0": {
+        "type": "project",
+        "frameworkAssemblies": [
+          "System.ComponentModel.Annotations",
+          "System.ComponentModel.DataAnnotations",
+          "System.Data"
+        ]
+      },
+      "MySql.Data/6.9.6": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MySql.Data.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MySql.Data.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5": {
+      "Folke.Orm/1.1.0": {
         "type": "project",
         "frameworkAssemblies": [
           "System.ComponentModel.Annotations",
@@ -23,7 +42,7 @@
     }
   },
   "libraries": {
-    "Folke.Orm/1.0.0": {
+    "Folke.Orm/1.1.0": {
       "type": "project",
       "path": "../Folke.Orm/project.json"
     },
@@ -50,6 +69,7 @@
       "Folke.Orm ",
       "MySql.Data >= 6.9.6"
     ],
-    "DNX,Version=v4.5.1": []
+    "DNX,Version=v4.5.1": [],
+    ".NETFramework,Version=v4.5": []
   }
 }

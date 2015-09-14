@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.Reflection;
 using Folke.Orm.InformationSchema;
 using Folke.Orm.Mapping;
@@ -18,13 +18,13 @@ namespace Folke.Orm.Sqlite
 
         public DbConnection CreateConnection(string connectionString)
         {
-            return new SQLiteConnection(connectionString);
+            return new SqliteConnection(connectionString);
         }
 
         public string GetSqlType(PropertyInfo property, int maxLength)
         {
             var type = property.PropertyType;
-            if (type.IsGenericType)
+            if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
             if (type == typeof(bool))
@@ -59,7 +59,7 @@ namespace Folke.Orm.Sqlite
             {
                 return "INT";
             }
-            else if (type.IsEnum)
+            else if (type.GetTypeInfo().IsEnum)
             {
                 return "VARCHAR(255)";
             }

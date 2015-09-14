@@ -1,18 +1,17 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using Folke.Orm.Mapping;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Sqlite.Test
 {
-    [TestFixture]
-    public class TestSqlite
+    [Collection("SqliteIntegrationTest")]
+    public class TestSqlite : IDisposable
     {
-        private FolkeConnection connection;
-        private TestClass testValue;
-        private FolkeTransaction transaction;
+        private readonly FolkeConnection connection;
+        private readonly FolkeTransaction transaction;
 
-        [SetUp]
-        public void Setup()
+        public TestSqlite()
         {
             var sqliteDriver = new SqliteDriver();
             var mapper = new Mapper();
@@ -22,17 +21,16 @@ namespace Folke.Orm.Sqlite.Test
             connection.CreateOrUpdateTable<TestClass>();
             connection.CreateOrUpdateTable<TestClass>();
 
-            testValue = new TestClass {Text = "Toto"};
+            var testValue = new TestClass {Text = "Toto"};
             connection.Save(testValue);
         }
 
-        [TearDown]
-        public void Teardown()
+        public void Dispose()
         {
             connection.Dispose();
         }
 
-        [Test]
+        [Fact]
         public void Test()
         {
             transaction.Dispose();
