@@ -1,4 +1,6 @@
-﻿using Folke.Orm.Mapping;
+﻿using System;
+using Folke.Orm.Mapping;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
@@ -6,11 +8,9 @@ namespace Folke.Orm.Mysql.Test
     using System.Configuration;
 
     using Folke.Orm.Fluent;
-
-    using NUnit.Framework;
-
-    [TestFixture]
-    public class IntegrationTestFluent
+    
+    [Collection("IntegrationTest")]
+    public class IntegrationTestFluent : IDisposable
     {
         public class TestPoco : IFolkeTable
         {
@@ -51,8 +51,7 @@ namespace Folke.Orm.Mysql.Test
 
         private FolkeConnection connection;
 
-        [SetUp]
-        public void Initialize()
+        public IntegrationTestFluent()
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
@@ -69,8 +68,7 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(many);
         }
 
-        [TearDown]
-        public void Cleanup()
+        public void Dispose()
         {
             connection.DropTable<IntegrationTestWithFolkeTable.TestCollection>();
             connection.DropTable<IntegrationTestWithFolkeTable.TestCollectionMember>();
@@ -80,31 +78,31 @@ namespace Folke.Orm.Mysql.Test
             connection.Dispose();
         }
 
-        [Test]
+        [Fact]
         public void SelectAll()
         {
             connection.Select<TestPoco>().All().From().List();
         }
 
-        [Test]
+        [Fact]
         public void SelectAllAll()
         {
             connection.Select<TestManyPoco>().All().All(x => x.Poco).From().From(x => x.Poco).List();
         }
 
-        [Test]
+        [Fact]
         public void SelectValues()
         {
             connection.Select<TestPoco>().Values(x => x.Name, x => x.Boolean).From().List();
         }
 
-        [Test]
+        [Fact]
         public void SelectAllLeftJoinOnId()
         {
             connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoin(x => x.Poco).OnId(x => x.Poco).List();
         }
 
-        [Test]
+        [Fact]
         public void Limit()
         {
             connection.Select<TestManyPoco>().All().From().LeftJoinOnId(x => x.Poco).Limit(0, 10).List();

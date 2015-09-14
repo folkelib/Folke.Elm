@@ -2,22 +2,21 @@
 using System.Linq;
 using Folke.Orm.Mapping;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Test.Mapping
 {
-    [TestFixture]
+    [Collection("IntegrationTest")]
     public class TestTypeMapping
     {
-        private Mock<IMapper> mapperMock;
+        private readonly Mock<IMapper> mapperMock;
 
-        [SetUp]
-        public void Setup()
+        public TestTypeMapping()
         {
             mapperMock = new Mock<IMapper>();
         }
 
-        [Test]
+        [Fact]
         public void TypeMapping_Constructor_TypeWithGenericProperties()
         {
             var referencedTypeMapping = new TypeMapping(typeof(GenericClass<string>), mapperMock.Object);
@@ -26,9 +25,9 @@ namespace Folke.Orm.Test.Mapping
 
             var typeMapping = new TypeMapping(typeof(TypeWithGenericProperties<string>), mapperMock.Object);
             
-            Assert.IsTrue(typeMapping.Columns.Any(x => x.Key == "Id"));
-            Assert.IsTrue(typeMapping.Columns.Any(x => x.Key == "GenericProperty"));
-            Assert.IsTrue(typeMapping.Columns.Any(x => x.Value.ColumnName == "GenericProperty_id"));
+            Assert.True(typeMapping.Columns.Any(x => x.Key == "Id"));
+            Assert.True(typeMapping.Columns.Any(x => x.Key == "GenericProperty"));
+            Assert.True(typeMapping.Columns.Any(x => x.Value.ColumnName == "GenericProperty_id"));
         }
 
         public class GenericClass<TKey>

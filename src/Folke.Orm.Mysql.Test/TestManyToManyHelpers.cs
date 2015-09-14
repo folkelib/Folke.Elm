@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Folke.Orm.Mapping;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
-    [TestFixture]
-    public class TestManyToManyHelpers
+    [Collection("IntegrationTest")]
+    public class TestManyToManyHelpers : IDisposable
     {
         public class ParentClass : IFolkeTable
         {
@@ -42,8 +42,7 @@ namespace Folke.Orm.Mysql.Test
         private readonly Func<ChildDto, ChildClass> mapper = dto => new ChildClass { Test = dto.Test };
         private ParentClass parent;
 
-        [SetUp]
-        public void Initialize()
+        public TestManyToManyHelpers()
         {
             var driver = new MySqlDriver();
             var newMapper = new Mapper();
@@ -53,8 +52,7 @@ namespace Folke.Orm.Mysql.Test
             connection.CreateOrUpdateTable<LinkClass>();
         }
         
-        [TearDown]
-        public void Cleanup()
+        public void Dispose()
         {
             connection.DropTable<LinkClass>();
             connection.DropTable<ParentClass>();
@@ -62,7 +60,7 @@ namespace Folke.Orm.Mysql.Test
             connection.Dispose();
         }
 
-        [Test]
+        [Fact]
         public void UpdateManyToMany_NoExisting_AddedElements()
         {
             using (var transaction = connection.BeginTransaction())
@@ -77,15 +75,15 @@ namespace Folke.Orm.Mysql.Test
 
                 var newParent = connection.Load<ParentClass>(parent.Id);
 
-                Assert.AreEqual(2, newParent.Children.Count);
+                Assert.Equal(2, newParent.Children.Count);
                 var children = newParent.Children;
-                Assert.IsTrue(children.Any(c => c.Child.Test == "First"));
-                Assert.IsTrue(children.Any(c => c.Child.Test == "Second"));
+                Assert.True(children.Any(c => c.Child.Test == "First"));
+                Assert.True(children.Any(c => c.Child.Test == "Second"));
                 transaction.Rollback();
             }
         }
 
-        [Test]
+        [Fact]
         public void UpdateManyToMany_TwoExistingElement_AddOneElement()
         {
             using (var transaction = connection.BeginTransaction())
@@ -108,15 +106,15 @@ namespace Folke.Orm.Mysql.Test
                 connection.Cache.Clear();
 
                 var final = connection.Load<ParentClass>(parent.Id);
-                Assert.AreEqual(3, final.Children.Count);
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "First"));
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Third"));
+                Assert.Equal(3, final.Children.Count);
+                Assert.True(final.Children.Any(c => c.Child.Test == "First"));
+                Assert.True(final.Children.Any(c => c.Child.Test == "Second"));
+                Assert.True(final.Children.Any(c => c.Child.Test == "Third"));
                 transaction.Rollback();
             }
         }
 
-        [Test]
+        [Fact]
         public void UpdateManyToMany_TwoExistingElement_RemoveOneElement()
         {
             using (var transaction = connection.BeginTransaction())
@@ -138,15 +136,15 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
-                Assert.IsNotNull(first);
+                Assert.NotNull(first);
                 var final = connection.Load<ParentClass>(parent.Id);
-                Assert.AreEqual(1, final.Children.Count);
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
+                Assert.Equal(1, final.Children.Count);
+                Assert.True(final.Children.Any(c => c.Child.Test == "Second"));
                 transaction.Rollback();
             }
         }
 
-        [Test]
+        [Fact]
         public void UpdateManyToMany_TwoExistingElement_RemoveAndOneElement()
         {
             using (var transaction = connection.BeginTransaction())
@@ -168,11 +166,11 @@ namespace Folke.Orm.Mysql.Test
 
                 connection.Cache.Clear();
 
-                Assert.IsNotNull(first);
+                Assert.NotNull(first);
                 var final = connection.Load<ParentClass>(parent.Id);
-                Assert.AreEqual(2, final.Children.Count);
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Second"));
-                Assert.IsTrue(final.Children.Any(c => c.Child.Test == "Third"));
+                Assert.Equal(2, final.Children.Count);
+                Assert.True(final.Children.Any(c => c.Child.Test == "Second"));
+                Assert.True(final.Children.Any(c => c.Child.Test == "Third"));
                 transaction.Rollback();
             }
         }

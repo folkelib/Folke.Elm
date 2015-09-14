@@ -1,0 +1,10 @@
+﻿{
+  "Data": {
+    "DefaultConnection": {
+      "ConnectionString": "Server=localhost;Database=test;Uid=root;Pwd=toto"
+    },
+    "CI": {
+      "ConnectionString": "Server=localhost;Database=test;Uid=root;Pwd=Password12!"
+    }
+  }
+}

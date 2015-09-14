@@ -1,17 +1,17 @@
-﻿using Folke.Orm.Mapping;
-using NUnit.Framework;
+﻿using System;
+using Folke.Orm.Mapping;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
-    [TestFixture]
-    public class TestQueryBuilderExtensions
+    [Collection("IntegrationTest")]
+    public class TestQueryBuilderExtensions : IDisposable
     {
         private FolkeConnection connection;
         private FolkeTransaction transaction;
         private TestPoco testPoco;
 
-        [SetUp]
-        public void Setup()
+        public TestQueryBuilderExtensions()
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
@@ -23,8 +23,7 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(testPoco); 
         }
 
-        [TearDown]
-        public void Teardown()
+        public void Dispose()
         {
             connection.DropTable<TestManyPoco>();
             connection.DropTable<TestPoco>();
@@ -32,7 +31,7 @@ namespace Folke.Orm.Mysql.Test
             connection.Dispose();
         }
 
-        [Test]
+        [Fact]
         public async void ExecuteAsync()
         {
             var poco = new TestPoco();
@@ -40,40 +39,40 @@ namespace Folke.Orm.Mysql.Test
             await queryBuilder.ExecuteAsync();
         }
 
-        [Test]
+        [Fact]
         public async void ListAsync()
         {
             var queryBuilder = connection.SelectAllFrom<TestPoco>(); // TODO utiliser un fake
             var list = await queryBuilder.ListAsync();
-            Assert.AreEqual(1, list.Count);
-            Assert.AreEqual(testPoco.Id, list[0].Id);
-            Assert.AreEqual(testPoco.Name, list[0].Name);
+            Assert.Equal(1, list.Count);
+            Assert.Equal(testPoco.Id, list[0].Id);
+            Assert.Equal(testPoco.Name, list[0].Name);
         }
 
-        [Test]
+        [Fact]
         public async void SingleAsync()
         {
             var queryBuilder = connection.SelectAllFrom<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.SingleAsync();
-            Assert.AreEqual(testPoco.Id, result.Id);
-            Assert.AreEqual(testPoco.Name, result.Name);
+            Assert.Equal(testPoco.Id, result.Id);
+            Assert.Equal(testPoco.Name, result.Name);
         }
 
-        [Test]
+        [Fact]
         public async void SingleOrDefaultAsync()
         {
             var queryBuilder = connection.SelectAllFrom<TestPoco>().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.SingleOrDefaultAsync();
-            Assert.AreEqual(testPoco.Id, result.Id);
-            Assert.AreEqual(testPoco.Name, result.Name);
+            Assert.Equal(testPoco.Id, result.Id);
+            Assert.Equal(testPoco.Name, result.Name);
         }
 
-        [Test]
+        [Fact]
         public async void ScalarAsync()
         {
             var queryBuilder = connection.Select<TestPoco>().Values(x => x.Name).From().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.ScalarAsync<string>();
-            Assert.AreEqual(testPoco.Name, result);
+            Assert.Equal(testPoco.Name, result);
         }
 
         public class TestPoco : IFolkeTable

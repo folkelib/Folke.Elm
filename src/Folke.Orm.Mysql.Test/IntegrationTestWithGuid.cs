@@ -2,18 +2,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Folke.Orm.Mapping;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
-    public class IntegrationTestWithGuid
+    [Collection("IntegrationTest")]
+    public class IntegrationTestWithGuid : IDisposable
     {
-        private FolkeConnection connection;
-        private FolkeTransaction transaction;
-        private TableWithGuid testValue;
+        private readonly FolkeConnection connection;
+        private readonly FolkeTransaction transaction;
+        private readonly TableWithGuid testValue;
 
-        [SetUp]
-        public void Initialize()
+        public IntegrationTestWithGuid()
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
@@ -33,8 +33,7 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(testValue);
         }
 
-        [TearDown]
-        public void Teardown()
+        public void Dispose()
         {
             connection.DropTable<TableWithGuid>();  
             connection.DropTable<ParentTableWithGuid>();
@@ -42,12 +41,12 @@ namespace Folke.Orm.Mysql.Test
             connection.Dispose();
         }
 
-        [Test]
+        [Fact]
         public void CreateDatabaseWithGuid()
         {
         }
 
-        [Test]
+        [Fact]
         public void InsertInDatabaseWithGuid()
         {
             var value = new TableWithGuid
@@ -58,7 +57,7 @@ namespace Folke.Orm.Mysql.Test
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
         }
 
-        [Test]
+        [Fact]
         public void SelectInDatabaseWithGuid()
         {
             var value = new TableWithGuid
@@ -69,12 +68,12 @@ namespace Folke.Orm.Mysql.Test
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             transaction.Commit();
             var values = connection.Select<TableWithGuid>().All().From().Where(x => x.Id == value.Id).List();
-            Assert.IsNotEmpty(values);
-            Assert.AreEqual(value.Id, values[0].Id);
-            Assert.AreEqual(value.Text, values[0].Text);
+            Assert.NotEmpty(values);
+            Assert.Equal(value.Id, values[0].Id);
+            Assert.Equal(value.Text, values[0].Text);
         }
 
-        [Test]
+        [Fact]
         public void SelectInDatabaseWithObject()
         {
             var value = new TableWithGuid
@@ -85,12 +84,12 @@ namespace Folke.Orm.Mysql.Test
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             transaction.Commit();
             var values = connection.Select<TableWithGuid>().All().From().Where(x => x == value).List();
-            Assert.IsNotEmpty(values);
-            Assert.AreEqual(value.Id, values[0].Id);
-            Assert.AreEqual(value.Text, values[0].Text);
+            Assert.NotEmpty(values);
+            Assert.Equal(value.Id, values[0].Id);
+            Assert.Equal(value.Text, values[0].Text);
         }
 
-        [Test]
+        [Fact]
         public void SelectInDatabaseWithParameters()
         {
             var value = new TableWithGuid
@@ -101,12 +100,12 @@ namespace Folke.Orm.Mysql.Test
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             transaction.Commit();
             var values = connection.Select<TableWithGuid, FolkeTuple<TableWithGuid>>().All().From().Where((x, p) => x == p.Item0).List(connection, value);
-            Assert.IsNotEmpty(values);
-            Assert.AreEqual(value.Id, values[0].Id);
-            Assert.AreEqual(value.Text, values[0].Text);
+            Assert.NotEmpty(values);
+            Assert.Equal(value.Id, values[0].Id);
+            Assert.Equal(value.Text, values[0].Text);
         }
 
-        [Test]
+        [Fact]
         public void SelectInDatabaseWithGuidUsingShortcuts()
         {
             var value = new TableWithGuid
@@ -116,11 +115,11 @@ namespace Folke.Orm.Mysql.Test
             };
             connection.Save(value);
             var result = connection.Load<TableWithGuid>(value.Id);
-            Assert.AreEqual(value.Id, result.Id);
-            Assert.AreEqual(value.Text, result.Text);
+            Assert.Equal(value.Id, result.Id);
+            Assert.Equal(value.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public void SelectInDatabaseWithGuidUsingShortcutsAndJoin()
         {
             var value = new TableWithGuid
@@ -137,37 +136,37 @@ namespace Folke.Orm.Mysql.Test
             };
             connection.Save(parent);
             var result = connection.Load<ParentTableWithGuid>(parent.Key, x => x.Reference);
-            Assert.AreEqual(parent.Key, result.Key);
-            Assert.AreEqual(parent.Text, result.Text);
-            Assert.AreEqual(value.Id, parent.Reference.Id);
-            Assert.AreEqual(value.Text, parent.Reference.Text);
+            Assert.Equal(parent.Key, result.Key);
+            Assert.Equal(parent.Text, result.Text);
+            Assert.Equal(value.Id, parent.Reference.Id);
+            Assert.Equal(value.Text, parent.Reference.Text);
         }
 
-        [Test]
+        [Fact]
         public void Get()
         {
             var result = connection.Get<TableWithGuid>(testValue.Id);
-            Assert.AreEqual(testValue.Id, result.Id);
-            Assert.AreEqual(testValue.Text, result.Text);
+            Assert.Equal(testValue.Id, result.Id);
+            Assert.Equal(testValue.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public async void LoadAsync()
         {
             var result = await connection.LoadAsync<TableWithGuid>(testValue.Id);
-            Assert.AreEqual(testValue.Id, result.Id);
-            Assert.AreEqual(testValue.Text, result.Text);
+            Assert.Equal(testValue.Id, result.Id);
+            Assert.Equal(testValue.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public async void GetAsync()
         {
             var result = await connection.GetAsync<TableWithGuid>(testValue.Id);
-            Assert.AreEqual(testValue.Id, result.Id);
-            Assert.AreEqual(testValue.Text, result.Text);
+            Assert.Equal(testValue.Id, result.Id);
+            Assert.Equal(testValue.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public async void SaveAsync()
         {
             var value = new TableWithGuid
@@ -177,44 +176,44 @@ namespace Folke.Orm.Mysql.Test
             };
             await connection.SaveAsync(value);
             var result = await connection.GetAsync<TableWithGuid>(value.Id);
-            Assert.AreEqual(value.Id, result.Id);
-            Assert.AreEqual(value.Text, result.Text);
+            Assert.Equal(value.Id, result.Id);
+            Assert.Equal(value.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public void Delete()
         {
             connection.Delete(testValue);
             var result = connection.Get<TableWithGuid>(testValue.Id);
-            Assert.IsNull(result);
+            Assert.Null(result);
         }
 
-        [Test]
+        [Fact]
         public async Task DeleteAsync()
         {
             await connection.DeleteAsync(testValue);
             var result = connection.Get<TableWithGuid>(testValue.Id);
-            Assert.IsNull(result);
+            Assert.Null(result);
         }
 
-        [Test]
+        [Fact]
         public void Update()
         {
             testValue.Text = "Brocoli";
             connection.Update(testValue);
             var result = connection.Get<TableWithGuid>(testValue.Id);
-            Assert.AreEqual(testValue.Id, result.Id);
-            Assert.AreEqual(testValue.Text, result.Text);
+            Assert.Equal(testValue.Id, result.Id);
+            Assert.Equal(testValue.Text, result.Text);
         }
 
-        [Test]
+        [Fact]
         public async Task UpdateAsync()
         {
             testValue.Text = "Brocoli";
             await connection.UpdateAsync(testValue);
             var result = connection.Get<TableWithGuid>(testValue.Id);
-            Assert.AreEqual(testValue.Id, result.Id);
-            Assert.AreEqual(testValue.Text, result.Text);
+            Assert.Equal(testValue.Id, result.Id);
+            Assert.Equal(testValue.Text, result.Text);
         }
 
         [Table("TableWithGuid")]

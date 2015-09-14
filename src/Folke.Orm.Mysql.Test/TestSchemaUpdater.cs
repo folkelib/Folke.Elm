@@ -1,11 +1,11 @@
-﻿using System.Configuration;
+﻿using System;
 using Folke.Orm.Mapping;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
-    [TestFixture]
-    public class TestSchemaUpdater
+    [Collection("IntegrationTest")]
+    public class TestSchemaUpdater : IDisposable
     {
         public class FirstClass
         {
@@ -15,8 +15,7 @@ namespace Folke.Orm.Mysql.Test
 
         private FolkeConnection connection;
         
-        [SetUp]
-        public void Initialize()
+        public TestSchemaUpdater()
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
@@ -24,8 +23,7 @@ namespace Folke.Orm.Mysql.Test
             connection.CreateTable<FirstClass>(true);
         }
 
-        [TearDown]
-        public void Cleanup()
+        public void Dispose()
         {
             connection.DropTable<FirstClass>();
             connection.Dispose();
@@ -42,7 +40,7 @@ namespace Folke.Orm.Mysql.Test
             }
         }
 
-        [Test]
+        [Fact]
         public void AddColumn()
         {
             connection.CreateOrUpdateTable<AddColumnClass.FirstClass>();
@@ -58,7 +56,7 @@ namespace Folke.Orm.Mysql.Test
             }
         }
 
-        [Test]    
+        [Fact]    
         public void ChangeColumnType()
         {
             connection.CreateOrUpdateTable<ChangeColumnTypeClass.FirstClass>();

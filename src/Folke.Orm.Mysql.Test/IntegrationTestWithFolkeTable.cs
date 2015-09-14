@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using Folke.Orm.Fluent;
 using Folke.Orm.Mapping;
-using NUnit.Framework;
+using Xunit;
 
 namespace Folke.Orm.Mysql.Test
 {
-    [TestFixture]
-    public class IntegrationTestWithFolkeTable
+    [Collection("IntegrationTest")]
+    public class IntegrationTestWithFolkeTable : IDisposable
     {
         public class TestPoco : IFolkeTable
         {
@@ -83,8 +83,7 @@ namespace Folke.Orm.Mysql.Test
 
         private FolkeConnection connection;
 
-        [SetUp]
-        public void Initialize()
+        public IntegrationTestWithFolkeTable()
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
@@ -97,8 +96,7 @@ namespace Folke.Orm.Mysql.Test
             connection.CreateTable<TestDecimal>(drop: true);
         }
 
-        [TearDown]
-        public void Cleanup()
+        public void Dispose()
         {
             connection.DropTable<TestCollection>();
             connection.DropTable<TestCollectionMember>();
@@ -110,31 +108,31 @@ namespace Folke.Orm.Mysql.Test
         }
 
 
-        [Test]
+        [Fact]
         public void Create()
         {
             connection.CreateTable<TestCreatePoco>();
             connection.DropTable<TestCreatePoco>();
         }
 
-        [Test]
+        [Fact]
         public void Save()
         {
             var newPoco = new TestPoco { Name = "Tutu "};
             connection.Save(newPoco);
-            Assert.AreNotEqual(0, newPoco.Id);
+            Assert.NotEqual(0, newPoco.Id);
         }
 
-        [Test]
+        [Fact]
         public void Query()
         {
             var newPoco = new TestPoco { Name = "Tutu " };
             connection.Save(newPoco);
             var foundPoco = connection.SelectAllFrom<TestPoco>().Where(t => t.Name == newPoco.Name).Single();
-            Assert.AreEqual(newPoco.Name, foundPoco.Name);
+            Assert.Equal(newPoco.Name, foundPoco.Name);
         }
 
-        [Test]
+        [Fact]
         public void Boolean()
         {
             var newPocoFalse = new TestPoco { Name = "Hihi" };
@@ -143,23 +141,23 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(newPocoTrue);
 
             var foundTrue = connection.SelectAllFrom<TestPoco>().Where(t => t.Boolean).List();
-            Assert.AreEqual(1, foundTrue.Count);
-            Assert.AreEqual(newPocoTrue.Name, foundTrue[0].Name);
+            Assert.Equal(1, foundTrue.Count);
+            Assert.Equal(newPocoTrue.Name, foundTrue[0].Name);
             var foundFalse = connection.SelectAllFrom<TestPoco>().Where(t => !t.Boolean).List();
-            Assert.AreEqual(1, foundFalse.Count);
-            Assert.AreEqual(newPocoFalse.Name, foundFalse[0].Name);
+            Assert.Equal(1, foundFalse.Count);
+            Assert.Equal(newPocoFalse.Name, foundFalse[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void IsNull()
         {
             var newPoco = new TestPoco { Name = null };
             connection.Save(newPoco);
             var foundPoco = connection.SelectAllFrom<TestPoco>().Where(t => t.Name == null).Single();
-            Assert.AreEqual(newPoco.Id, foundPoco.Id);
+            Assert.Equal(newPoco.Id, foundPoco.Id);
         }
 
-        [Test]
+        [Fact]
         public void Many()
         {
             var newPoco = new TestPoco { Name = null };
@@ -167,22 +165,22 @@ namespace Folke.Orm.Mysql.Test
             var newMany = new TestManyPoco { Toto = "Toto", Poco = newPoco };
             connection.Save(newMany);
             var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco, manies[0].Poco);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco, manies[0].Poco);
         }
 
-        [Test]
+        [Fact]
         public void Select_MultipleColumns()
         {
             var newPoco = new TestPoco { Name = "Ihihi" };
             connection.Save(newPoco);
             connection.Cache.Clear();
             var poco = connection.Select<TestPoco>().Values(x => x.Id, x => x.Name).From().List();
-            Assert.AreEqual(newPoco.Id, poco[0].Id);
-            Assert.AreEqual(newPoco.Name, poco[0].Name);
+            Assert.Equal(newPoco.Id, poco[0].Id);
+            Assert.Equal(newPoco.Name, poco[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void ManyNoJoin()
         {
             var newPoco = new TestPoco { Name = null };
@@ -193,11 +191,11 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Id, manies[0].Poco.Id);
         }
 
-        [Test]
+        [Fact]
         public void ManyNoJoinNameNotRetreived()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -208,12 +206,12 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
-            Assert.IsNull(manies[0].Poco.Name);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Id, manies[0].Poco.Id);
+            Assert.Null(manies[0].Poco.Name);
         }
 
-        [Test]
+        [Fact]
         public void ManyJoin()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -224,12 +222,12 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var manies = connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoinOnId(x => x.Poco).Where(t => t.Toto == "Toto").List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
-            Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Id, manies[0].Poco.Id);
+            Assert.Equal(newPoco.Name, manies[0].Poco.Name);
         }
 
-        [Test]
+        [Fact]
         public void ManyFetch()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -240,12 +238,12 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var manies = connection.SelectAllFrom<TestManyPoco>(t => t.Poco).Where(t => t.Toto == "Toto").List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Id, manies[0].Poco.Id);
-            Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Id, manies[0].Poco.Id);
+            Assert.Equal(newPoco.Name, manies[0].Poco.Name);
         }
 
-        [Test]
+        [Fact]
         public void Anonymous()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -255,11 +253,11 @@ namespace Folke.Orm.Mysql.Test
             
             var manies = connection.Select<AnonymousType>().All(x => x.Poco).All(x => x.Many).From(x => x.Many)
                 .LeftJoin(x => x.Poco).On(x => x.Many.Poco == x.Poco).List();
-            Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
-            Assert.AreEqual(newMany.Toto, manies[0].Many.Toto);
+            Assert.Equal(newPoco.Name, manies[0].Poco.Name);
+            Assert.Equal(newMany.Toto, manies[0].Many.Toto);
         }
         
-        [Test]
+        [Fact]
         public void AnonymousWithCriteria()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -273,12 +271,12 @@ namespace Folke.Orm.Mysql.Test
 
             var manies = connection.Select<AnonymousType>().All(x => x.Poco).All(x => x.Many).From(x => x.Poco)
                 .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Toto").List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
-            Assert.AreEqual(newMany.Toto, manies[0].Many.Toto);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Name, manies[0].Poco.Name);
+            Assert.Equal(newMany.Toto, manies[0].Many.Toto);
         }
 
-        [Test]
+        [Fact]
         public void AnonymousWithCriteria2()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -292,12 +290,12 @@ namespace Folke.Orm.Mysql.Test
 
             var manies = connection.Select<AnonymousType>().All(x => x.Poco).All(x => x.Many).From(x => x.Poco)
                 .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Titi").OrderBy(x => x.Poco.Name).List();
-            Assert.AreEqual(1, manies.Count);
-            Assert.AreEqual(newPoco.Name, manies[0].Poco.Name);
-            Assert.AreEqual(null, manies[0].Many);
+            Assert.Equal(1, manies.Count);
+            Assert.Equal(newPoco.Name, manies[0].Poco.Name);
+            Assert.Equal(null, manies[0].Many);
         }
 
-        [Test]
+        [Fact]
         public void LimitAndOrder()
         {
             for (var i = 0; i < 10; i++)
@@ -307,12 +305,12 @@ namespace Folke.Orm.Mysql.Test
             }
 
             var pocos = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Desc().Limit(1, 2).List();
-            Assert.AreEqual(2, pocos.Count);
-            Assert.AreEqual("Name8", pocos[0].Name);
-            Assert.AreEqual("Name7", pocos[1].Name);
+            Assert.Equal(2, pocos.Count);
+            Assert.Equal("Name8", pocos[0].Name);
+            Assert.Equal("Name7", pocos[1].Name);
         }
 
-        [Test]
+        [Fact]
         public void Subquery()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -324,11 +322,11 @@ namespace Folke.Orm.Mysql.Test
 
             var pocos = connection.Select<FolkeTuple<TestPoco, TestManyPoco>>().All(x => x.Item0).From(x => x.Item0)
                 .WhereExists(sub => sub.All(x => x.Item1).From(x => x.Item1).Where(x => x.Item1.Poco == x.Item0)).List();
-            Assert.AreEqual(1, pocos.Count);
-            Assert.AreEqual(newPoco.Name, pocos[0].Item0.Name);
+            Assert.Equal(1, pocos.Count);
+            Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
         }
 
-        [Test]
+        [Fact]
         public void AndFrom()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -341,13 +339,13 @@ namespace Folke.Orm.Mysql.Test
                     .All(x => x.Item1)
                     .From(x => x.Item0)
                     .From(x => x.Item1).List();
-            Assert.AreEqual(1, pocos.Count);
-            Assert.AreEqual(newPoco.Name, pocos[0].Item0.Name);
-            Assert.AreEqual(newMany.Toto, pocos[0].Item1.Toto);
-            Assert.AreEqual(newPoco, pocos[0].Item1.Poco);
+            Assert.Equal(1, pocos.Count);
+            Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
+            Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);
+            Assert.Equal(newPoco, pocos[0].Item1.Poco);
         }
 
-        [Test]
+        [Fact]
         public void RightJoin()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -364,16 +362,16 @@ namespace Folke.Orm.Mysql.Test
                     .RightJoin(x => x.Item1)
                     .On(x => x.Item1.Poco == x.Item0)
                     .List();
-            Assert.AreEqual(2, pocos.Count);
-            Assert.AreEqual(newPoco.Name, pocos[0].Item0.Name);
-            Assert.AreEqual(newMany.Toto, pocos[0].Item1.Toto);
-            Assert.AreEqual(newPoco, pocos[0].Item1.Poco);
-            Assert.AreEqual(newPoco.Name, pocos[1].Item0.Name);
-            Assert.AreEqual(otherMany.Toto, pocos[1].Item1.Toto);
-            Assert.AreEqual(newPoco, pocos[1].Item1.Poco);
+            Assert.Equal(2, pocos.Count);
+            Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
+            Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);
+            Assert.Equal(newPoco, pocos[0].Item1.Poco);
+            Assert.Equal(newPoco.Name, pocos[1].Item0.Name);
+            Assert.Equal(otherMany.Toto, pocos[1].Item1.Toto);
+            Assert.Equal(newPoco, pocos[1].Item1.Poco);
         }
 
-        [Test]
+        [Fact]
         public void InnerJoin()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -388,12 +386,12 @@ namespace Folke.Orm.Mysql.Test
                     .All(x => x.Poco)
                     .From()
                     .InnerJoin(x => x.Poco).OnId(x => x.Poco).List();
-            Assert.AreEqual(1, pocos.Count);
-            Assert.AreEqual(newPoco.Name, pocos[0].Poco.Name);
-            Assert.AreEqual(newMany.Toto, pocos[0].Toto);
+            Assert.Equal(1, pocos.Count);
+            Assert.Equal(newPoco.Name, pocos[0].Poco.Name);
+            Assert.Equal(newMany.Toto, pocos[0].Toto);
         }
 
-        [Test]
+        [Fact]
         public void LoadWithFetch()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -408,13 +406,13 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var multi = connection.Load<TestMultiPoco>(all.Id, x => x.One, x => x.Two, x => x.Three);
-            Assert.AreEqual(all.Name, multi.Name);
-            Assert.AreEqual(onePoco.Name, multi.One.Name);
-            Assert.AreEqual(twoPoco.Name, multi.Two.Name);
-            Assert.AreEqual(three.Toto, multi.Three.Toto);
+            Assert.Equal(all.Name, multi.Name);
+            Assert.Equal(onePoco.Name, multi.One.Name);
+            Assert.Equal(twoPoco.Name, multi.Two.Name);
+            Assert.Equal(three.Toto, multi.Three.Toto);
         }
 
-        [Test]
+        [Fact]
         public void Prepare()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -424,16 +422,16 @@ namespace Folke.Orm.Mysql.Test
 
             var query = new PreparedQueryBuilder<TestPoco, string>(q => q.All().From().Where((x, y) => x.Name == y.Item0));
             var result = query.List(connection, "Two");
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("Two", result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("Two", result[0].Name);
             result = query.List(connection, "One");
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("One", result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("One", result[0].Name);
         }
 
         private readonly PreparedQueryBuilder<TestPoco, string> staticQuery = new PreparedQueryBuilder<TestPoco, string>(q => q.All().From().Where((x, y) => x.Name == y.Item0));
 
-        [Test]
+        [Fact]
         public void PrepareStatic()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -442,14 +440,14 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(twoPoco);
 
             var result = staticQuery.List(connection, "Two");
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("Two", result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("Two", result[0].Name);
             result = staticQuery.List(connection, "One");
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("One", result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("One", result[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void Like()
         {
             var onePoco = new TestPoco { Name = "One" };
@@ -458,11 +456,11 @@ namespace Folke.Orm.Mysql.Test
             connection.Save(twoPoco);
 
             var result = connection.SelectAllFrom<TestPoco>().Where(x => x.Name.Like("On%")).List();
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("One", result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("One", result[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void CollectionAuto()
         {
             var collection = new TestCollection { Name = "Collection" };
@@ -476,33 +474,33 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var coll = connection.Load<TestCollection>(collection.Id);
-            Assert.AreEqual(collection.Name, coll.Name);
-            Assert.AreEqual(10, coll.Members.Count);
+            Assert.Equal(collection.Name, coll.Name);
+            Assert.Equal(10, coll.Members.Count);
             var j = 0;
             foreach (var member in coll.Members)
             {
-                Assert.AreEqual(coll, member.Collection);
-                Assert.AreEqual("Member" + j++, member.Name);
+                Assert.Equal(coll, member.Collection);
+                Assert.Equal("Member" + j++, member.Name);
             }
         }
 
-        [Test]
+        [Fact]
         public void FromSubQuery()
         {
             var query = connection.Select<UserInGroup>().Values(x => x.Group).FromSubQuery(q => q.Values(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group));
-            Assert.AreEqual("SELECT `t`.`Group_id` FROM (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item0) GROUP BY  `t`.`Group_id`) AS t", query.QueryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Group_id` FROM (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item0) GROUP BY  `t`.`Group_id`) AS t", query.QueryBuilder.Sql);
         }
 
-        [Test]
+        [Fact]
         public void InnerJoinSubQuery()
         {
             UserInGroup a = null;
             var query = connection.Select<UserInGroup>().Values(x => x.Group).FromSubQuery(q => q.Values(x => x.Group).From().Where(x => x.User.Id == 1).GroupBy(x => x.Group))
                .InnerJoinSubQuery(q => q.Values(x => x.Group).From().Where(x => x.User.Id == 2), () => a).On(x => a.Group == x.Group);
-            Assert.AreEqual("SELECT `t`.`Group_id` FROM (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item0) GROUP BY  `t`.`Group_id`) AS t INNER JOIN (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item1)) AS t1 ON ( `t1`.`Group_id`= `t`.`Group_id`)", query.QueryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Group_id` FROM (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item0) GROUP BY  `t`.`Group_id`) AS t INNER JOIN (SELECT `t`.`Group_id` FROM `UserInGroup` as t WHERE( `t`.`User_id`= @Item1)) AS t1 ON ( `t1`.`Group_id`= `t`.`Group_id`)", query.QueryBuilder.Sql);
         }
 
-        [Test]
+        [Fact]
         public void SelectOneColumnInTableWithForeignKeys()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -513,10 +511,10 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var response = connection.Select<TestManyPoco>().Values(x => x.Toto).From().List();
-            Assert.AreEqual(newMany.Toto, response[0].Toto);
+            Assert.Equal(newMany.Toto, response[0].Toto);
         }
 
-        [Test]
+        [Fact]
         public void SelectOneColumnAndIdInTableWithForeignKeys()
         {
             var newPoco = new TestPoco { Name = "Name" };
@@ -527,10 +525,10 @@ namespace Folke.Orm.Mysql.Test
             connection.Cache.Clear();
 
             var response = connection.Select<TestManyPoco>().Values(x => x.Id).Values(x => x.Toto).From().List();
-            Assert.AreEqual(newMany.Toto, response[0].Toto);
+            Assert.Equal(newMany.Toto, response[0].Toto);
         }
 
-        [Test]
+        [Fact]
         public void Set()
         {
             // Arrange
@@ -542,10 +540,10 @@ namespace Folke.Orm.Mysql.Test
 
             // Assert
             var result = connection.Load<TestPoco>(newPoco.Id);
-            Assert.AreEqual("Test", result.Name);
+            Assert.Equal("Test", result.Name);
         }
 
-        [Test]
+        [Fact]
         public void LimitWithVariable()
         {
             // Arrange
@@ -559,11 +557,11 @@ namespace Folke.Orm.Mysql.Test
             var results = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Asc().Limit(x => 5, 5).List();
 
             // Assert
-            Assert.AreEqual(5, results.Count);
-            Assert.AreEqual("Name5", results[0].Name);
+            Assert.Equal(5, results.Count);
+            Assert.Equal("Name5", results[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void LimitWithParameter()
         {
             // Arrange
@@ -581,11 +579,11 @@ namespace Folke.Orm.Mysql.Test
                     .Limit((x, y) => y.Item0, 5).List(connection, 5);
             
             // Assert
-            Assert.AreEqual(5, results.Count);
-            Assert.AreEqual("Name5", results[0].Name);
+            Assert.Equal(5, results.Count);
+            Assert.Equal("Name5", results[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void SelectCountAll()
         {
             // Arrange
@@ -599,10 +597,10 @@ namespace Folke.Orm.Mysql.Test
             var result = connection.Select<TestPoco>().CountAll().From().Scalar<int>();
 
             // Assert
-            Assert.AreEqual(10, result);
+            Assert.Equal(10, result);
         }
 
-        [Test]
+        [Fact]
         public void TestLinq()
         {
             var newPoco = new TestPoco { Name = Guid.NewGuid().ToString() };
@@ -612,11 +610,11 @@ namespace Folke.Orm.Mysql.Test
 
             FluentWhereBuilder<TestPoco, FolkeTuple> query = from toto in connection.SelectAllFrom<TestPoco>() where toto.Name == newPoco.Name select toto;
             var result = query.List();
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual(newPoco.Name, result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal(newPoco.Name, result[0].Name);
         }
 
-        [Test]
+        [Fact]
         public void WhereWithQuote()
         {
             var newPoco = new TestPoco {Name = Guid.NewGuid().ToString() + "'azer'ty"};
@@ -624,11 +622,11 @@ namespace Folke.Orm.Mysql.Test
 
             var result = connection.SelectAllFrom<TestPoco>().Where(x => x.Name == newPoco.Name).SingleOrDefault();
 
-            Assert.IsNotNull(result);
-            Assert.AreEqual(newPoco.Name, result.Name);
+            Assert.NotNull(result);
+            Assert.Equal(newPoco.Name, result.Name);
         }
 
-        [Test]
+        [Fact]
         public void Decimal()
         {
             var newDecimal = new TestDecimal { Decimal = new decimal(1.23)};
@@ -637,11 +635,11 @@ namespace Folke.Orm.Mysql.Test
 
             var result = connection.SelectAllFrom<TestDecimal>().SingleOrDefault();
 
-            Assert.IsNotNull(result);
-            Assert.AreEqual(newDecimal.Decimal, result.Decimal);
+            Assert.NotNull(result);
+            Assert.Equal(newDecimal.Decimal, result.Decimal);
         }
 
-/*        [Test]
+/*        [Fact]
         public void TestLinqWithJoin()
         {
             var newPoco = new TestPoco { Name = Guid.NewGuid().ToString() };
@@ -653,8 +651,8 @@ namespace Folke.Orm.Mysql.Test
                                                              join link in toto.
                                                              where toto.Name == newPoco.Name select toto;
             var result = query.List();
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual(newPoco.Name, result[0].Name);
+            Assert.Equal(1, result.Count);
+            Assert.Equal(newPoco.Name, result[0].Name);
         }*/
     }
 }
