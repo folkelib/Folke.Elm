@@ -1,0 +1,20 @@
+﻿{
+  "version": "1.1.0-*",
+  "description": "An adapter for Sqlite for Folke.Orm",
+  "authors": [ "Sidoine De Wispelaere" ],
+  "tags": [ "sqlite orm" ],
+  "projectUrl": "https://github.com/folkelib/orm",
+  "licenseUrl": "http://opensource.org/licenses/GPL-2.0",
+
+  "dependencies": {
+    "Folke.Elm": "",
+    "Microsoft.Data.Sqlite": "1.0.0-beta7"
+  },
+
+  "frameworks": {
+    "dnx451": {
+    },
+    "net45": { },
+    "dnxcore50": {}
+  }
+}

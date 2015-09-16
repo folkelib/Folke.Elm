@@ -1,0 +1,23 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "Folke.Elm.Abstract.Test Class Library",
+  "authors": [ "Sidoine" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Folke.Elm": "",
+    "xunit": "2.1.0-rc1-build3168"
+  },
+
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.ComponentModel.DataAnnotations": "4.0.0.0",
+        "System.Runtime": "4.0.10.0",
+        "System.Configuration": "4.0.0.0"
+      }
+    }
+  }
+}
