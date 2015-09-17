@@ -282,7 +282,8 @@ namespace Folke.Elm
                 }
                 else
                 {
-                    var newType = foreign ? "INT" : Connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength);
+                    var columnProperty = foreign ? property.Reference.Key : property;
+                    var newType = Connection.Driver.GetSqlType(columnProperty.PropertyInfo, columnProperty.MaxLength);
                     if (!Connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
                         AddComma();

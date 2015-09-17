@@ -96,6 +96,8 @@ namespace Folke.Elm.Sqlite
             if (firstType == secondType)
                 return true;
 
+            if (firstType.StartsWith("int") && secondType.StartsWith("int")) return true;
+
             var parent = firstType.IndexOf('(');
             if (parent >= 0)
                 firstType = firstType.Substring(0, parent);
@@ -104,7 +106,7 @@ namespace Folke.Elm.Sqlite
                 secondType = secondType.Substring(0, parent);
             if (firstType == secondType)
                 return true;
-            if (firstType.IndexOf("text") >= 0 && secondType.IndexOf("text") >= 0)
+            if (firstType.IndexOf("text", StringComparison.Ordinal) >= 0 && secondType.IndexOf("text", StringComparison.Ordinal) >= 0)
                 return true;
             return false;
         }

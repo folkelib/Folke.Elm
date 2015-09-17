@@ -12,6 +12,8 @@ namespace Folke.Elm.Abstract.Test
         {
             public int Id { get; set; }
             public string Text { get; set; }
+            public Guid Guid { get; set; }
+            public decimal Decimal { get; set; }
         }
 
         public class ChangeColumnTypeClass
@@ -21,6 +23,8 @@ namespace Folke.Elm.Abstract.Test
             {
                 public int Id { get; set; }
                 public int Text { get; set; }
+                public Guid Guid { get; set; }
+                public decimal Decimal { get; set; }
             }
         }
 
@@ -49,6 +53,8 @@ namespace Folke.Elm.Abstract.Test
             {
                 public int Id { get; set; }
                 public string Text { get; set; }
+                public Guid Guid { get; set; }
+                public decimal Decimal { get; set; }
                 public int Int { get; set; }
             }
         }
