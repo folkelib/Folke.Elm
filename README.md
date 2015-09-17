@@ -1,4 +1,4 @@
-Folke.Orm
+Folke.Elm
 =========
 
  Object-Relational Mapping library written in C#
@@ -7,15 +7,17 @@ Folke.Orm
 
 ```C#
 
-public class TestPoco : IFolkeTable
+public class TestPoco
 {
+    [Key]
     public int Id { get; set; }
     public string Name { get; set; }
     public bool Boolean { get; set; }
 }
 
-public class TestManyPoco : IFolkeTable
+public class TestManyPoco
 {
+    [Key]
     public int Id { get; set; }
     public string Toto { get; set; }
     public TestPoco Poco { get; set; }
@@ -25,8 +27,10 @@ public class Example
 {
     public void Test()
     {
-        var driver = new MySqlDriver(new DatabaseSettings { Database = "sample", Host = "localhost", Password = "test", User = "test" });
-        var connection = new FolkeConnection(driver);
+        var driver = new MySqlDriver();
+        var mapper = new Mapper();
+        var connectionString = "Server=localhost;Database=test;Uid=root;Pwd=test";
+        var connection = new FolkeConnection(driver, mapper, connectionString);
         connection.CreateTable<TestPoco>(drop: true);
         connection.CreateTable<TestManyPoco(drop: true);
         
@@ -36,7 +40,7 @@ public class Example
         var newMany = new TestManyPoco { Name = "Many", Poco = newPoco };
         connection.Save(newMany);
         
-        var manies = connection.QueryOver<TestManyPoco>(p => p.Poco).Where(t => t.Poco == newPoco).List();
+        var manies = connection.SelectAllFrom<TestManyPoco>(p => p.Poco).Where(t => t.Poco == newPoco).List();
         Assert.AreEqual(1, manies.Count);
         Assert.AreEqual(newPoco, manies[0].Poco);
     }
@@ -44,8 +48,8 @@ public class Example
 
 ```
 
-##Limitations
+##Features
 
-* Only MySQL
-* Primary key must be int Id
+* MySQL and Sqlite
+* DNX 4.51, Core 5.0, and .NET 4.5
 
