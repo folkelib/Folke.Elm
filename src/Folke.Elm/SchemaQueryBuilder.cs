@@ -180,6 +180,9 @@ namespace Folke.Elm
             {
                 foreach (var property in mapping.Columns.Values)
                 {
+                    if (!DoesForeignTableExist(property, existingTables))
+                        continue;
+
                     if (property.Index != null)
                     {
                         query.Append(";");
