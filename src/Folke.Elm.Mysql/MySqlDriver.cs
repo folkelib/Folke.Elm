@@ -109,7 +109,7 @@ namespace Folke.Elm.Mysql
             return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).List().Cast<ColumnDefinition>().ToList();
         }
 
-        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
+        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
         {
             return connection.Select<Tables>().All().From().Where(t => t.Schema == connection.Database).List().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
         }

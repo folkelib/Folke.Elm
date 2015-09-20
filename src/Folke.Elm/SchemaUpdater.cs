@@ -48,7 +48,7 @@ namespace Folke.Elm
                 || t.GetCustomAttribute<TableAttribute>() != null)).Select(x => connection.Mapper.GetTypeMapping(x.AsType())).ToList();
             using (var transaction = connection.BeginTransaction())
             {
-                var existingTableTables = connection.Driver.GetTableDefinitions(connection, connection.Database).Select(t => t.Name.ToLower()).ToList();
+                var existingTableTables = connection.Driver.GetTableDefinitions(connection).Select(t => t.Name.ToLower()).ToList();
                 var tableToCreate = tables.Where(t => existingTableTables.All(y => y != t.TableName.ToLower())).ToList();
                 
                 foreach (var table in tableToCreate)

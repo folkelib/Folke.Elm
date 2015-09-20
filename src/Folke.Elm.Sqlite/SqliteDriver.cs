@@ -132,18 +132,21 @@ namespace Folke.Elm.Sqlite
             return list;
         }
 
-        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p)
+        public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
         {
             var list = new List<TableDefinition>();
             using (var command = connection.OpenCommand())
             {
-                command.CommandText = ".tables";
+                command.CommandText = $"SELECT name FROM {connection.Database}.sqlite_master WHERE TYPE='table'";
                 using (var reader = command.ExecuteReader())
                 {
-                    list.Add(new TableDefinition
+                    while (reader.Read())
                     {
-                        Name = reader.GetString(0)
-                    });
+                        list.Add(new TableDefinition
+                        {
+                            Name = reader.GetString(0)
+                        });
+                    }
                 }
             }
             return list;

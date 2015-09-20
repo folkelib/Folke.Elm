@@ -15,7 +15,7 @@ namespace Folke.Elm
 
         IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap);
 
-        IList<TableDefinition> GetTableDefinitions(FolkeConnection connection, string p);
+        IList<TableDefinition> GetTableDefinitions(FolkeConnection connection);
 
         SqlStringBuilder CreateSqlStringBuilder();
 
