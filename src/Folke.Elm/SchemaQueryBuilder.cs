@@ -263,17 +263,21 @@ namespace Folke.Elm
                     AddComma();
                     AddColumn(property);
                     changes = true;
-                    if (property.Index != null)
+                    if (driver.CanAddIndexInCreateTable())
                     {
-                        AddComma();
-                        query.Append("ADD ");
-                        AppendIndex(property, property.Index);
-                    }
-                    else if (foreign)
-                    {
-                        AddComma();
-                        query.Append("ADD ");
-                        AppendIndex(property, property.ColumnName);
+                        // TODO add indexes to existing columns if not present
+                        if (property.Index != null)
+                        {
+                            AddComma();
+                            query.Append("ADD ");
+                            AppendIndex(property, property.Index);
+                        }
+                        else if (foreign)
+                        {
+                            AddComma();
+                            query.Append("ADD ");
+                            AppendIndex(property, property.ColumnName);
+                        }
                     }
 
                     if (foreign)
