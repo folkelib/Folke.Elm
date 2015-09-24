@@ -196,5 +196,10 @@ namespace Folke.Elm.Sqlite
         {
             return false;
         }
+
+        public bool CanDoMultipleActionsInAlterTable()
+        {
+            return false;
+        }
     }
 }

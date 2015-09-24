@@ -75,7 +75,13 @@ namespace Folke.Elm
             query.Append(" ");
             query.Append("FOREIGN KEY (");
             AppendColumnName(column);
-            query.Append(") REFERENCES ");
+            query.Append(")");
+            AppendReferences(column);
+        }
+
+        private void AppendReferences(PropertyMapping column)
+        { 
+            query.Append(" REFERENCES ");
             AppendTableName(column.Reference);
             query.Append("(");
             query.Append(column.Reference.Key.ColumnName);
@@ -216,14 +222,14 @@ namespace Folke.Elm
 
         internal SchemaQueryBuilder<T> AlterTable(Type type)
         {
-            query.Append("ALTER TABLE ");
+            query.AppendAfterSpace("ALTER TABLE ");
             query.AppendSymbol(Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 
         internal void AddColumn(PropertyMapping property)
         {
-            query.Append("ADD COLUMN ");
+            query.AppendAfterSpace("ADD COLUMN ");
             AppendColumn(property);
         }
     
@@ -260,9 +266,33 @@ namespace Folke.Elm
                 var existingColumn = columns.SingleOrDefault(c => c.ColumnName.Equals(columnName,StringComparison.OrdinalIgnoreCase));
                 if (existingColumn == null)
                 {
-                    AddComma();
+                    // TODO ugly
+                    if (driver.CanDoMultipleActionsInAlterTable())
+                    {
+                        AddComma();
+                    }
+                    else
+                    {
+                        if (commaAdded)
+                        {
+                            query.Append(";");
+                            AlterTable(type);
+                        }
+                        else
+                        {
+                            commaAdded = true;
+                        }
+                    }
+
                     AddColumn(property);
                     changes = true;
+                    if (foreign)
+                    {
+                    //    AddComma();
+                      //  query.Append("ADD ");
+                        AppendReferences(property);
+                    }
+
                     if (driver.CanAddIndexInCreateTable())
                     {
                         // TODO add indexes to existing columns if not present
@@ -280,12 +310,7 @@ namespace Folke.Elm
                         }
                     }
 
-                    if (foreign)
-                    {
-                        AddComma();
-                        query.Append("ADD ");
-                        AppendForeignKey(property);
-                    }
+                    
                 }
                 else
                 {

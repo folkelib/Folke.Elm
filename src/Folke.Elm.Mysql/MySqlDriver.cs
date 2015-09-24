@@ -145,5 +145,10 @@ namespace Folke.Elm.Mysql
         {
             return true;
         }
+
+        public bool CanDoMultipleActionsInAlterTable()
+        {
+            return true;
+        }
     }
 }

@@ -24,5 +24,6 @@ namespace Folke.Elm
 
         // Capabilities
         bool CanAddIndexInCreateTable();
+        bool CanDoMultipleActionsInAlterTable();
     }
 }
