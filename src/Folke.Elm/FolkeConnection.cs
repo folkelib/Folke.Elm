@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -27,13 +26,13 @@ namespace Folke.Elm
             Mapper = mapper;
         }
 
-        public IDictionary<string, IDictionary<object, object>> Cache { get; private set; }
+        public IDictionary<string, IDictionary<object, object>> Cache { get; }
 
         public string Database { get; set; }
 
         public IDatabaseDriver Driver { get; set; }
 
-        public IMapper Mapper { get; private set; }
+        public IMapper Mapper { get; }
         
         public FolkeCommand OpenCommand()
         {
@@ -55,29 +54,29 @@ namespace Folke.Elm
             return new FolkeTransaction(this);
         }
 
-        public FluentSelectBuilder<T, FolkeTuple> Select<T>() where T : class, new()
+        public ISelectResult<T, FolkeTuple> Select<T>() where T : class, new()
         {
-            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+            return FluentBaseBuilder<T, FolkeTuple>.Select(new BaseQueryBuilder(this, typeof(T)));
         }
 
-        public FluentSelectBuilder<T, TParameters> Select<T, TParameters>() where T : class, new()
+        public ISelectResult<T, TParameters> Select<T, TParameters>() where T : class, new()
         {
-            return new FluentSelectBuilder<T, TParameters>(new BaseQueryBuilder(this, typeof(T), typeof(TParameters)));
+            return FluentBaseBuilder<T, TParameters>.Select(new BaseQueryBuilder(this, typeof(T), typeof(TParameters)));
         }
 
         [Obsolete("Use Select")]
-        public FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new()
+        public ISelectResult<T, FolkeTuple> Query<T>() where T : class, new()
         {
-            return new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+            return Select<T>();
         }
 
-        public FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>() where T : class, new()
+        public IFromResult<T, FolkeTuple> SelectAllFrom<T>() where T : class, new()
         {
             return Select<T>().All().From();
         }
 
         [Obsolete("Use SelectAll")]
-        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new()
+        public IFromResult<T, FolkeTuple> QueryOver<T>() where T : class, new()
         {
             return SelectAllFrom<T>();
         }
@@ -88,21 +87,21 @@ namespace Folke.Elm
         /// <typeparam name="T">The type to select on</typeparam>
         /// <param name="fetches">The other tables to select (using a left join)</param>
         /// <returns></returns>
-        public FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
+        public IFromResult<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
             where T : class, new()
         {
-            var query = new FluentSelectBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
-            query.All();
+            var query = FluentBaseBuilder<T, FolkeTuple>.Select(new BaseQueryBuilder(this, typeof(T)));
+            var all = query.All();
             foreach (var fetch in fetches)
                 query.All(fetch);
-            var fromQuery = query.From();
+            var fromQuery = all.From();
             foreach (var fetch in fetches)
                 fromQuery.LeftJoinOnId(fetch);
             return fromQuery;
         }
 
         [Obsolete("Use SelectAll")]
-        public FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
+        public IFromResult<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             return SelectAllFrom<T>(fetches);
         }
@@ -113,9 +112,9 @@ namespace Folke.Elm
             Delete<T>().From().Where(x => x.Key() == keyProperty.GetValue(value)).Execute();
         }
 
-        public FluentDeleteBuilder<T, FolkeTuple> Delete<T>() where T : class, new()
+        public IDeleteResult<T, FolkeTuple> Delete<T>() where T : class, new()
         {
-            return new FluentDeleteBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+            return FluentBaseBuilder<T, FolkeTuple>.Delete(new BaseQueryBuilder(this, typeof(T)));
         }
 
         public async Task DeleteAsync<T>(T value) where T : class, new()
@@ -130,9 +129,9 @@ namespace Folke.Elm
             Update<T>().SetAll(value).Where(x => x.Key() == keyProperty.GetValue(value)).Execute();
         }
 
-        public FluentUpdateBuilder<T, FolkeTuple> Update<T>()
+        public IUpdateResult<T, FolkeTuple> Update<T>()
         {
-            return new FluentUpdateBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+            return FluentBaseBuilder<T, FolkeTuple>.Update(new BaseQueryBuilder(this, typeof(T)));
         }
 
         public async Task UpdateAsync<T>(T value) where T : class, new()
@@ -164,42 +163,42 @@ namespace Folke.Elm
 
         public T Load<T>(int id) where T : class, IFolkeTable, new()
         {
-            return Select<T>().All().From().Where(x => x.Id == id).Single();
+            return Select<T>().All().From().Where(x => x.Id == id).First();
         }
 
         public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
         {
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).Single();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).First();
         }
 
         public T Get<T>(int id) where T : class, IFolkeTable, new()
         {
-            return Select<T>().All().From().Where(x => x.Id == id).SingleOrDefault();
+            return Select<T>().All().From().Where(x => x.Id == id).FirstOrDefault();
         }
 
         public T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
         {
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).SingleOrDefault();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).FirstOrDefault();
         }
 
         public T Get<T>(object id) where T : class, new()
         {
-            return Select<T>().All().From().Where(x => x.Key() == id).SingleOrDefault();
+            return Select<T>().All().From().Where(x => x.Key() == id).FirstOrDefault();
         }
 
         public T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleOrDefault();
+            return CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).FirstOrDefault();
         }
 
         public async Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
-            return await CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleOrDefaultAsync();
+            return await CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).FirstOrDefaultAsync();
         }
 
-        public FluentInsertIntoBuilder<T, FolkeTuple> InsertInto<T>() where T : class, new()
+        public IInsertIntoResult<T, FolkeTuple> InsertInto<T>() where T : class, new()
         {
-            return new FluentInsertIntoBuilder<T, FolkeTuple>(new BaseQueryBuilder(this, typeof(T)));
+            return FluentBaseBuilder<T, FolkeTuple>.InsertInto(new BaseQueryBuilder(this, typeof(T)));
         }
 
         public void Save<T>(T value) where T : class, new()
@@ -234,7 +233,7 @@ namespace Folke.Elm
             Cache[typeof(T).Name][keyProperty.GetValue(value)] = value;
         }
 
-        private FluentInsertIntoBuilder<T, FolkeTuple> CreateSaveQuery<T>(T value, bool automatic, PropertyInfo keyProperty)
+        private IInsertedValuesResult<T, FolkeTuple> CreateSaveQuery<T>(T value, bool automatic, PropertyInfo keyProperty)
             where T : class, new()
         {
             if (automatic)
@@ -288,7 +287,7 @@ namespace Folke.Elm
             var columns =
                 SelectAllFrom<KeyColumnUsage>()
                     .Where(c => c.ReferencedTableName == typeMap.TableName && c.ReferencedTableSchema == typeMap.TableSchema)
-                    .List();
+                    .ToList();
 
             foreach (var column in columns)
             {
@@ -352,7 +351,7 @@ namespace Folke.Elm
             new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
         }
 
-        private FluentFromBuilder<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
+        private IFromResult<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             var query = Select<T>().All();
             foreach (var fetch in fetches)
@@ -384,73 +383,6 @@ namespace Folke.Elm
             }
             command.CommandText = commandText;
             return command;
-        }
-
-        public TU Scalar<TU>(string query, params object[] commandParameters)
-        {
-            using (var command = CreateCommand(query, commandParameters))
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    if (!reader.Read() || reader.IsDBNull(0))
-                    {
-                        return default(TU);
-                    }
-                    var ret = reader.GetTypedValue<TU>(0);
-                    return ret;
-                }
-            }
-        }
-
-        public async Task<TU> ScalarAsync<TU>(string query, params object[] commandParameters)
-        {
-            using (var command = CreateCommand(query, commandParameters))
-            {
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    if (!reader.Read() || reader.IsDBNull(0))
-                    {
-                        return default(TU);
-                    }
-                    var ret = reader.GetTypedValue<TU>(0);
-                    // reader.Close();
-                    return ret;
-                }
-            }
-        }
-
-        public object Scalar(string query, params object[] commandParameters)
-        {
-            using (var command = CreateCommand(query, commandParameters))
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    if (!reader.Read() || reader.IsDBNull(0))
-                    {
-                        return null;
-                    }
-                    var ret = reader.GetValue(0);
-                    // reader.Close();
-                    return ret;
-                }
-            }
-        }
-
-        public async Task<object> ScalarAsync(string query, params object[] commandParameters)
-        {
-            using (var command = CreateCommand(query, commandParameters))
-            {
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    if (!reader.Read() || reader.IsDBNull(0))
-                    {
-                        return null;
-                    }
-                    var ret = reader.GetValue(0);
-                    // reader.Close();
-                    return ret;
-                }
-            }
         }
     } 
 }

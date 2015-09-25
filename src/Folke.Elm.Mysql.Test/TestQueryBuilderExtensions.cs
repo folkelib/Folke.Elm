@@ -1,15 +1,16 @@
 ﻿using System;
 using Folke.Elm.Mapping;
 using Xunit;
+using Folke.Elm.Fluent;
 
 namespace Folke.Elm.Mysql.Test
 {
     [Collection("IntegrationTest")]
     public class TestQueryBuilderExtensions : IDisposable
     {
-        private FolkeConnection connection;
-        private FolkeTransaction transaction;
-        private TestPoco testPoco;
+        private readonly FolkeConnection connection;
+        private readonly FolkeTransaction transaction;
+        private readonly TestPoco testPoco;
 
         public TestQueryBuilderExtensions()
         {
@@ -43,7 +44,7 @@ namespace Folke.Elm.Mysql.Test
         public async void ListAsync()
         {
             var queryBuilder = connection.SelectAllFrom<TestPoco>(); // TODO utiliser un fake
-            var list = await queryBuilder.ListAsync();
+            var list = await queryBuilder.ToListAsync();
             Assert.Equal(1, list.Count);
             Assert.Equal(testPoco.Id, list[0].Id);
             Assert.Equal(testPoco.Name, list[0].Name);
@@ -73,6 +74,16 @@ namespace Folke.Elm.Mysql.Test
             var queryBuilder = connection.Select<TestPoco>().Values(x => x.Name).From().Where(x => x.Id == testPoco.Id); // TODO utiliser un fake
             var result = await queryBuilder.ScalarAsync<string>();
             Assert.Equal(testPoco.Name, result);
+        }
+
+        [Fact]
+        public void Foreach()
+        {
+            var queryBuilder = connection.Select<TestPoco>().Values(x => x.Name).From().Where(x => x.Id == testPoco.Id);
+            foreach (var poco in queryBuilder)
+            {
+                Assert.Equal(testPoco.Name, poco.Name);
+            }
         }
 
         public class TestPoco : IFolkeTable

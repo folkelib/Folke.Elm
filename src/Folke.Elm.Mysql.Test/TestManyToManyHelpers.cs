@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Folke.Elm.Mapping;
 using Xunit;
+using Folke.Elm.Fluent;
 
 namespace Folke.Elm.Mysql.Test
 {
@@ -13,7 +14,7 @@ namespace Folke.Elm.Mysql.Test
         {
             public int Id { get; set; }
 
-            [FolkeList(Join="Child")]
+            [Select(IncludeReference="Child")]
             public IReadOnlyList<LinkClass> Children { get; set; }
         }
 
@@ -38,7 +39,7 @@ namespace Folke.Elm.Mysql.Test
             public int Id { get; set; }
         }
 
-        private IFolkeConnection connection;
+        private readonly IFolkeConnection connection;
         private readonly Func<ChildDto, ChildClass> mapper = dto => new ChildClass { Test = dto.Test };
         private ParentClass parent;
 

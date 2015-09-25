@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Folke.Elm.Fluent;
+using Xunit;
 
 namespace Folke.Elm.Abstract.Test
 {
@@ -18,10 +19,10 @@ namespace Folke.Elm.Abstract.Test
             connection.Save(twoPoco);
 
             var query = new PreparedQueryBuilder<TestPoco, string>(q => q.All().From().Where((x, y) => x.Name == y.Item0));
-            var result = query.List(connection, "Two");
+            var result = query.Build(connection, "Two").ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal("Two", result[0].Name);
-            result = query.List(connection, "One");
+            result = query.Build(connection, "One").ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal("One", result[0].Name);
         }
@@ -33,10 +34,10 @@ namespace Folke.Elm.Abstract.Test
             var twoPoco = new TestPoco { Name = "Two" };
             connection.Save(twoPoco);
 
-            var result = staticQuery.List(connection, "Two");
+            var result = staticQuery.Build(connection, "Two").ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal("Two", result[0].Name);
-            result = staticQuery.List(connection, "One");
+            result = staticQuery.Build(connection, "One").ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal("One", result[0].Name);
         }

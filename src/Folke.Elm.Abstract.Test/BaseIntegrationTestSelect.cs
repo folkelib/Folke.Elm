@@ -14,7 +14,7 @@ namespace Folke.Elm.Abstract.Test
         {
             var newPoco = new TestPoco { Name = "Tutu " };
             connection.Save(newPoco);
-            var foundPoco = connection.SelectAllFrom<TestPoco>().Where(t => t.Name == newPoco.Name).Single();
+            var foundPoco = connection.SelectAllFrom<TestPoco>().Single(t => t.Name == newPoco.Name);
             Assert.NotNull(foundPoco);
             Assert.Equal(newPoco.Name, foundPoco.Name);
         }
@@ -26,10 +26,10 @@ namespace Folke.Elm.Abstract.Test
             var newPocoTrue = new TestPoco { Name = "Huhu", Boolean = true };
             connection.Save(newPocoTrue);
 
-            var foundTrue = connection.SelectAllFrom<TestPoco>().Where(t => t.Boolean).List();
+            var foundTrue = connection.SelectAllFrom<TestPoco>().Where(t => t.Boolean).ToList();
             Assert.Equal(1, foundTrue.Count);
             Assert.Equal(newPocoTrue.Name, foundTrue[0].Name);
-            var foundFalse = connection.SelectAllFrom<TestPoco>().Where(t => !t.Boolean).List();
+            var foundFalse = connection.SelectAllFrom<TestPoco>().Where(t => !t.Boolean).ToList();
             Assert.Equal(1, foundFalse.Count);
             Assert.Equal(newPocoFalse.Name, foundFalse[0].Name);
         }
@@ -38,7 +38,7 @@ namespace Folke.Elm.Abstract.Test
         {
             var newPoco = new TestPoco { Name = null };
             connection.Save(newPoco);
-            var foundPoco = connection.SelectAllFrom<TestPoco>().Where(t => t.Name == null).Single();
+            var foundPoco = connection.SelectAllFrom<TestPoco>().Single(t => t.Name == null);
             Assert.Equal(newPoco.Id, foundPoco.Id);
         }
 
@@ -48,7 +48,8 @@ namespace Folke.Elm.Abstract.Test
             connection.Save(newPoco);
             var newMany = new TestManyPoco { Toto = "Toto", Poco = newPoco };
             connection.Save(newMany);
-            var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).List();
+
+            var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco, manies[0].Poco);
         }
@@ -62,7 +63,7 @@ namespace Folke.Elm.Abstract.Test
 
             connection.Cache.Clear();
 
-            var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).List();
+            var manies = connection.SelectAllFrom<TestManyPoco>().Where(t => t.Poco == newPoco).ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco.Id, manies[0].Poco.Id);
             Assert.Null(manies[0].Poco.Name);
@@ -77,7 +78,7 @@ namespace Folke.Elm.Abstract.Test
 
             connection.Cache.Clear();
 
-            var manies = connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoinOnId(x => x.Poco).Where(t => t.Toto == "Toto").List();
+            var manies = connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoinOnId(x => x.Poco).Where(t => t.Toto == "Toto").ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco.Id, manies[0].Poco.Id);
             Assert.Equal(newPoco.Name, manies[0].Poco.Name);
@@ -88,7 +89,7 @@ namespace Folke.Elm.Abstract.Test
             var newPoco = new TestPoco { Name = "Ihihi" };
             connection.Save(newPoco);
             connection.Cache.Clear();
-            var poco = connection.Select<TestPoco>().Values(x => x.Id, x => x.Name).From().List();
+            var poco = connection.Select<TestPoco>().Values(x => x.Id, x => x.Name).From().ToList();
             Assert.Equal(newPoco.Id, poco[0].Id);
             Assert.Equal(newPoco.Name, poco[0].Name);
         }
@@ -102,7 +103,7 @@ namespace Folke.Elm.Abstract.Test
 
             connection.Cache.Clear();
 
-            var manies = connection.SelectAllFrom<TestManyPoco>(t => t.Poco).Where(t => t.Toto == "Toto").List();
+            var manies = connection.SelectAllFrom<TestManyPoco>(t => t.Poco).Where(t => t.Toto == "Toto").ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco.Id, manies[0].Poco.Id);
             Assert.Equal(newPoco.Name, manies[0].Poco.Name);
@@ -116,7 +117,7 @@ namespace Folke.Elm.Abstract.Test
             connection.Save(newMany);
 
             var manies = connection.Select<TestNotATable>().All(x => x.Poco).All(x => x.Many).From(x => x.Many)
-                .LeftJoin(x => x.Poco).On(x => x.Many.Poco == x.Poco).List();
+                .LeftJoin(x => x.Poco).On(x => x.Many.Poco == x.Poco).ToList();
             Assert.Equal(newPoco.Name, manies[0].Poco.Name);
             Assert.Equal(newMany.Toto, manies[0].Many.Toto);
         }
@@ -133,7 +134,7 @@ namespace Folke.Elm.Abstract.Test
             connection.Cache.Clear();
 
             var manies = connection.Select<TestNotATable>().All(x => x.Poco).All(x => x.Many).From(x => x.Poco)
-                .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Toto").List();
+                .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Toto").ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco.Name, manies[0].Poco.Name);
             Assert.Equal(newMany.Toto, manies[0].Many.Toto);
@@ -151,7 +152,7 @@ namespace Folke.Elm.Abstract.Test
             connection.Cache.Clear();
 
             var manies = connection.Select<TestNotATable>().All(x => x.Poco).All(x => x.Many).From(x => x.Poco)
-                .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Titi").OrderBy(x => x.Poco.Name).List();
+                .LeftJoin(x => x.Many).On(x => x.Many.Poco == x.Poco).AndOn(x => x.Many.Toto == "Titi").OrderBy(x => x.Poco.Name).ToList();
             Assert.Equal(1, manies.Count);
             Assert.Equal(newPoco.Name, manies[0].Poco.Name);
             Assert.Equal(null, manies[0].Many);
@@ -165,7 +166,7 @@ namespace Folke.Elm.Abstract.Test
                 connection.Save(newPoco);
             }
 
-            var pocos = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Desc().Limit(1, 2).List();
+            var pocos = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Desc().Limit(1, 2).ToList();
             Assert.Equal(2, pocos.Count);
             Assert.Equal("Name8", pocos[0].Name);
             Assert.Equal("Name7", pocos[1].Name);
@@ -181,7 +182,7 @@ namespace Folke.Elm.Abstract.Test
             connection.Save(otherPoco);
 
             var pocos = connection.Select<FolkeTuple<TestPoco, TestManyPoco>>().All(x => x.Item0).From(x => x.Item0)
-                .WhereExists(sub => sub.All(x => x.Item1).From(x => x.Item1).Where(x => x.Item1.Poco == x.Item0)).List();
+                .WhereExists(sub => sub.All(x => x.Item1).From(x => x.Item1).Where(x => x.Item1.Poco == x.Item0)).ToList();
             Assert.Equal(1, pocos.Count);
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
         }
@@ -197,7 +198,7 @@ namespace Folke.Elm.Abstract.Test
                     .All(x => x.Item0)
                     .All(x => x.Item1)
                     .From(x => x.Item0)
-                    .From(x => x.Item1).List();
+                    .From(x => x.Item1).ToList();
             Assert.Equal(1, pocos.Count);
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
             Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);
@@ -219,7 +220,7 @@ namespace Folke.Elm.Abstract.Test
                     .From(x => x.Item0)
                     .RightJoin(x => x.Item1)
                     .On(x => x.Item1.Poco == x.Item0)
-                    .List();
+                    .ToList();
             Assert.Equal(2, pocos.Count);
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
             Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);
@@ -242,7 +243,7 @@ namespace Folke.Elm.Abstract.Test
                     .All()
                     .All(x => x.Poco)
                     .From()
-                    .InnerJoin(x => x.Poco).OnId(x => x.Poco).List();
+                    .InnerJoin(x => x.Poco).OnId(x => x.Poco).ToList();
             Assert.Equal(1, pocos.Count);
             Assert.Equal(newPoco.Name, pocos[0].Poco.Name);
             Assert.Equal(newMany.Toto, pocos[0].Toto);
@@ -255,7 +256,7 @@ namespace Folke.Elm.Abstract.Test
             var twoPoco = new TestPoco { Name = "Two" };
             connection.Save(twoPoco);
 
-            var result = connection.SelectAllFrom<TestPoco>().Where(x => x.Name.Like("On%")).List();
+            var result = connection.SelectAllFrom<TestPoco>().Where(x => x.Name.Like("On%")).ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal("One", result[0].Name);
         }
@@ -269,7 +270,7 @@ namespace Folke.Elm.Abstract.Test
 
             connection.Cache.Clear();
 
-            var response = connection.Select<TestManyPoco>().Values(x => x.Toto).From().List();
+            var response = connection.Select<TestManyPoco>().Values(x => x.Toto).From().ToList();
             Assert.Equal(newMany.Toto, response[0].Toto);
         }
 
@@ -282,7 +283,7 @@ namespace Folke.Elm.Abstract.Test
 
             connection.Cache.Clear();
 
-            var response = connection.Select<TestManyPoco>().Values(x => x.Id).Values(x => x.Toto).From().List();
+            var response = connection.Select<TestManyPoco>().Values(x => x.Id).Values(x => x.Toto).From().ToList();
             Assert.Equal(newMany.Toto, response[0].Toto);
         }
 
@@ -296,7 +297,7 @@ namespace Folke.Elm.Abstract.Test
             }
 
             // Act
-            var results = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Asc().Limit(x => 5, 5).List();
+            var results = connection.SelectAllFrom<TestPoco>().OrderBy(x => x.Name).Asc().Limit(x => 5, 5).ToList();
 
             // Assert
             Assert.Equal(5, results.Count);
@@ -313,11 +314,10 @@ namespace Folke.Elm.Abstract.Test
             }
 
             // Act
-            var results =
-                new FluentSelectBuilder<TestPoco, FolkeTuple<int>>(connection.Driver, connection.Mapper).All()
+            var results = FluentBaseBuilder<TestPoco, FolkeTuple<int>>.Select(connection.Driver, connection.Mapper).All()
                     .From()
                     .OrderBy(x => x.Name)
-                    .Limit((x, y) => y.Item0, 5).List(connection, 5);
+                    .Limit((x, y) => y.Item0, 5).Build(connection, 5).ToList();
 
             // Assert
             Assert.Equal(5, results.Count);
@@ -347,8 +347,8 @@ namespace Folke.Elm.Abstract.Test
             var otherPoco = new TestPoco { Name = Guid.NewGuid().ToString() };
             connection.Save(otherPoco);
 
-            FluentWhereBuilder<TestPoco, FolkeTuple> query = from toto in connection.SelectAllFrom<TestPoco>() where toto.Name == newPoco.Name select toto;
-            var result = query.List();
+            var query = from toto in connection.SelectAllFrom<TestPoco>() where toto.Name == newPoco.Name select toto;
+            var result = query.ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal(newPoco.Name, result[0].Name);
         }
@@ -387,7 +387,7 @@ namespace Folke.Elm.Abstract.Test
             FluentWhereBuilder<TestPoco, FolkeTuple> query = from toto in connection.SelectAll<TestPoco>() 
                                                                 join link in toto.
                                                                 where toto.Name == newPoco.Name select toto;
-            var result = query.List();
+            var result = query.ToList();
             Assert.Equal(1, result.Count);
             Assert.Equal(newPoco.Name, result[0].Name);
         }*/
@@ -401,7 +401,7 @@ namespace Folke.Elm.Abstract.Test
             };
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             
-            var values = connection.Select<TableWithGuid>().All().From().Where(x => x.Id == value.Id).List();
+            var values = connection.Select<TableWithGuid>().All().From().Where(x => x.Id == value.Id).ToList();
             Assert.NotEmpty(values);
             Assert.Equal(value.Id, values[0].Id);
             Assert.Equal(value.Text, values[0].Text);
@@ -416,7 +416,7 @@ namespace Folke.Elm.Abstract.Test
             };
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             
-            var values = connection.Select<TableWithGuid>().All().From().Where(x => x == value).List();
+            var values = connection.Select<TableWithGuid>().All().From().Where(x => x == value).ToList();
             Assert.NotEmpty(values);
             Assert.Equal(value.Id, values[0].Id);
             Assert.Equal(value.Text, values[0].Text);
@@ -431,7 +431,7 @@ namespace Folke.Elm.Abstract.Test
             };
             connection.InsertInto<TableWithGuid>().Values(value).Execute();
             
-            var values = connection.Select<TableWithGuid, FolkeTuple<TableWithGuid>>().All().From().Where((x, p) => x == p.Item0).List(connection, value);
+            var values = connection.Select<TableWithGuid, FolkeTuple<TableWithGuid>>().All().From().Where((x, p) => x == p.Item0).Build(connection, value).ToList();
             Assert.NotEmpty(values);
             Assert.Equal(value.Id, values[0].Id);
             Assert.Equal(value.Text, values[0].Text);

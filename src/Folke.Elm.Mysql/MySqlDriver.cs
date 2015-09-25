@@ -6,6 +6,7 @@ using System.Reflection;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
 using MySql.Data.MySqlClient;
+using Folke.Elm.Fluent;
 
 namespace Folke.Elm.Mysql
 {
@@ -99,19 +100,19 @@ namespace Folke.Elm.Mysql
                 secondType = secondType.Substring(0, parent);
             if (firstType == secondType)
                 return true;
-            if (firstType.IndexOf("text") >= 0 && secondType.IndexOf("text") >= 0)
+            if (firstType.IndexOf("text", StringComparison.Ordinal) >= 0 && secondType.IndexOf("text", StringComparison.Ordinal) >= 0)
                 return true;
             return false;
         }
 
         public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).List().Cast<ColumnDefinition>().ToList();
+            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).ToList().Cast<ColumnDefinition>().ToList();
         }
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
         {
-            return connection.Select<Tables>().All().From().Where(t => t.Schema == connection.Database).List().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
+            return connection.Select<Tables>().All().From().Where(t => t.Schema == connection.Database).ToList().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
         }
 
         public SqlStringBuilder CreateSqlStringBuilder()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Folke.Elm.Fluent;
 
 namespace Folke.Elm
 {
@@ -53,7 +54,7 @@ namespace Folke.Elm
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<TDto> dto)
             {
                 var existingChildrenIds = dto.Where(c => c.Id != 0).Select(c => c.Id).ToArray();
-                return existingChildrenIds.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(existingChildrenIds)).List() : null;
+                return existingChildrenIds.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(existingChildrenIds)).ToList() : null;
             }
 
             public void UpdateDto(TDto dto, TChild child)
@@ -85,7 +86,7 @@ namespace Folke.Elm
 
             public IList<TChild> QueryExisting(IFolkeConnection connection, IList<int> dto)
             {
-                return dto.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(dto)).List() : null;
+                return dto.Any() ? connection.SelectAllFrom<TChild>().Where(c => c.Id.In(dto)).ToList() : null;
             }
 
             public void UpdateDto(int dto, TChild child)

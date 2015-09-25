@@ -78,31 +78,31 @@ namespace Folke.Elm.Mysql.Test
         [Fact]
         public void SelectAll()
         {
-            connection.Select<TestPoco>().All().From().List();
+            connection.Select<TestPoco>().All().From().ToList();
         }
 
         [Fact]
         public void SelectAllAll()
         {
-            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().From(x => x.Poco).List();
+            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().From(x => x.Poco).ToList();
         }
 
         [Fact]
         public void SelectValues()
         {
-            connection.Select<TestPoco>().Values(x => x.Name, x => x.Boolean).From().List();
+            connection.Select<TestPoco>().Values(x => x.Name, x => x.Boolean).From().ToList();
         }
 
         [Fact]
         public void SelectAllLeftJoinOnId()
         {
-            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoin(x => x.Poco).OnId(x => x.Poco).List();
+            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoin(x => x.Poco).OnId(x => x.Poco).ToList();
         }
 
         [Fact]
         public void Limit()
         {
-            connection.Select<TestManyPoco>().All().From().LeftJoinOnId(x => x.Poco).Limit(0, 10).List();
+            connection.Select<TestManyPoco>().All().From().LeftJoinOnId(x => x.Poco).Limit(0, 10).ToList();
         }
     }
 }

@@ -62,7 +62,7 @@ namespace Folke.Elm.Mapping
                             if (propertyType.IsAssignableFrom(folkeList))
                             {
                                 var joins =
-                                    propertyInfo.GetCustomAttributes<FolkeListAttribute>().Select(x => x.Join).ToArray();
+                                    propertyInfo.GetCustomAttributes<SelectAttribute>().Select(x => x.IncludeReference).ToArray();
                                 var constructor =
                                     folkeList.GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
                                 var mappedCollection = new MappedCollection

@@ -9,14 +9,14 @@ namespace Folke.Elm.Mysql.Test
     public class TestFluentGenericQueryBuilder
     {
         private readonly MySqlDriver mySqlDriver;
-        private readonly FluentSelectBuilder<FakeClass, FolkeTuple> fluentSelectBuilder;
+        private readonly ISelectResult<FakeClass, FolkeTuple> fluentSelectBuilder;
         private readonly BaseQueryBuilder queryBuilder;
 
         public TestFluentGenericQueryBuilder()
         {
             mySqlDriver = new MySqlDriver();
             var mapper = new Mapper();
-            fluentSelectBuilder = new FluentSelectBuilder<FakeClass, FolkeTuple>(mySqlDriver, mapper);
+            fluentSelectBuilder = FluentBaseBuilder<FakeClass, FolkeTuple>.Select(mySqlDriver, mapper);
             queryBuilder = fluentSelectBuilder.QueryBuilder;
         }
 

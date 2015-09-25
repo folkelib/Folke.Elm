@@ -13,14 +13,14 @@ namespace Folke.Elm
         FolkeTransaction BeginTransaction();
 
         [Obsolete("Use SelectAllFrom")]
-        FluentFromBuilder<T, FolkeTuple> QueryOver<T>() where T : class, new();
+        IFromResult<T, FolkeTuple> QueryOver<T>() where T : class, new();
         [Obsolete("Use SelectAllFrom")]
-        FluentFromBuilder<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
+        IFromResult<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
 
         [Obsolete("Use Select")]
-        FluentSelectBuilder<T, FolkeTuple> Query<T>() where T : class, new();
+        ISelectResult<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
-        FluentUpdateBuilder<T, FolkeTuple> Update<T>();
+        IUpdateResult<T, FolkeTuple> Update<T>();
 
         /// <summary>
         /// Loads an object by its id. Throws an error if the object can not be found.
@@ -44,7 +44,7 @@ namespace Folke.Elm
         void Save<T>(T value) where T : class, new();
         void Delete<T>(T value) where T : class, new();
 
-        FluentDeleteBuilder<T, FolkeTuple> Delete<T>() where T : class, new();
+        IDeleteResult<T, FolkeTuple> Delete<T>() where T : class, new();
         T Refresh<T>(T value) where T : class, new();
         void Merge<T>(T oldElement, T newElement) where T : class, IFolkeTable, new();
         void CreateTable<T>(bool drop = false) where T : class, new();
@@ -72,7 +72,7 @@ namespace Folke.Elm
         /// </summary>
         /// <typeparam name="T">The base table</typeparam>
         /// <returns>The query</returns>
-        FluentSelectBuilder<T, FolkeTuple> Select<T>() where T : class, new();
+        ISelectResult<T, FolkeTuple> Select<T>() where T : class, new();
 
         /// <summary>
         /// Create a select expression with a parameter table
@@ -80,14 +80,14 @@ namespace Folke.Elm
         /// <typeparam name="T">The table to select from</typeparam>
         /// <typeparam name="TParameters">The class that holds the parameter for the query</typeparam>
         /// <returns>The query</returns>
-        FluentSelectBuilder<T, TParameters> Select<T, TParameters>() where T : class, new();
+        ISelectResult<T, TParameters> Select<T, TParameters>() where T : class, new();
 
         /// <summary>
         /// Create a query that selects all the field from the T type
         /// </summary>
         /// <typeparam name="T">The table to select on</typeparam>
         /// <returns>The query</returns>
-        FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>() where T : class, new();
+        IFromResult<T, FolkeTuple> SelectAllFrom<T>() where T : class, new();
 
         /// <summary>
         /// Create a query that selects all the fields from the T type and all the properties in parameter
@@ -95,7 +95,7 @@ namespace Folke.Elm
         /// <typeparam name="T">The type to select on</typeparam>
         /// <param name="fetches">The other tables to select (using a left join)</param>
         /// <returns></returns>
-        FluentFromBuilder<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
+        IFromResult<T, FolkeTuple> SelectAllFrom<T>(params Expression<Func<T, object>>[] fetches)
             where T : class, new();
 
         /// <summary>
@@ -103,6 +103,6 @@ namespace Folke.Elm
         /// </summary>
         /// <typeparam name="T">The table where the values are inserted</typeparam>
         /// <returns>The query</returns>
-        FluentInsertIntoBuilder<T, FolkeTuple> InsertInto<T>() where T : class, new();
+        IInsertIntoResult<T, FolkeTuple> InsertInto<T>() where T : class, new();
     }
 }

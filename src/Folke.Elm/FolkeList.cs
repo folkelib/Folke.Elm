@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Folke.Elm.Fluent;
 
 namespace Folke.Elm
 {
@@ -68,24 +69,15 @@ namespace Folke.Elm
                             queryBuilder.AppendParameter(parentId);
                         }
                     }
-                    results = query.List();
+                    results = query.ToList();
                 }
                 return results;
             }
         }
 
-        public T this[int index] 
-        {
-            get
-            {
-                return Results[index];
-            }
-        }
+        public T this[int index] => Results[index];
 
-        public int Count
-        {
-            get { return Results.Count; }
-        }
+        public int Count => Results.Count;
 
         public IEnumerator<T> GetEnumerator()
         {

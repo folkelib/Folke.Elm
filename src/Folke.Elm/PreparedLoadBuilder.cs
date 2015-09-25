@@ -8,7 +8,7 @@ namespace Folke.Elm
     public class PreparedLoadBuilder<T>
         where T : class, IFolkeTable, new()
     {
-        protected FluentQueryableBuilder<T, FolkeTuple<int>> query;
+        protected IQueryableCommand<T> query;
 
         private readonly Expression<Func<T, object>>[] fetches;
 
@@ -21,17 +21,17 @@ namespace Folke.Elm
             this.fetches = fetches;
         }
 
-        private FluentQueryableBuilder<T, FolkeTuple<int>> GetQuery(IDatabaseDriver driver, IMapper mapper)
+        private IQueryableCommand<T> GetQuery(IDatabaseDriver driver, IMapper mapper)
         {
             if (query == null)
             {
                 if (fetches == null)
                 {
-                    query = new FluentSelectBuilder<T, FolkeTuple<int>>(driver, mapper).All().From().Where((x, y) => x.Id == y.Item0);
+                    query = FluentBaseBuilder<T, FolkeTuple<int>>.Select(new BaseQueryBuilder(driver, mapper)).All().From().Where((x, y) => x.Id == y.Item0);
                 }
                 else
                 {
-                    var selectQuery = new FluentSelectBuilder<T, FolkeTuple<int>>(driver, mapper).All();
+                    var selectQuery = FluentBaseBuilder<T, FolkeTuple<int>>.Select(new BaseQueryBuilder(driver, mapper)).All();
                     foreach (var fetch in fetches)
                     {
                         selectQuery.All(fetch);
@@ -53,12 +53,12 @@ namespace Folke.Elm
 
         public T Load(IFolkeConnection connection, int id)
         {
-            return GetQuery(connection.Driver, connection.Mapper).Single(connection, id);
+            return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).First();
         }
 
         public T Get(IFolkeConnection connection, int id)
         {
-            return GetQuery(connection.Driver, connection.Mapper).SingleOrDefault(connection, id);
+            return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).FirstOrDefault();
         }
     }
 

@@ -8,7 +8,7 @@ using Folke.Elm.Mapping;
 
 namespace Folke.Elm
 {
-    public class BaseQueryBuilder<T> : BaseQueryBuilder
+    public class BaseQueryBuilder<T> : BaseQueryBuilder, IQueryableCommand<T>
     {
         public BaseQueryBuilder(FolkeConnection connection)
             : base(connection, typeof(T))
@@ -19,9 +19,14 @@ namespace Folke.Elm
             : base(databaseDriver, mapper, typeof(T))
         {
         }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return this.Enumerate().GetEnumerator();
+        }
     }
 
-    public class BaseQueryBuilder
+    public class BaseQueryBuilder : IQueryableCommand
     {
         protected enum ContextEnum
         {
@@ -136,13 +141,13 @@ namespace Folke.Elm
 
         public string Sql => query.ToString();
 
-        internal FolkeConnection Connection => connection;
+        public IFolkeConnection Connection => connection;
 
         internal IDatabaseDriver Driver => driver;
 
         public object[] Parameters => parameters?.ToArray();
 
-        internal MappedClass MappedClass => baseMappedClass;
+        public MappedClass MappedClass => baseMappedClass;
 
         internal void AppendTableName(TypeMapping type)
         {
@@ -277,9 +282,9 @@ namespace Folke.Elm
 
         internal void AddExpression(Expression expression, bool registerTable = false)
         {
-            if (expression is UnaryExpression)
+            var unary = expression as UnaryExpression;
+            if (unary != null)
             {
-                var unary = (UnaryExpression) expression;
                 switch (unary.NodeType)
                 {
                     case ExpressionType.Negate:
@@ -296,10 +301,10 @@ namespace Folke.Elm
                 AddExpression(unary.Operand, registerTable);
                 return;
             }
-            
-            if (expression is BinaryExpression)
+
+            var binary = expression as BinaryExpression;
+            if (binary != null)
             {
-                var binary = expression as BinaryExpression;
                 query.Append('(');
 
                 AddExpression(binary.Left, registerTable);
@@ -376,9 +381,9 @@ namespace Folke.Elm
                 return;
             }
 
-            if (expression is ConstantExpression)
+            var constant = expression as ConstantExpression;
+            if (constant != null)
             {
-                var constant = (ConstantExpression) expression;
                 AppendParameter(constant.Value);
                 return;
             }
