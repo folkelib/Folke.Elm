@@ -8,7 +8,7 @@
 
   "dependencies": {
     "Folke.Elm": "",
-    "Microsoft.Data.Sqlite": "1.0.0-beta7"
+    "Microsoft.Data.Sqlite": "1.0.0-beta8"
   },
 
   "frameworks": {
