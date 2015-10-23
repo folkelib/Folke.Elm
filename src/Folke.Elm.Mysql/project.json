@@ -8,7 +8,7 @@
 
   "dependencies": {
     "Folke.Elm": "",
-    "MySql.Data": "6.9.6"
+    "MySql.Data": "6.9.8"
   },
 
   "frameworks": {
