@@ -108,7 +108,7 @@ namespace Folke.Elm.Fluent
         }
     }
 
-    public interface IWhereResult<T, TMe> : IQueryableCommand<T>, IGroupByTarget<T, TMe>, IAndWhereTarget<T, TMe>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>
+    public interface IWhereResult<T, TMe> : IQueryableCommand<T>, IGroupByTarget<T, TMe>, IAndWhereTarget<T, TMe>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>
     {
     }
 }
