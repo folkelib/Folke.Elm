@@ -614,8 +614,11 @@ namespace Folke.Elm
             }
 
             var columnMember = (MemberExpression)columnExpression;
-            
-            var memberExpression = columnMember.Expression as MemberExpression;
+
+            var columnMemberExpression = columnMember.Expression;
+            if (columnMemberExpression.NodeType == ExpressionType.Convert)
+                columnMemberExpression = ((UnaryExpression) columnMemberExpression).Operand;
+            var memberExpression = columnMemberExpression as MemberExpression;
             if (memberExpression != null)
             {
                 var table = GetTable(memberExpression, registerDefaultTable);
@@ -633,7 +636,7 @@ namespace Folke.Elm
                 return new TableColumn {Column = table.Mapping.Columns[columnMember.Member.Name], Table = table };
             }
 
-            var parameterExpression = columnMember.Expression as ParameterExpression;
+            var parameterExpression = columnMemberExpression as ParameterExpression;
             if (parameterExpression != null && parameterExpression.Type == defaultType.Type)
             {
                 if (defaultTable == null)
