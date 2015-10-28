@@ -1,0 +1,2 @@
+job1:
+	script: "powershell .\build.ps1 %NUGET_KEY" 
