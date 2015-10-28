@@ -130,7 +130,7 @@ namespace Folke.Elm
 
         private string GetAutoIndexName(TypeMapping table, PropertyMapping column)
         {
-            return $"{table.TableName}_${column.ColumnName}";
+            return $"{table.TableName}_{column.ColumnName}";
         }
 
         public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
