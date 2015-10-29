@@ -616,46 +616,50 @@ namespace Folke.Elm
             var columnMember = (MemberExpression)columnExpression;
 
             var columnMemberExpression = columnMember.Expression;
-            if (columnMemberExpression.NodeType == ExpressionType.Convert)
-                columnMemberExpression = ((UnaryExpression) columnMemberExpression).Operand;
-            var memberExpression = columnMemberExpression as MemberExpression;
-            if (memberExpression != null)
+            if (columnMemberExpression != null)
             {
-                var table = GetTable(memberExpression, registerDefaultTable);
-                if (table == null)
-                {
-                    // Asking the id of the item pointed by a foreign key is the same as asking the foreign key
-                    var keyOfTable = Mapper.GetKey(memberExpression.Type);
-                    if (keyOfTable !=null && columnMember.Member == keyOfTable.PropertyInfo)
-                    {
-                        return ExpressionToColumn(memberExpression);
-                    }
-                    return null;
-                }
 
-                return new TableColumn {Column = table.Mapping.Columns[columnMember.Member.Name], Table = table };
-            }
-
-            var parameterExpression = columnMemberExpression as ParameterExpression;
-            if (parameterExpression != null && parameterExpression.Type == defaultType.Type)
-            {
-                if (defaultTable == null)
+                if (columnMemberExpression.NodeType == ExpressionType.Convert)
+                    columnMemberExpression = ((UnaryExpression)columnMemberExpression).Operand;
+                var memberExpression = columnMemberExpression as MemberExpression;
+                if (memberExpression != null)
                 {
-                    if (registerDefaultTable)
+                    var table = GetTable(memberExpression, registerDefaultTable);
+                    if (table == null)
                     {
-                        defaultTable = RegisterTable(defaultType.Type, null);
-                    }
-                    else
-                    {
-                        var table = GetTable(columnExpression);
-                        if (table != null)
+                        // Asking the id of the item pointed by a foreign key is the same as asking the foreign key
+                        var keyOfTable = Mapper.GetKey(memberExpression.Type);
+                        if (keyOfTable != null && columnMember.Member == keyOfTable.PropertyInfo)
                         {
-                            return new TableColumn { Column = table.Mapping.Key, Table = table };
+                            return ExpressionToColumn(memberExpression);
                         }
                         return null;
                     }
+
+                    return new TableColumn { Column = table.Mapping.Columns[columnMember.Member.Name], Table = table };
                 }
-                return new TableColumn {Column = defaultTable.Mapping.Columns[columnMember.Member.Name], Table = defaultTable};
+
+                var parameterExpression = columnMemberExpression as ParameterExpression;
+                if (parameterExpression != null && parameterExpression.Type == defaultType.Type)
+                {
+                    if (defaultTable == null)
+                    {
+                        if (registerDefaultTable)
+                        {
+                            defaultTable = RegisterTable(defaultType.Type, null);
+                        }
+                        else
+                        {
+                            var table = GetTable(columnExpression);
+                            if (table != null)
+                            {
+                                return new TableColumn { Column = table.Mapping.Key, Table = table };
+                            }
+                            return null;
+                        }
+                    }
+                    return new TableColumn { Column = defaultTable.Mapping.Columns[columnMember.Member.Name], Table = defaultTable };
+                }
             }
 
             var columnAsTable = GetTable(columnExpression, false);
