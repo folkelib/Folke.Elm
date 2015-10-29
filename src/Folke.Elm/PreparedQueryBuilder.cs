@@ -87,7 +87,7 @@ namespace Folke.Elm
                 var select = FluentBaseBuilder<T, FolkeTuple<T0, T1, T2>>.Select(connection.Driver, connection.Mapper);
                 query = prepare.Invoke(select);
             }
-            return query.Build(connection, param0, param1);
+            return query.Build(connection, param0, param1, param2);
         }
     }
 
@@ -109,7 +109,7 @@ namespace Folke.Elm
                 var select = FluentBaseBuilder<T, FolkeTuple<T0, T1, T2, T3>>.Select(connection.Driver, connection.Mapper);
                 query = prepare.Invoke(select);
             }
-            return query.Build(connection, param0, param1);
+            return query.Build(connection, param0, param1, param2, param3);
         }
     }
 
@@ -131,7 +131,7 @@ namespace Folke.Elm
                 var select = FluentBaseBuilder<T, FolkeTuple<T0, T1, T2, T3, T4>>.Select(connection.Driver, connection.Mapper);
                 query = prepare.Invoke(select);
             }
-            return query.Build(connection, param0, param1);
+            return query.Build(connection, param0, param1, param2, param3, param4);
         }
     }
 }
