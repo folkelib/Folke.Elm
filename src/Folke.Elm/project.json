@@ -5,11 +5,10 @@
   "tags": [ "" ],
   "projectUrl": "https://github.com/folkelib/orm",
   "licenseUrl": "http://opensource.org/licenses/GPL-2.0",
-
   "dependencies": {
+    "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final"
   },
-
-  "frameworks": {
+    "frameworks": {
     "dnx451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
@@ -19,21 +18,21 @@
     },
     "dnxcore50": {
       "dependencies": {
-        "System.Data.Common": "4.0.1-beta-23409",
+        "System.Data.Common": "4.0.1-beta-*",
         "System.ComponentModel.Annotations": "4.0.10",
-        "System.Globalization": "4.0.11-beta-23409",
-        "Microsoft.CSharp": "4.0.0",
-        "System.Collections": "4.0.11-beta-23409",
-        "System.Linq": "4.0.1-beta-23409",
-        "System.Linq.Expressions": "4.0.11-beta-23409",
-        "System.Reflection": "4.1.0-beta-23409",
+        "System.Globalization": "4.0.11-beta-*",
+        "Microsoft.CSharp": "4.0.1-beta-*",
+        "System.Collections": "4.0.11-beta-*",
+        "System.Linq": "4.0.1-beta-*",
+        "System.Linq.Expressions": "4.0.11-beta-*",
+        "System.Reflection": "4.1.0-beta-*",
         "System.Reflection.Extensions": "4.0.0",
-        "System.Runtime": "4.0.21-beta-23409",
-        "System.Runtime.Extensions": "4.0.11-beta-23409",
+        "System.Runtime": "4.0.21-beta-*",
+        "System.Runtime.Extensions": "4.0.11-beta-*",
         "System.Threading": "4.0.10"
       }
     },
-    "net45": {
+    "net451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.ComponentModel.Annotations": "4.0.0.0",

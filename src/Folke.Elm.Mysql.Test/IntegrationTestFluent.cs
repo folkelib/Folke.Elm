@@ -52,7 +52,7 @@ namespace Folke.Elm.Mysql.Test
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
-            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
+            connection = FolkeConnection.Create(driver, mapper, TestHelpers.ConnectionString);
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
             connection.CreateTable<TestMultiPoco>(drop: true);

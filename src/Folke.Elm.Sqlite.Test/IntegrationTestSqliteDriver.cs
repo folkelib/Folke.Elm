@@ -19,7 +19,7 @@ namespace Folke.Elm.Sqlite.Test
         public IntegrationTestSqliteDriver()
         {
             driver = new SqliteDriver();
-            connection = new FolkeConnection(driver, new Mapper(), TestHelpers.ConnectionString);
+            connection = FolkeConnection.Create(driver, new Mapper(), TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
         }
 

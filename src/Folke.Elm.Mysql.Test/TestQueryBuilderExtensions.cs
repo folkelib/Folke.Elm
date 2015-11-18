@@ -16,7 +16,7 @@ namespace Folke.Elm.Mysql.Test
         {
             var driver = new MySqlDriver();
             var mapper = new Mapper();
-            connection = new FolkeConnection(driver, mapper, TestHelpers.ConnectionString);
+            connection = FolkeConnection.Create(driver, mapper, TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
             connection.CreateOrUpdateTable<TestPoco>();
             connection.CreateOrUpdateTable<TestManyPoco>();

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Folke.Elm.Fluent;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
+using Microsoft.Extensions.OptionsModel;
 
 namespace Folke.Elm
 {
@@ -17,13 +18,23 @@ namespace Folke.Elm
         private int stackedTransactions;
         private bool askRollback;
 
-        public FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, string connectionString = null)
+        public FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, IOptions<ElmOptions> options):
+            this(databaseDriver, mapper, options.Value.ConnectionString)
+        {
+        }
+
+        private FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, string connectionString = null)
         {
             Cache = new Dictionary<string, IDictionary<object, object>>();
             Driver = databaseDriver;
             connection = databaseDriver.CreateConnection(connectionString);
             Database = connection.Database;
             Mapper = mapper;
+        }
+
+        public static FolkeConnection Create(IDatabaseDriver databaseDriver, IMapper mapper, string connectionString = null)
+        {
+            return new FolkeConnection(databaseDriver, mapper, connectionString);
         }
 
         public IDictionary<string, IDictionary<object, object>> Cache { get; }

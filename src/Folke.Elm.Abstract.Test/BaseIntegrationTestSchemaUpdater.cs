@@ -42,7 +42,7 @@ namespace Folke.Elm.Abstract.Test
         public BaseIntegrationTestSchemaUpdater(IDatabaseDriver driver, string connectionString, bool drop)
         {
             var mapper = new Mapper();
-            connection = new FolkeConnection(driver, mapper, connectionString);
+            connection = FolkeConnection.Create(driver, mapper, connectionString);
             transaction = connection.BeginTransaction();
             connection.CreateTable<FirstClass>(drop);
             connection.CreateTable<SecondClass>(drop);

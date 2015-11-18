@@ -14,7 +14,7 @@ namespace Folke.Elm.Abstract.Test
         public BaseIntegrationTest(IDatabaseDriver databaseDriver, string connectionString, bool drop)
         {
             var mapper = new Mapper();
-            connection = new FolkeConnection(databaseDriver, mapper, connectionString);
+            connection = FolkeConnection.Create(databaseDriver, mapper, connectionString);
             transaction = connection.BeginTransaction();
             connection.CreateTable<TestPoco>(drop: drop);
             connection.CreateTable<TestManyPoco>(drop: drop);
