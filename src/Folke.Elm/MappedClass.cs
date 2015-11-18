@@ -7,19 +7,20 @@ using Folke.Elm.Mapping;
 
 namespace Folke.Elm
 {
+    /// <summary>A class that has been mapped to selected fields</summary>
     public class MappedClass
     {
         public readonly IList<MappedField> fields = new List<MappedField>();
         public IList<MappedCollection> collections;
+        /// <summary>The primary key mapping</summary>
         public MappedField idField;
         public ConstructorInfo constructor;
 
         public object Construct(IFolkeConnection connection, Type type, object id)
         {
             var ret = constructor.Invoke(null);
-                
-            if (idField != null)
-                idField.propertyInfo.SetValue(ret, id);
+
+            idField?.propertyInfo.SetValue(ret, id);
 
             if (collections != null)
             {

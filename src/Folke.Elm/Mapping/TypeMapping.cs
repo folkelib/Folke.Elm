@@ -7,18 +7,25 @@ using System.Reflection;
 
 namespace Folke.Elm.Mapping
 {
+    /// <summary>The mapping from a class to a table</summary>
     public class TypeMapping
     {
+        /// <summary>The type that is mapped</summary>
         public Type Type { get; set; }
 
+        /// <summary>The table name</summary>
         public string TableName { get; set; }
 
+        /// <summary>The table schema</summary>
         public string TableSchema { get; set; }
 
+        /// <summary>The mapping to the primary key</summary>
         public PropertyMapping Key { get; set; }
 
+        /// <summary>The columns, mapped by name</summary>
         public Dictionary<string, PropertyMapping> Columns { get; set; }
 
+        /// <summary>The collections</summary>
         public Dictionary<string, MappedCollection> Collections { get; set; }
 
         public TypeMapping(Type type, IMapper mapper)
@@ -129,8 +136,6 @@ namespace Folke.Elm.Mapping
                 }
 
                 propertyMapping.Readonly = propertyMapping.IsAutomatic;
-
-                
             }
         }
     }

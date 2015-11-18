@@ -8,13 +8,12 @@
 
   "dependencies": {
     "Folke.Elm": "",
-    "Microsoft.Data.Sqlite": "1.0.0-beta8"
+    "Microsoft.Data.Sqlite": "1.0.0-rc1-final"
   },
 
   "frameworks": {
     "dnx451": {
     },
-    "net45": { },
     "dnxcore50": {}
   }
 }
