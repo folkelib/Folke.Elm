@@ -3,8 +3,8 @@
   "description": "A simple ORM",
   "authors": [ "Sidoine De Wispelaere" ],
   "tags": [ "" ],
-  "projectUrl": "https://github.com/folkelib/orm",
-  "licenseUrl": "http://opensource.org/licenses/GPL-2.0",
+  "projectUrl": "https://github.com/folkelib/Folke.Elm",
+  "licenseUrl": "http://opensource.org/licenses/MIT",
   "dependencies": {
     "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final"
   },
