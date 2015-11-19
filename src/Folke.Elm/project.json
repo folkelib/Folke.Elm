@@ -8,7 +8,7 @@
   "dependencies": {
     "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final"
   },
-    "frameworks": {
+  "frameworks": {
     "dnx451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
@@ -16,7 +16,7 @@
         "System.ComponentModel.DataAnnotations": "4.0.0.0"
       }
     },
-    "dnxcore50": {
+    "dotnet5.4": {
       "dependencies": {
         "System.Data.Common": "4.0.1-beta-*",
         "System.ComponentModel.Annotations": "4.0.10",
