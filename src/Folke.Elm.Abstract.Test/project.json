@@ -12,7 +12,7 @@
   },
 
   "frameworks": {
-    "dnx451": {
+    "net451": {
       "frameworkAssemblies": {
         "System.ComponentModel.DataAnnotations": "4.0.0.0",
         "System.Runtime": "4.0.10.0",
