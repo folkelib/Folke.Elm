@@ -55,7 +55,7 @@ namespace Folke.Elm.Fluent
             fluentBuilder.QueryBuilder.AppendWhere();
             fluentBuilder.QueryBuilder.Append("(");
             expression((IAndWhereTarget<T, TMe>) fluentBuilder);
-            fluentBuilder.QueryBuilder.Append(")");
+            fluentBuilder.QueryBuilder.AppendSubWhereEnd();
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
 

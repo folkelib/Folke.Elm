@@ -93,6 +93,7 @@ namespace Folke.Elm
         protected IDatabaseDriver driver;
         protected IList<FieldAlias> selectedFields;
         protected IList<TableAlias> tables;
+
         protected TableAlias defaultTable;
         protected TypeMapping defaultType;
         protected Type parametersType;
@@ -846,6 +847,12 @@ namespace Folke.Elm
             {
                 currentContext = ContextEnum.WhereExpression;
             }
+        }
+
+        internal void AppendSubWhereEnd()
+        {
+            Append(")");
+            currentContext = ContextEnum.Where;
         }
 
         internal void AppendGroupBy()
