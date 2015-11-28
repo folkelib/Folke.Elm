@@ -2,11 +2,12 @@
 using System.Linq.Expressions;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
+using System.Threading.Tasks;
 
 namespace Folke.Elm
 {
     public class PreparedLoadBuilder<T>
-        where T : class, IFolkeTable, new()
+        where T : class
     {
         protected IQueryableCommand<T> query;
 
@@ -27,11 +28,11 @@ namespace Folke.Elm
             {
                 if (fetches == null)
                 {
-                    query = FluentBaseBuilder<T, FolkeTuple<int>>.Select(new BaseQueryBuilder(driver, mapper)).All().From().Where((x, y) => x.Id == y.Item0);
+                    query = FluentBaseBuilder<T, FolkeTuple<object>>.Select(driver, mapper).All().From().Where((x, y) => x.Key().Equals(y.Item0));
                 }
                 else
                 {
-                    var selectQuery = FluentBaseBuilder<T, FolkeTuple<int>>.Select(new BaseQueryBuilder(driver, mapper)).All();
+                    var selectQuery = FluentBaseBuilder<T, FolkeTuple<object>>.Select(driver, mapper).All();
                     foreach (var fetch in fetches)
                     {
                         selectQuery.All(fetch);
@@ -43,7 +44,7 @@ namespace Folke.Elm
                         fromQuery.LeftJoinOnId(fetch);
                     }
 
-                    fromQuery.Where((x, y) => x.Id == y.Item0);
+                    fromQuery.Where((x, y) => x.Key().Equals(y.Item0));
                     query = fromQuery;
                 }
             }
@@ -51,14 +52,24 @@ namespace Folke.Elm
             return query;
         }
 
-        public T Load(IFolkeConnection connection, int id)
+        public T Load(IFolkeConnection connection, object id)
         {
             return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).First();
         }
 
-        public T Get(IFolkeConnection connection, int id)
+        public T Get(IFolkeConnection connection, object id)
         {
             return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).FirstOrDefault();
+        }
+
+        public Task<T> LoadAsync(IFolkeConnection connection, object id)
+        {
+            return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).FirstAsync();
+        }
+
+        public Task<T> GetAsync(IFolkeConnection connection, object id)
+        {
+            return GetQuery(connection.Driver, connection.Mapper).Build(connection, id).FirstOrDefaultAsync();
         }
     }
 
