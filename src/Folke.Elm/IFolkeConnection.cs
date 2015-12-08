@@ -52,7 +52,7 @@ namespace Folke.Elm
         void CreateOrUpdateTable<T>() where T : class, new();
         void UpdateSchema(Assembly assembly);
 
-        FolkeCommand OpenCommand();
+        FolkeCommand CreateCommand();
         IDictionary<string, IDictionary<object, object>> Cache { get; } //TODO
         IDatabaseDriver Driver { get; }
         IMapper Mapper { get; }

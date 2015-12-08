@@ -229,7 +229,7 @@ namespace Folke.Elm
 
         internal void AddColumn(PropertyMapping property)
         {
-            query.AppendAfterSpace("ADD COLUMN ");
+            query.BeforeAddColumn();
             AppendColumn(property);
         }
     
@@ -248,12 +248,12 @@ namespace Folke.Elm
             }
         }
 
-        internal bool AlterColumns(IList<ColumnDefinition> columns)
+        internal bool AlterColumns(IList<IColumnDefinition> columns)
         {
             return AlterColumns(typeof(T), columns);
         }
 
-        internal bool AlterColumns(Type type, IList<ColumnDefinition> columns)
+        internal bool AlterColumns(Type type, IList<IColumnDefinition> columns)
         {
             bool changes = false;
             var mapping = Mapper.GetTypeMapping(type);
@@ -296,21 +296,36 @@ namespace Folke.Elm
                     if (driver.CanAddIndexInCreateTable())
                     {
                         // TODO add indexes to existing columns if not present
-                        if (property.Index != null)
+                        if (property.Index != null || foreign)
                         {
-                            AddComma();
-                            query.Append("ADD ");
-                            AppendIndex(property, property.Index);
+                            if (driver.CanDoMultipleActionsInAlterTable())
+                            {
+                                AddComma();
+                                query.Append("ADD ");
+                                if (property.Index != null)
+                                {
+                                    AppendIndex(property, property.Index);
+                                }
+                                else if (foreign)
+                                {
+                                    AppendIndex(property, property.ColumnName);
+                                }
+                            }
+                            else
+                            {
+                                query.Append(";");
+                                if (property.Index != null)
+                                {
+                                    AppendCreateIndex(mapping, property, property.Index);
+                                }
+                                else if (foreign)
+                                {
+                                    AppendCreateIndex(mapping, property, property.ColumnName);
+                                }
+                            }
                         }
-                        else if (foreign)
-                        {
-                            AddComma();
-                            query.Append("ADD ");
-                            AppendIndex(property, property.ColumnName);
-                        }
-                    }
 
-                    
+                    }
                 }
                 else
                 {
@@ -320,9 +335,7 @@ namespace Folke.Elm
                     {
                         AddComma();
                     
-                        query.Append(" CHANGE COLUMN ");
-                        AppendColumnName(property);
-                        query.Append(" ");
+                        query.BeforeAlterColumn(property.ColumnName);
                         AppendColumn(property);
                         changes = true;
                     }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
 
-namespace Folke.Elm.Mysql.Test
+namespace Folke.Elm.Abstract.Test
 {
     public static class TestHelpers
     {

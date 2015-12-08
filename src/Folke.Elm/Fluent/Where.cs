@@ -13,14 +13,14 @@ namespace Folke.Elm.Fluent
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, bool>> expression)
         {
             fluentBuilder.QueryBuilder.AppendWhere();
-            fluentBuilder.QueryBuilder.AddExpression(expression.Body);
+            fluentBuilder.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IWhereResult<T, TMe>) fluentBuilder;
         }
 
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, TMe, bool>> expression)
         {
             fluentBuilder.QueryBuilder.AppendWhere();
-            fluentBuilder.QueryBuilder.AddExpression(expression.Body);
+            fluentBuilder.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
 

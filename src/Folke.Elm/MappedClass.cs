@@ -91,7 +91,7 @@ namespace Folke.Elm
                 {
                     if (fieldInfo == null)
                         throw new Exception("Unknown error");
-                    object field = reader.GetTypedValue(mappedField.propertyInfo.PropertyType, fieldInfo.index);
+                    object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.propertyInfo.PropertyType, fieldInfo.index);
                     mappedField.propertyInfo.SetValue(value, field);
                 }
                 else 

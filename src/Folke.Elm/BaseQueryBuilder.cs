@@ -281,6 +281,19 @@ namespace Folke.Elm
             query.Append(" @Item" + parameterIndex);
         }
 
+        internal void AddBooleanExpression(Expression expression, bool registerTable = false)
+        {
+            if ((expression is MemberExpression || expression is ParameterExpression) && !Driver.HasBooleanType)
+            {
+                AddExpression(expression, registerTable);
+                query.Append("= 1 ");
+            }
+            else
+            {
+                AddExpression(expression, registerTable);
+            }
+        }
+
         internal void AddExpression(Expression expression, bool registerTable = false)
         {
             var unary = expression as UnaryExpression;
@@ -299,7 +312,11 @@ namespace Folke.Elm
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
-                AddExpression(unary.Operand, registerTable);
+
+                if (unary.NodeType == ExpressionType.Not)
+                    AddBooleanExpression(unary.Operand, registerTable);
+                else
+                    AddExpression(unary.Operand, registerTable);
                 return;
             }
 
@@ -308,7 +325,26 @@ namespace Folke.Elm
             {
                 query.Append('(');
 
-                AddExpression(binary.Left, registerTable);
+                bool booleanOperator;
+                switch (binary.NodeType)
+                {
+                    case ExpressionType.AndAlso:
+                    case ExpressionType.OrElse:
+                        booleanOperator = true;
+                        break;
+                    default:
+                        booleanOperator = false;
+                        break;
+                }
+
+                if (booleanOperator)
+                {
+                    AddBooleanExpression(binary.Left, registerTable);
+                }
+                else
+                {
+                    AddExpression(binary.Left, registerTable);
+                }
 
                 if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
                 {
@@ -376,7 +412,14 @@ namespace Folke.Elm
                 }
                 else
                 {
-                    AddExpression(binary.Right, registerTable);
+                    if (booleanOperator)
+                    {
+                        AddBooleanExpression(binary.Right, registerTable);
+                    }
+                    else
+                    {
+                        AddExpression(binary.Right, registerTable);
+                    }
                 }
                 query.Append(')');
                 return;
@@ -887,5 +930,7 @@ namespace Folke.Elm
             query.Append(sql);
             query.Append(')');
         }
+
+        public SqlStringBuilder StringBuilder => query;
     }
 }

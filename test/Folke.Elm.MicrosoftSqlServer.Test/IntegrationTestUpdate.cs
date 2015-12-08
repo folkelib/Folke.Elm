@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks;
-using Folke.Elm.Abstract.Test;
+﻿using Folke.Elm.Abstract.Test;
+using System.Threading.Tasks;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.MicrosoftSqlServer.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestUpdate : IIntegrationTestUpdate
@@ -11,7 +11,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestUpdate()
         {
-            test = new BaseIntegrationTestUpdate(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestUpdate(new MicrosoftSqlServerDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()

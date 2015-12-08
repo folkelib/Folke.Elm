@@ -12,7 +12,7 @@ namespace Folke.Elm.Fluent
         public static IAndWhereResult<T, TMe> Or<T,TMe>(this IAndWhereTarget<T, TMe> target, Expression<Func<T, bool>> expression)
         {
             target.QueryBuilder.AppendOr();
-            target.QueryBuilder.AddExpression(expression.Body);
+            target.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IAndWhereResult<T, TMe>) target;
         }
     }

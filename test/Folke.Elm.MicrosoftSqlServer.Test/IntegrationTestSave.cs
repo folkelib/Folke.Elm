@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks;
-using Folke.Elm.Abstract.Test;
+﻿using Folke.Elm.Abstract.Test;
+using System.Threading.Tasks;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.MicrosoftSqlServer.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestSave : IIntegrationTestSave
@@ -11,7 +11,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestSave()
         {
-            test = new BaseIntegrationTestSave(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestSave(new MicrosoftSqlServerDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()

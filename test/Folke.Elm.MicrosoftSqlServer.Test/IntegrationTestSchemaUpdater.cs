@@ -1,7 +1,7 @@
 ﻿using Folke.Elm.Abstract.Test;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.MicrosoftSqlServer.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestSchemaUpdater : IIntegrationTestSchemaUpdater
@@ -10,7 +10,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestSchemaUpdater()
         {
-            test = new BaseIntegrationTestSchemaUpdater(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestSchemaUpdater(new MicrosoftSqlServerDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()
@@ -24,7 +24,7 @@ namespace Folke.Elm.Sqlite.Test
             test.SchemaUpdater_AddColumn();
         }
 
-        [Fact(Skip = "CHANGE Column type not supported")]
+        [Fact]
         public void SchemaUpdater_ChangeColumnType()
         {
             test.SchemaUpdater_ChangeColumnType();

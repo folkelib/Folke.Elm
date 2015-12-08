@@ -12,6 +12,8 @@ namespace Folke.Elm.Mysql
 {
     public class MySqlDriver : IDatabaseDriver
     {
+        public bool HasBooleanType { get; } = true;
+        
         public virtual DbConnection CreateConnection(string connectionString)
         {
             return new MySqlConnection(connectionString);
@@ -105,9 +107,9 @@ namespace Folke.Elm.Mysql
             return false;
         }
 
-        public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
+        public IList<IColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            return connection.Select<Columns>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).ToList().Cast<ColumnDefinition>().ToList();
+            return connection.Select<MySqlColumnDefinition>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).ToList().Cast<IColumnDefinition>().ToList();
         }
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
@@ -150,6 +152,55 @@ namespace Folke.Elm.Mysql
         public bool CanDoMultipleActionsInAlterTable()
         {
             return true;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)
+        {
+            object value;
+            if (type.GetTypeInfo().IsGenericType)
+                type = Nullable.GetUnderlyingType(type);
+
+            if (type == typeof(string))
+                value = reader.GetString(index);
+            else if (type == typeof(int))
+                value = reader.GetInt32(index);
+            else if (type == typeof(long))
+                value = reader.GetInt64(index);
+            else if (type == typeof(float))
+                value = reader.GetFloat(index);
+            else if (type == typeof(double))
+                value = reader.GetDouble(index);
+            else if (type == typeof(decimal))
+                value = reader.GetDecimal(index);
+            else if (type == typeof(TimeSpan))
+            {
+                value = new TimeSpan(0, 0, reader.GetInt32(index));
+            }
+            else if (type == typeof(DateTime))
+            {
+                var date = reader.GetDateTime(index);
+                value = date.ToLocalTime().ToUniversalTime(); // Allow to force UTC (from Unspecified)
+            }
+            else if (type == typeof(bool))
+                value = reader.GetBoolean(index);
+            else if (type.GetTypeInfo().IsEnum)
+            {
+                var text = reader.GetString(index);
+                var names = Enum.GetNames(type);
+                var enumIndex = 0;
+                for (var i = 0; i < names.Length; i++)
+                {
+                    if (names[i] == text)
+                    {
+                        enumIndex = i;
+                        break;
+                    }
+                }
+                value = Enum.GetValues(type).GetValue(enumIndex);
+            }
+            else
+                value = null;
+            return value;
         }
     }
 }

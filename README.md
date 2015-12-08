@@ -23,14 +23,16 @@ public class TestManyPoco
     public TestPoco Poco { get; set; }
 }
 
-public class Example
+public class Program
 {
-    public void Test()
+    public void ConfigureServices(IServiceCollection services)
     {
-        var driver = new MySqlDriver();
-        var mapper = new Mapper();
-        var connectionString = "Server=localhost;Database=test;Uid=root;Pwd=test";
-        var connection = new FolkeConnection(driver, mapper, connectionString);
+        services.AddElm<MySqlDriver>(options =>
+            options.ConnectionString = "XXX");
+    }
+    
+    public void Configure(IFolkeConnection connection)
+    {        
         connection.CreateTable<TestPoco>(drop: true);
         connection.CreateTable<TestManyPoco(drop: true);
         
@@ -40,9 +42,9 @@ public class Example
         var newMany = new TestManyPoco { Name = "Many", Poco = newPoco };
         connection.Save(newMany);
         
-        var manies = connection.SelectAllFrom<TestManyPoco>(p => p.Poco).Where(t => t.Poco == newPoco).List();
-        Assert.AreEqual(1, manies.Count);
-        Assert.AreEqual(newPoco, manies[0].Poco);
+        var manies = connection.SelectAllFrom<TestManyPoco>(p => p.Poco).Where(t => t.Poco == newPoco).ToList();
+        Debug.Assert(manies.Count == 1);
+        Debug.Assert(manies[0].Poco == newPoco);
     }
 }
 
@@ -50,6 +52,6 @@ public class Example
 
 ##Features
 
-* MySQL and Sqlite
-* DNX 4.51, Core 5.0, and .NET 4.5
+* MySQL, Microsoft SQL Server, and Sqlite
+* .NET Core 5.0 and .NET 4.51
 

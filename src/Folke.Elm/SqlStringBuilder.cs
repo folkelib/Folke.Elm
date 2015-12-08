@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace Folke.Elm
 {
@@ -54,6 +55,7 @@ namespace Folke.Elm
             stringBuilder.Append('"');
         }
 
+
         public virtual void AppendAutoIncrement()
         {
             stringBuilder.Append(" AUTO_INCREMENT");
@@ -68,6 +70,32 @@ namespace Folke.Elm
         {
             Append("DROP TABLE ");
             AppendSymbol(tableName);
+        }
+
+        public virtual void BeforeLimit()
+        {
+            AppendAfterSpace("LIMIT ");
+        }
+
+        public virtual void DuringLimit()
+        {
+            Append(",");
+        }
+
+        public virtual void AfterLimit()
+        {
+        }
+
+        public virtual void BeforeAddColumn()
+        {
+            AppendAfterSpace("ADD COLUMN ");
+        }
+
+        public virtual void BeforeAlterColumn(string previousColumnName)
+        {
+            Append(" CHANGE COLUMN ");
+            AppendSymbol(previousColumnName);
+            Append(" ");
         }
     }
 }

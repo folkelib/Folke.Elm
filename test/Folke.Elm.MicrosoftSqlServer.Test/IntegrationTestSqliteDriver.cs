@@ -1,23 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Folke.Elm.Abstract.Test;
+﻿using Folke.Elm.Abstract.Test;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.MicrosoftSqlServer.Test
 {
     [Collection("Sqlite")]
-    public class IntegrationTestSqliteDriver : IDisposable
+    public class IntegrationTestMicrosoftSqlServerDriver : IDisposable
     {
-        private readonly SqliteDriver driver;
+        private readonly MicrosoftSqlServerDriver driver;
         private readonly FolkeConnection connection;
         private readonly FolkeTransaction transaction;
 
-        public IntegrationTestSqliteDriver()
+        public IntegrationTestMicrosoftSqlServerDriver()
         {
-            driver = new SqliteDriver();
+            driver = new MicrosoftSqlServerDriver();
             connection = FolkeConnection.Create(driver, new Mapper(), TestHelpers.ConnectionString);
             transaction = connection.BeginTransaction();
         }
@@ -29,7 +29,7 @@ namespace Folke.Elm.Sqlite.Test
         }
 
         [Fact]
-        public void SqliteDriver_GetTableDefinitions()
+        public void MicrosoftSqlServerDriver_GetTableDefinitions()
         {
             // Arrange
             connection.CreateTable<TestPoco>();
@@ -38,8 +38,8 @@ namespace Folke.Elm.Sqlite.Test
             IList<TableDefinition> tableDefinitions = driver.GetTableDefinitions(connection);
 
             // Assert
-            Assert.True(tableDefinitions.Count >= 1);
-            Assert.True(tableDefinitions.Any(x => x.Name == "TestPoco"));
+            Assert.True(tableDefinitions.Count >= 1, "At least on table is defined");
+            Assert.True(tableDefinitions.Any(x => x.Name == "TestPoco"), "The TestPoco table is present");
         }
     }
 }

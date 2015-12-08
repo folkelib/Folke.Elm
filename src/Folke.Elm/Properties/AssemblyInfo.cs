@@ -37,4 +37,5 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Folke.Elm.Test")]
 [assembly: InternalsVisibleTo("Folke.Elm.Mysql")]
 [assembly: InternalsVisibleTo("Folke.Elm.Sqlite")]
+[assembly: InternalsVisibleTo("Folke.Elm.MicrosoftSqlServer")]
 [assembly: InternalsVisibleTo("Folke.Elm.Mysql.Test")]

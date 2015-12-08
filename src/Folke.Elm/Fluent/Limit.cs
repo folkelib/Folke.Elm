@@ -21,28 +21,31 @@ namespace Folke.Elm.Fluent
         /// <returns></returns>
         public static ILimitResult<T, TMe> Limit<T, TMe>(this ILimitTarget<T, TMe> builder, int offset, int count)
         {
-            builder.QueryBuilder.Append("LIMIT");
-            builder.QueryBuilder.Append(offset.ToString(CultureInfo.InvariantCulture));
-            builder.QueryBuilder.Append(",");
-            builder.QueryBuilder.Append(count.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.BeforeLimit();
+            builder.QueryBuilder.StringBuilder.Append(offset.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.DuringLimit();
+            builder.QueryBuilder.StringBuilder.Append(count.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.AfterLimit();
             return (ILimitResult<T, TMe>) builder;
         }
         
         public static ILimitResult<T, TMe> Limit<T, TMe>(this ILimitTarget<T, TMe> builder, Expression<Func<T, int>> offset, int count)
         {
-            builder.QueryBuilder.Append("LIMIT");
+            builder.QueryBuilder.StringBuilder.BeforeLimit();
             builder.QueryBuilder.AddExpression(offset.Body);
-            builder.QueryBuilder.Append(",");
+            builder.QueryBuilder.StringBuilder.DuringLimit();
             builder.QueryBuilder.Append(count.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.AfterLimit();
             return (ILimitResult<T, TMe>)builder;
         }
 
         public static ILimitResult<T, TMe> Limit<T, TMe>(this ILimitTarget<T, TMe> builder, Expression<Func<T, TMe, int>> offset, int count)
         {
-            builder.QueryBuilder.Append("LIMIT");
+            builder.QueryBuilder.StringBuilder.BeforeLimit();
             builder.QueryBuilder.AddExpression(offset.Body);
-            builder.QueryBuilder.Append(",");
+            builder.QueryBuilder.StringBuilder.DuringLimit();
             builder.QueryBuilder.Append(count.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.AfterLimit();
             return (ILimitResult<T, TMe>)builder;
         }
     }

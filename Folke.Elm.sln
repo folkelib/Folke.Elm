@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}"
 EndProject
@@ -26,6 +26,10 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Sqlite.Test", "test\Folke.Elm.Sqlite.Test\Folke.Elm.Sqlite.Test.xproj", "{E71E7F59-0329-4D72-9622-FBCA9C157EB6}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Test", "test\Folke.Elm.Test\Folke.Elm.Test.xproj", "{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServer", "src\Folke.Elm.MicrosoftSqlServer\Folke.Elm.MicrosoftSqlServer.xproj", "{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServer.Test", "test\Folke.Elm.MicrosoftSqlServer.Test\Folke.Elm.MicrosoftSqlServer.Test.xproj", "{B99D6362-394C-47E0-B81A-91C86CB501E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +65,14 @@ Global
 		{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,5 +85,7 @@ Global
 		{385ACCA0-9440-4DD7-BB64-643638703632} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 		{E71E7F59-0329-4D72-9622-FBCA9C157EB6} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 		{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
+		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49} = {3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}
+		{B99D6362-394C-47E0-B81A-91C86CB501E6} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 	EndGlobalSection
 EndGlobal

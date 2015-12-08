@@ -12,14 +12,14 @@ namespace Folke.Elm.Fluent
         public static IOnResult<T, TMe> On<T,TMe>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, bool>> expression)
         {
             onTarget.QueryBuilder.Append("ON ");
-            onTarget.QueryBuilder.AddExpression(expression.Body);
+            onTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IOnResult<T, TMe>) onTarget;
         }
 
         public static IOnResult<T, TMe> On<T, TMe>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, TMe, bool>> expression)
         {
             onTarget.QueryBuilder.Append("ON ");
-            onTarget.QueryBuilder.AddExpression(expression.Body);
+            onTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IOnResult<T, TMe>)onTarget;
         }
 

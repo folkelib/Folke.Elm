@@ -45,11 +45,13 @@ namespace Folke.Elm
 
         public IMapper Mapper { get; }
         
-        public FolkeCommand OpenCommand()
+        public FolkeCommand CreateCommand()
         {
             if (transaction == null)
                 connection.Open();
-            return new FolkeCommand(this, connection.CreateCommand());
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            return new FolkeCommand(this, command);
         }
 
         public FolkeTransaction BeginTransaction()
@@ -302,7 +304,7 @@ namespace Folke.Elm
 
             foreach (var column in columns)
             {
-                using (var command = OpenCommand())
+                using (var command = CreateCommand())
                 {
                     command.CommandText = String.Format(
                         "UPDATE `{0}`.`{1}` SET `{2}` = {3} WHERE `{2}` = {4}",
@@ -387,7 +389,7 @@ namespace Folke.Elm
 
         public FolkeCommand CreateCommand(string commandText, object[] commandParameters)
         {
-            var command = OpenCommand();
+            var command = CreateCommand();
             if (commandParameters != null)
             {
                 command.SetParameters(commandParameters, Mapper, Driver);

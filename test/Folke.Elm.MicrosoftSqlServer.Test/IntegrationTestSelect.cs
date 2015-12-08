@@ -1,9 +1,7 @@
-﻿using System.Configuration;
-using Folke.Elm.Abstract.Test;
-using Microsoft.Data.Sqlite;
+﻿using Folke.Elm.Abstract.Test;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.MicrosoftSqlServer.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestSelect : IIntegrationTestSelect
@@ -12,7 +10,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestSelect()
         {
-            integrationTestSelect =  new BaseIntegrationTestSelect(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            integrationTestSelect =  new BaseIntegrationTestSelect(new MicrosoftSqlServerDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()
@@ -104,7 +102,7 @@ namespace Folke.Elm.Sqlite.Test
             integrationTestSelect.Select_Tuple_FromAndFrom_List();
         }
 
-        [Fact(Skip = "Right Join not supported")]
+        [Fact]
         public void Select_Tuple_FromRightJoin_List()
         {
             integrationTestSelect.Select_Tuple_FromRightJoin_List();

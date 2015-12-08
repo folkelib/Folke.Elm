@@ -51,8 +51,8 @@ namespace Folke.Elm
                     {
                         return default(TU);
                     }
-                    var ret = reader.GetTypedValue<TU>(0);
-                    return ret;
+                    var ret = baseQueryBuilder.Connection.Driver.ConvertReaderValueToValue(reader, typeof(TU), 0);
+                    return (TU)ret;
                 }
             }
         }
@@ -67,7 +67,8 @@ namespace Folke.Elm
                     {
                         return default(TU);
                     }
-                    return reader.GetTypedValue<TU>(0);
+                    var ret = baseQueryBuilder.Connection.Driver.ConvertReaderValueToValue(reader, typeof(TU), 0);
+                    return (TU)ret;
                 }
             }
         }

@@ -99,6 +99,11 @@ namespace Folke.Elm.Mapping
                     propertyMapping.OnDelete = columnConstraintAttribute.OnDelete;
                     propertyMapping.OnUpdate = columnConstraintAttribute.OnUpdate;
                 }
+                else
+                {
+                    propertyMapping.OnDelete = ConstraintEventEnum.NoAction;
+                    propertyMapping.OnUpdate = ConstraintEventEnum.NoAction;
+                }
 
                 var columnAttribute = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                 if (columnAttribute != null)

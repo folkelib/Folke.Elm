@@ -16,6 +16,8 @@ namespace Folke.Elm.Sqlite
         {
         }
 
+        public bool HasBooleanType { get; } = true;
+
         public DbConnection CreateConnection(string connectionString)
         {
             return new SqliteConnection(connectionString);
@@ -111,17 +113,17 @@ namespace Folke.Elm.Sqlite
             return false;
         }
 
-        public IList<ColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
+        public IList<IColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            var list = new List<ColumnDefinition>();
-            using (var command = connection.OpenCommand())
+            var list = new List<IColumnDefinition>();
+            using (var command = connection.CreateCommand())
             {
                 command.CommandText = $"PRAGMA table_info({typeMap.TableName})";
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        list.Add(new ColumnDefinition
+                        list.Add(new SqliteColumnDefinition
                         {
                             ColumnName = reader.GetString(1),
                             ColumnType = reader.GetString(2)
@@ -135,7 +137,7 @@ namespace Folke.Elm.Sqlite
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
         {
             var list = new List<TableDefinition>();
-            using (var command = connection.OpenCommand())
+            using (var command = connection.CreateCommand())
             {
                 command.CommandText = $"SELECT name FROM {connection.Database}.sqlite_master WHERE TYPE='table'";
                 using (var reader = command.ExecuteReader())
@@ -200,6 +202,55 @@ namespace Folke.Elm.Sqlite
         public bool CanDoMultipleActionsInAlterTable()
         {
             return false;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)
+        {
+            object value;
+            if (type.GetTypeInfo().IsGenericType)
+                type = Nullable.GetUnderlyingType(type);
+
+            if (type == typeof(string))
+                value = reader.GetString(index);
+            else if (type == typeof(int))
+                value = reader.GetInt32(index);
+            else if (type == typeof(long))
+                value = reader.GetInt64(index);
+            else if (type == typeof(float))
+                value = reader.GetFloat(index);
+            else if (type == typeof(double))
+                value = reader.GetDouble(index);
+            else if (type == typeof(decimal))
+                value = reader.GetDecimal(index);
+            else if (type == typeof(TimeSpan))
+            {
+                value = new TimeSpan(0, 0, reader.GetInt32(index));
+            }
+            else if (type == typeof(DateTime))
+            {
+                var date = reader.GetDateTime(index);
+                value = date.ToLocalTime().ToUniversalTime(); // Allow to force UTC (from Unspecified)
+            }
+            else if (type == typeof(bool))
+                value = reader.GetBoolean(index);
+            else if (type.GetTypeInfo().IsEnum)
+            {
+                var text = reader.GetString(index);
+                var names = Enum.GetNames(type);
+                var enumIndex = 0;
+                for (var i = 0; i < names.Length; i++)
+                {
+                    if (names[i] == text)
+                    {
+                        enumIndex = i;
+                        break;
+                    }
+                }
+                value = Enum.GetValues(type).GetValue(enumIndex);
+            }
+            else
+                value = null;
+            return value;
         }
     }
 }

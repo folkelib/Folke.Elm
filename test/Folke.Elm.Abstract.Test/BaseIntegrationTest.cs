@@ -41,8 +41,8 @@ namespace Folke.Elm.Abstract.Test
         {
             connection.DropTable<TestMultiPoco>();
             connection.DropTable<TestOtherPoco>();
-            connection.DropTable<TableWithGuid>();
             connection.DropTable<ParentTableWithGuid>();
+            connection.DropTable<TableWithGuid>();
             connection.DropTable<TestCollectionMember>();
             connection.DropTable<TestCollection>();
             connection.DropTable<TestManyPoco>();
