@@ -267,22 +267,7 @@ namespace Folke.Elm
                 if (existingColumn == null)
                 {
                     // TODO ugly
-                    if (driver.CanDoMultipleActionsInAlterTable())
-                    {
-                        AddComma();
-                    }
-                    else
-                    {
-                        if (commaAdded)
-                        {
-                            query.Append(";");
-                            AlterTable(type);
-                        }
-                        else
-                        {
-                            commaAdded = true;
-                        }
-                    }
+                    DuringAlterTable(type);
 
                     AddColumn(property);
                     changes = true;
@@ -333,8 +318,7 @@ namespace Folke.Elm
                     var newType = Connection.Driver.GetSqlType(columnProperty.PropertyInfo, columnProperty.MaxLength);
                     if (!Connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
-                        AddComma();
-                    
+                        DuringAlterTable(type);
                         query.BeforeAlterColumn(property.ColumnName);
                         AppendColumn(property);
                         changes = true;
@@ -342,6 +326,26 @@ namespace Folke.Elm
                 }
             }
             return changes;
+        }
+
+        private void DuringAlterTable(Type type)
+        {
+            if (driver.CanDoMultipleActionsInAlterTable())
+            {
+                AddComma();
+            }
+            else
+            {
+                if (commaAdded)
+                {
+                    query.Append(";");
+                    AlterTable(type);
+                }
+                else
+                {
+                    commaAdded = true;
+                }
+            }
         }
     }
 }

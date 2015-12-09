@@ -63,7 +63,7 @@ namespace Folke.Elm.MicrosoftSqlServer
                 value = date.ToLocalTime().ToUniversalTime(); // Allow to force UTC (from Unspecified)
             }
             else if (type == typeof(bool))
-                value = reader.GetByte(index) == 1;
+                value = reader.GetBoolean(index);
             else if (type.GetTypeInfo().IsEnum)
             {
                 var text = reader.GetString(index);
@@ -120,7 +120,7 @@ namespace Folke.Elm.MicrosoftSqlServer
 
             if (firstType == secondType)
                 return true;
-
+            
             var parent = firstType.IndexOf('(');
             if (parent >= 0)
                 firstType = firstType.Substring(0, parent);
@@ -148,7 +148,7 @@ namespace Folke.Elm.MicrosoftSqlServer
 
             if (type == typeof(bool))
             {
-                return "TINYINT";
+                return "BIT";
             }
             else if (type == typeof(short))
             {
@@ -180,7 +180,7 @@ namespace Folke.Elm.MicrosoftSqlServer
             }
             else if (type.GetTypeInfo().IsEnum)
             {
-                return "VARCHAR(255)";
+                return "NVARCHAR(255)";
             }
             else if (type == typeof(decimal))
             {
@@ -193,10 +193,10 @@ namespace Folke.Elm.MicrosoftSqlServer
                     if (maxLength > 255)
                         return "TEXT";
                     else
-                        return "VARCHAR(" + maxLength + ")";
+                        return "NVARCHAR(" + maxLength + ")";
                 }
                 else
-                    return "VARCHAR(255)";
+                    return "NVARCHAR(255)";
             }
             else if (type == typeof(Guid))
             {
