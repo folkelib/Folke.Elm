@@ -21,3 +21,9 @@ cd .\src\Folke.Elm.Sqlite
 $file = Get-Item "bin\Debug\*-$version.nupkg"
 nuget push $file.FullName $key
 cd ..\..
+
+cd .\src\Folke.Elm.MicrosoftSqlServer
+& dnu pack
+$file = Get-Item "bin\Debug\*-$version.nupkg"
+nuget push $file.FullName $key
+cd ..\..
