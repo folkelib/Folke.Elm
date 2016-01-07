@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Folke.Elm
         private DbTransaction transaction;
         private int stackedTransactions;
         private bool askRollback;
+        private readonly ElmQueryProvider queryProvider;
 
         public FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, IOptions<ElmOptions> options):
             this(databaseDriver, mapper, options.Value.ConnectionString)
@@ -28,8 +30,9 @@ namespace Folke.Elm
             Cache = new Dictionary<string, IDictionary<object, object>>();
             Driver = databaseDriver;
             connection = databaseDriver.CreateConnection(connectionString);
-            Database = connection.Database;
+            Database = connection?.Database;
             Mapper = mapper;
+            queryProvider = new ElmQueryProvider(this);
         }
 
         public static FolkeConnection Create(IDatabaseDriver databaseDriver, IMapper mapper, string connectionString = null)
@@ -45,7 +48,7 @@ namespace Folke.Elm
 
         public IMapper Mapper { get; }
         
-        public FolkeCommand CreateCommand()
+        public IFolkeCommand CreateCommand()
         {
             if (transaction == null)
                 connection.Open();
@@ -76,24 +79,12 @@ namespace Folke.Elm
         {
             return FluentBaseBuilder<T, TParameters>.Select(new BaseQueryBuilder(this, typeof(T), typeof(TParameters)));
         }
-
-        [Obsolete("Use Select")]
-        public ISelectResult<T, FolkeTuple> Query<T>() where T : class, new()
-        {
-            return Select<T>();
-        }
-
+        
         public IFromResult<T, FolkeTuple> SelectAllFrom<T>() where T : class, new()
         {
             return Select<T>().All().From();
         }
-
-        [Obsolete("Use SelectAll")]
-        public IFromResult<T, FolkeTuple> QueryOver<T>() where T : class, new()
-        {
-            return SelectAllFrom<T>();
-        }
-
+        
         /// <summary>
         /// Select all the fields from the T type and the properties in parameter
         /// </summary>
@@ -218,16 +209,24 @@ namespace Folke.Elm
         {
             var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key;
             bool automatic = keyProperty.IsAutomatic;
-            CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).Execute();
-            UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
+            using (var t = BeginTransaction())
+            {
+                CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).Execute();
+                UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
+                t.Commit();
+            }
         }
 
         public async Task SaveAsync<T>(T value) where T : class, new()
         {
             var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key;
             bool automatic = keyProperty.IsAutomatic;
-            await CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).ExecuteAsync();
-            UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
+            using (var t = BeginTransaction())
+            {
+                await CreateSaveQuery(value, automatic, keyProperty.PropertyInfo).ExecuteAsync();
+                UpdateSavedValue(value, automatic, keyProperty.PropertyInfo);
+                t.Commit();
+            }
         }
 
         private void UpdateSavedValue<T>(T value, bool automatic, PropertyInfo keyProperty) where T : class, new()
@@ -387,7 +386,7 @@ namespace Folke.Elm
             connection?.Dispose();
         }
 
-        public FolkeCommand CreateCommand(string commandText, object[] commandParameters)
+        public IFolkeCommand CreateCommand(string commandText, object[] commandParameters)
         {
             var command = CreateCommand();
             if (commandParameters != null)
@@ -396,6 +395,11 @@ namespace Folke.Elm
             }
             command.CommandText = commandText;
             return command;
+        }
+
+        public IQueryable<T> Query<T>()
+        {
+            return new ElmQueryable<T>(queryProvider);
         }
     } 
 }

@@ -10,7 +10,7 @@ namespace Folke.Elm
 {
     public class BaseQueryBuilder<T> : BaseQueryBuilder, IQueryableCommand<T>
     {
-        public BaseQueryBuilder(FolkeConnection connection)
+        public BaseQueryBuilder(IFolkeConnection connection)
             : base(connection, typeof(T))
         {
         }
@@ -88,7 +88,7 @@ namespace Folke.Elm
 
         protected SqlStringBuilder query;
         protected IList<object> parameters;
-        protected readonly FolkeConnection connection;
+        protected readonly IFolkeConnection connection;
         protected MappedClass baseMappedClass;
         protected IDatabaseDriver driver;
         protected IList<FieldAlias> selectedFields;
@@ -103,7 +103,7 @@ namespace Folke.Elm
         internal TableAlias DefaultTable => defaultTable;
         internal IList<FieldAlias> SelectedFields => selectedFields;
 
-        public BaseQueryBuilder(FolkeConnection connection, Type type = null, Type parametersType = null)
+        public BaseQueryBuilder(IFolkeConnection connection, Type type = null, Type parametersType = null)
             : this(connection.Driver, connection.Mapper, type, parametersType)
         {
             this.connection = connection;
@@ -210,17 +210,17 @@ namespace Folke.Elm
             return aliasValue;
         }
 
-        internal protected TableAlias GetTable(string tableAlias)
+        protected internal TableAlias GetTable(string tableAlias)
         {
             return tables.SingleOrDefault(t => t.alias == tableAlias);
         }
 
-        internal protected TableAlias GetTable(Expression alias)
+        protected internal TableAlias GetTable(Expression alias)
         {
             return GetTable(GetTableAlias(alias));
         }
 
-        internal protected TableAlias GetTable(Expression aliasExpression, bool register)
+        protected internal TableAlias GetTable(Expression aliasExpression, bool register)
         {
             var alias = GetTableAlias(aliasExpression);
             if (register)
@@ -296,6 +296,13 @@ namespace Folke.Elm
 
         internal void AddExpression(Expression expression, bool registerTable = false)
         {
+            var lambda = expression as LambdaExpression;
+            if (lambda != null)
+            {
+                AddExpression(lambda.Body, registerTable);
+                return;
+            }
+
             var unary = expression as UnaryExpression;
             if (unary != null)
             {
@@ -308,6 +315,7 @@ namespace Folke.Elm
                         query.Append(" NOT ");
                         break;
                     case ExpressionType.Convert:
+                    case ExpressionType.Quote:
                         break;
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
@@ -428,7 +436,18 @@ namespace Folke.Elm
             var constant = expression as ConstantExpression;
             if (constant != null)
             {
-                AppendParameter(constant.Value);
+                if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
+                {
+                    var queryable = (ElmQueryable)constant.Value;
+                    AppendSelect();
+                    AppendAllSelects(queryable.ElementType, null);
+                    AppendFrom();
+                    AppendTable(queryable.ElementType, (string)null);
+                }
+                else
+                {
+                    AppendParameter(constant.Value);
+                }
                 return;
             }
 
@@ -452,7 +471,40 @@ namespace Folke.Elm
             if (expression.NodeType == ExpressionType.Call)
             {
                 var call = (MethodCallExpression)expression;
-                
+
+                if (call.Method.DeclaringType == typeof (Queryable))
+                {
+                    switch (call.Method.Name)
+                    {
+                        case nameof(Queryable.Where):
+                            AddExpression(call.Arguments[0], registerTable);
+                            AppendWhere();
+                            AddExpression(call.Arguments[1], registerTable);
+                            break;
+                        case nameof(Queryable.Skip):
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.BeforeLimit();
+                            query.Append(call.Arguments[1].ToString());
+                            break;
+
+                        case nameof(Queryable.Take):
+                            AddExpression(call.Arguments[0], registerTable);
+                            query.DuringLimit();
+                            query.Append(call.Arguments[1].ToString());
+                            query.AfterLimit();
+                            break;
+                        case nameof(Queryable.OrderBy):
+                            AddExpression(call.Arguments[0], registerTable);
+                            AppendOrderBy();
+                            AddExpression(call.Arguments[1], registerTable);
+                            break;
+                            
+                        default:
+                            throw new Exception("Unsupported Queryable method");
+                    }
+                    return;
+                }
+
                 if (call.Method.DeclaringType == typeof(ExpressionHelpers))
                 {
                     switch (call.Method.Name)
@@ -541,14 +593,15 @@ namespace Folke.Elm
                             break;
                         }
                         case nameof(string.Contains):
-                        {
-                            AddExpression(call.Object, registerTable);
-                            query.Append(" LIKE");
-                            var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
-                            text = "%" + text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
-                            AppendParameter(text);
-                            break;
-                        }
+                            {
+                                AddExpression(call.Object, registerTable);
+                                query.Append(" LIKE");
+
+                                var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke() ?? string.Empty;
+                                text = "%" + text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
+                                AppendParameter(text);
+                                break;
+                            }
                             
                         default:
                             throw new Exception("Unsupported string method");

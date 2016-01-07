@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -12,13 +13,6 @@ namespace Folke.Elm
     {
         FolkeTransaction BeginTransaction();
 
-        [Obsolete("Use SelectAllFrom")]
-        IFromResult<T, FolkeTuple> QueryOver<T>() where T : class, new();
-        [Obsolete("Use SelectAllFrom")]
-        IFromResult<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new();
-
-        [Obsolete("Use Select")]
-        ISelectResult<T, FolkeTuple> Query<T>() where T : class, new();
         void Update<T>(T value) where T : class, new();
         IUpdateResult<T, FolkeTuple> Update<T>();
 
@@ -52,7 +46,7 @@ namespace Folke.Elm
         void CreateOrUpdateTable<T>() where T : class, new();
         void UpdateSchema(Assembly assembly);
 
-        FolkeCommand CreateCommand();
+        IFolkeCommand CreateCommand();
         IDictionary<string, IDictionary<object, object>> Cache { get; } //TODO
         IDatabaseDriver Driver { get; }
         IMapper Mapper { get; }
@@ -60,7 +54,7 @@ namespace Folke.Elm
         T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         T Get<T>(object id) where T : class, new();
         T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
-        FolkeCommand CreateCommand(string commandText, object[] commandParameters);
+        IFolkeCommand CreateCommand(string commandText, object[] commandParameters);
         Task<T> LoadAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
         Task SaveAsync<T>(T value) where T : class, new();
@@ -104,5 +98,7 @@ namespace Folke.Elm
         /// <typeparam name="T">The table where the values are inserted</typeparam>
         /// <returns>The query</returns>
         IInsertIntoResult<T, FolkeTuple> InsertInto<T>() where T : class, new();
+
+        IQueryable<T> Query<T>();
     }
 }

@@ -1,8 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Folke.Elm
 {
+    /// <summary>
+    /// Implementation of IQueryableCommand.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class QueryableCommand<T> : IQueryableCommand<T>
     {
         public QueryableCommand(IFolkeConnection connection, MappedClass mappedClass, string sql, params object[] parameters)

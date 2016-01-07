@@ -36,7 +36,7 @@ namespace Folke.Elm
             }
         }
 
-        public static FolkeCommand CreateCommand(this IQueryableCommand queryableCommand)
+        public static IFolkeCommand CreateCommand(this IQueryableCommand queryableCommand)
         {
             return queryableCommand.Connection.CreateCommand(queryableCommand.Sql, queryableCommand.Parameters);
         }

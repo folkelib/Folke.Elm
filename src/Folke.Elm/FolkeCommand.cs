@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace Folke.Elm
 {
-    public class FolkeCommand: IDisposable
+    public class FolkeCommand: IDisposable, IFolkeCommand
     {
         private readonly DbCommand command;
         private readonly FolkeConnection connection;
@@ -24,7 +24,7 @@ namespace Folke.Elm
             connection.CloseCommand();
         }
 
-        internal DbParameter CreateParameter()
+        public DbParameter CreateParameter()
         {
             return command.CreateParameter();
         }
@@ -33,22 +33,22 @@ namespace Folke.Elm
 
         public string CommandText { get { return command.CommandText; } set { command.CommandText = value; } }
 
-        internal DbDataReader ExecuteReader()
+        public DbDataReader ExecuteReader()
         {
             return command.ExecuteReader();
         }
 
-        internal async Task<DbDataReader> ExecuteReaderAsync()
+        public async Task<DbDataReader> ExecuteReaderAsync()
         {
             return await command.ExecuteReaderAsync();
         }
 
-        internal void ExecuteNonQuery()
+        public void ExecuteNonQuery()
         {
             command.ExecuteNonQuery();
         }
 
-        internal async Task ExecuteNonQueryAsync()
+        public async Task ExecuteNonQueryAsync()
         {
             await command.ExecuteNonQueryAsync();
         }
