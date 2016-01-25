@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Folke.Elm.Mapping;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm
 {
@@ -256,6 +257,13 @@ namespace Folke.Elm
 
         internal void AppendParameter(object parameter)
         {
+            var parameterIndex = AddParameter(parameter);
+
+            query.Append(" @Item" + parameterIndex);
+        }
+
+        private int AddParameter(object parameter)
+        {
             if (parameters == null)
                 parameters = new List<object>();
 
@@ -263,10 +271,15 @@ namespace Folke.Elm
             if (parameter != null)
             {
                 var parameterType = parameter.GetType();
-                if (parameterType == typeof(TimeSpan))
+                if (parameterType == typeof (TimeSpan))
                 {
-                    parameter = ((TimeSpan)parameter).TotalSeconds;
+                    parameter = ((TimeSpan) parameter).TotalSeconds;
                 }
+               /* else if (parameterType.GetTypeInfo().IsEnum)
+                {
+                    var enumIndex = (int)parameter;
+                    parameter = Enum.GetNames(parameterType).GetValue(enumIndex);
+                }*/
                 else if (Mapper.IsMapped(parameterType))
                 {
                     var key = Mapper.GetTypeMapping(parameterType).Key;
@@ -277,20 +290,33 @@ namespace Folke.Elm
             }
 
             parameters.Add(parameter);
-
-            query.Append(" @Item" + parameterIndex);
+            return parameterIndex;
         }
 
         internal void AddBooleanExpression(Expression expression, bool registerTable = false)
         {
+            var lambda = expression as LambdaExpression;
+            if (lambda != null)
+            {
+                AddExpression(lambda.Body, registerTable);
+                return;
+            }
+
+            var visitable = ParseBooleanExpression(expression, registerTable);
+            var visitor = new SqlVisitor(query, noAlias);
+            visitable.Accept(visitor);
+        }
+
+        internal IVisitable ParseBooleanExpression(Expression expression, bool registerTable = false)
+        {
             if ((expression is MemberExpression || expression is ParameterExpression) && !Driver.HasBooleanType)
             {
-                AddExpression(expression, registerTable);
-                query.Append("= 1 ");
+                return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(expression, registerTable),
+                    new ConstantNumber(1));
             }
             else
             {
-                AddExpression(expression, registerTable);
+                return ParseExpression(expression, registerTable);
             }
         }
 
@@ -303,36 +329,57 @@ namespace Folke.Elm
                 return;
             }
 
+            var visitable = ParseExpression(expression, registerTable);
+            var visitor = new SqlVisitor(query, noAlias);
+            visitable.Accept(visitor);
+        }
+
+        internal IVisitable ParseExpression(Expression expression, bool registerTable = false)
+        {
+            if (expression.NodeType == ExpressionType.Constant)
+            {
+                var constantExpression = (ConstantExpression) expression;
+                if (constantExpression.Value == null)
+                    return new Null();
+                if (constantExpression.Type.GetTypeInfo().IsEnum)
+                {
+                    var enumType = constantExpression.Type;
+                    var enumIndex = (int)constantExpression.Value;
+                    return new Parameter(AddParameter(Enum.GetValues(enumType).GetValue(enumIndex)));
+                }
+            }
+
             var unary = expression as UnaryExpression;
             if (unary != null)
             {
+                UnaryOperatorType unaryOperatorType;
                 switch (unary.NodeType)
                 {
                     case ExpressionType.Negate:
-                        query.Append('-');
+                        unaryOperatorType = UnaryOperatorType.Negate;
                         break;
                     case ExpressionType.Not:
-                        query.Append(" NOT ");
+                        unaryOperatorType = UnaryOperatorType.Not;
                         break;
                     case ExpressionType.Convert:
                     case ExpressionType.Quote:
-                        break;
+                        return ParseExpression(unary.Operand, registerTable);
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
 
+                IVisitable subExpression;
+
                 if (unary.NodeType == ExpressionType.Not)
-                    AddBooleanExpression(unary.Operand, registerTable);
+                    subExpression = ParseBooleanExpression(unary.Operand, registerTable);
                 else
-                    AddExpression(unary.Operand, registerTable);
-                return;
+                    subExpression = ParseExpression(unary.Operand, registerTable);
+                return new UnaryOperator(unaryOperatorType, subExpression);
             }
 
             var binary = expression as BinaryExpression;
             if (binary != null)
             {
-                query.Append('(');
-
                 bool booleanOperator;
                 switch (binary.NodeType)
                 {
@@ -345,16 +392,17 @@ namespace Folke.Elm
                         break;
                 }
 
+                IVisitable left;
                 if (booleanOperator)
                 {
-                    AddBooleanExpression(binary.Left, registerTable);
+                    left = ParseBooleanExpression(binary.Left, registerTable);
                 }
                 else
                 {
-                    AddExpression(binary.Left, registerTable);
+                    left = ParseExpression(binary.Left, registerTable);
                 }
 
-                if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
+                /*if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
                 {
                     if (binary.NodeType == ExpressionType.Equal)
                         query.Append(" IS NULL");
@@ -364,91 +412,106 @@ namespace Folke.Elm
                         throw new Exception("Operator not supported with null right member in " + binary);
                     query.Append(")");
                     return;
-                }
+                }*/
+
+                BinaryOperatorType type;
 
                 switch (binary.NodeType)
                 {
                     case ExpressionType.Add:
-                        query.Append("+");
+                        type = BinaryOperatorType.Add;
                         break;
                     case ExpressionType.AndAlso:
-                        query.Append(" AND ");
+                        type = BinaryOperatorType.AndAlso;
                         break;
                     case ExpressionType.Divide:
-                        query.Append("/");
+                        type = BinaryOperatorType.Divide;
                         break;
                     case ExpressionType.Equal:
-                        query.Append('=');
+                        type = BinaryOperatorType.Equal;
                         break;
                     case ExpressionType.GreaterThan:
-                        query.Append(">");
+                        type = BinaryOperatorType.GreaterThan;
                         break;
                     case ExpressionType.GreaterThanOrEqual:
-                        query.Append(">=");
+                        type = BinaryOperatorType.GreaterThanOrEqual;
                         break;
                     case ExpressionType.LessThan:
-                        query.Append("<");
+                        type = BinaryOperatorType.LessThan;
                         break;
                     case ExpressionType.LessThanOrEqual:
-                        query.Append("<=");
+                        type = BinaryOperatorType.LessThanOrEqual;
                         break;
                     case ExpressionType.Modulo:
-                        query.Append("%");
+                        type = BinaryOperatorType.Modulo;
                         break;
                     case ExpressionType.Multiply:
-                        query.Append('*');
+                        type = BinaryOperatorType.Multiply;
                         break;
                     case ExpressionType.NotEqual:
-                        query.Append("<>");
+                        type = BinaryOperatorType.NotEqual;
                         break;
                     case ExpressionType.OrElse:
-                        query.Append(" OR ");
+                        type = BinaryOperatorType.OrElse;
                         break;
                     case ExpressionType.Subtract:
-                        query.Append('-');
+                        type = BinaryOperatorType.Subtract;
                         break;
                     default:
                         throw new Exception("Expression type not supported");
                 }
 
-                if (binary.Right.NodeType == ExpressionType.Constant && binary.Left.NodeType == ExpressionType.Convert
-                    && ((UnaryExpression)binary.Left).Operand.Type.GetTypeInfo().IsEnum)
+                IVisitable right;
+
+                if (booleanOperator)
                 {
-                    var enumType = ((UnaryExpression)binary.Left).Operand.Type;
-                    var enumIndex = (int) ((ConstantExpression)binary.Right).Value;
-                    AppendParameter(Enum.GetValues(enumType).GetValue(enumIndex));
+                    right = ParseBooleanExpression(binary.Right, registerTable);
                 }
                 else
                 {
-                    if (booleanOperator)
+                    right = ParseExpression(binary.Right, registerTable);
+                }
+
+                if (binary.Left.NodeType == ExpressionType.Convert && binary.Left.NodeType == ExpressionType.Convert
+                    && ((UnaryExpression)binary.Left).Operand.Type.GetTypeInfo().IsEnum)
+                {
+                    var parameter = right as Parameter;
+                    if (parameter != null)
                     {
-                        AddBooleanExpression(binary.Right, registerTable);
-                    }
-                    else
-                    {
-                        AddExpression(binary.Right, registerTable);
+                        parameters[parameter.Index] =
+                            Enum.GetValues(((UnaryExpression) binary.Left).Operand.Type)
+                                .GetValue((int)parameters[parameter.Index]);
                     }
                 }
-                query.Append(')');
-                return;
+
+                if (right.GetType() == typeof (Null))
+                {
+                    if (binary.NodeType == ExpressionType.Equal)
+                        return new UnaryOperator(UnaryOperatorType.IsNull, left);
+                    if (binary.NodeType == ExpressionType.NotEqual)
+                        return new UnaryOperator(UnaryOperatorType.IsNotNull, left);
+                    throw new Exception("Operator not supported with null right member in " + binary);
+                }
+
+                return new BinaryOperator(type, left, right);
             }
 
             var constant = expression as ConstantExpression;
             if (constant != null)
             {
-                if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
+                /*if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
                 {
+                TODO
                     var queryable = (ElmQueryable)constant.Value;
                     AppendSelect();
                     AppendAllSelects(queryable.ElementType, null);
                     AppendFrom();
                     AppendTable(queryable.ElementType, (string)null);
                 }
-                else
+                else*/
                 {
-                    AppendParameter(constant.Value);
+                    return ParseParameter(constant.Value);
                 }
-                return;
             }
 
             if (expression.NodeType == ExpressionType.MemberAccess)
@@ -456,16 +519,14 @@ namespace Folke.Elm
                 var memberExpression = (MemberExpression) expression;
                 if (memberExpression.Expression != null && memberExpression.Expression.Type == parametersType)
                 {
-                    query.Append(" @" + memberExpression.Member.Name);
-                    return;
+                    return new NamedParameter(memberExpression.Member.Name);
                 }
             }
 
             var column = ExpressionToColumn(expression, registerTable);
             if (column != null)
             {
-                AppendColumn(column);
-                return;
+                return new Column(column.Table.name, column.Column.ColumnName);
             }
 
             if (expression.NodeType == ExpressionType.Call)
@@ -477,32 +538,20 @@ namespace Folke.Elm
                     switch (call.Method.Name)
                     {
                         case nameof(Queryable.Where):
-                            AddExpression(call.Arguments[0], registerTable);
-                            AppendWhere();
-                            AddExpression(call.Arguments[1], registerTable);
-                            break;
+                            return new Where(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+
                         case nameof(Queryable.Skip):
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.BeforeLimit();
-                            query.Append(call.Arguments[1].ToString());
-                            break;
+                            return new Skip(ParseExpression(call.Arguments[0], registerTable), Convert.ToInt32(call.Arguments[1]));
 
                         case nameof(Queryable.Take):
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.DuringLimit();
-                            query.Append(call.Arguments[1].ToString());
-                            query.AfterLimit();
-                            break;
+                            return new Take(ParseExpression(call.Arguments[0], registerTable), Convert.ToInt32(call.Arguments[1]));
+
                         case nameof(Queryable.OrderBy):
-                            AddExpression(call.Arguments[0], registerTable);
-                            AppendOrderBy();
-                            AddExpression(call.Arguments[1], registerTable);
-                            break;
+                            return new OrderBy(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
                             
                         default:
                             throw new Exception("Unsupported Queryable method");
                     }
-                    return;
                 }
 
                 if (call.Method.DeclaringType == typeof(ExpressionHelpers))
@@ -510,50 +559,40 @@ namespace Folke.Elm
                     switch (call.Method.Name)
                     {
                         case nameof(ExpressionHelpers.Like):
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(" LIKE");
-                            AddExpression(call.Arguments[1], registerTable);
-                            break;
+                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
                         case nameof(ExpressionHelpers.In):
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(" IN");
-                            AppendValues((IEnumerable)Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke());
-                            break;
+                            return new BinaryOperator(BinaryOperatorType.In,
+                                ParseExpression(call.Arguments[0], registerTable),
+                                ParseValues((IEnumerable) Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke()));
                         case nameof(ExpressionHelpers.Between):
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(" BETWEEN ");
-                            AddExpression(call.Arguments[1], registerTable);
-                            query.Append(" AND ");
-                            AddExpression(call.Arguments[2], registerTable);
-                            break;
+                            return new Between(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable),
+                                            ParseExpression(call.Arguments[2], registerTable));
                         default:
                             throw new Exception("Unsupported expression helper");
                     }
-                    return;
                 }
 
                 if (call.Method.DeclaringType == typeof(Math))
                 {
+                    MathFunctionType type;
                     switch (call.Method.Name)
                     {
                         case nameof(Math.Abs):
-                            query.Append(" ABS(");
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(")");
+                            type = MathFunctionType.Abs;
                             break;
 
                         case nameof(Math.Cos):
-                            query.Append(" COS(");
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(")");
+                            type = MathFunctionType.Cos;
                             break;
 
                         case nameof(Math.Sin):
-                            query.Append(" SIN(");
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(")");
+                            type = MathFunctionType.Sin;
                             break;
+                        default:
+                            throw new NotImplementedException("Not implemented math function");
                     }
+
+                    return new MathFunction(type, ParseExpression(call.Arguments[0], registerTable));
                 }
 
                 if (call.Method.DeclaringType == typeof(SqlFunctions))
@@ -561,22 +600,14 @@ namespace Folke.Elm
                     switch (call.Method.Name)
                     {
                         case nameof(SqlFunctions.LastInsertedId):
-                            query.AppendLastInsertedId();
-                            break;
+                            return new LastInsertedId();
                         case nameof(SqlFunctions.Max):
-                            query.Append(" MAX(");
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(")");
-                            break;
+                            return new MathFunction(MathFunctionType.Max, ParseExpression(call.Arguments[0], registerTable));
                         case nameof(SqlFunctions.Sum):
-                            query.Append(" SUM(");
-                            AddExpression(call.Arguments[0], registerTable);
-                            query.Append(")");
-                            break;
+                            return new MathFunction(MathFunctionType.Sum, ParseExpression(call.Arguments[0], registerTable));
                         default:
                             throw new Exception("Unsupported sql function");
                     }
-                    return;
                 }
 
                 if (call.Method.DeclaringType == typeof(string))
@@ -585,58 +616,47 @@ namespace Folke.Elm
                     {
                         case nameof(string.StartsWith):
                         {
-                            AddExpression(call.Object, registerTable);
-                            query.Append(" LIKE");
                             var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
                             text = text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
-                            AppendParameter(text);
-                            break;
+                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, registerTable), ParseParameter(text));
                         }
                         case nameof(string.Contains):
                             {
-                                AddExpression(call.Object, registerTable);
-                                query.Append(" LIKE");
-
                                 var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke() ?? string.Empty;
                                 text = "%" + text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
-                                AppendParameter(text);
-                                break;
+                                return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, registerTable), ParseParameter(text));
                             }
                             
                         default:
                             throw new Exception("Unsupported string method");
                     }
-                    return;
                 }
 
                 if (call.Method.Name == nameof(object.Equals))
                 {
-                    query.Append('(');
-                    AddExpression(call.Object, registerTable);
-                    query.Append('=');
-                    AddExpression(call.Arguments[0], registerTable);
-                    query.Append(')');
-                    return;
+                    return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(call.Object, registerTable), ParseExpression(call.Arguments[0], registerTable));
                 }
             }
 
             var value = Expression.Lambda(expression).Compile().DynamicInvoke();
-            AppendParameter(value);
+            return ParseParameter(value);
         }
 
-        private void AppendValues(IEnumerable values)
+        private IVisitable ParseParameter(object value)
         {
-            query.Append("(");
-            bool first = true;
+            if (value == null) return new Null();
+            return new Parameter(AddParameter(value));
+        }
+
+        private IVisitable ParseValues(IEnumerable values)
+        {
+            var list = new List<IVisitable>();
+
             foreach (var value in values)
             {
-                if (first)
-                    first = false;
-                else
-                    query.Append(',');
-                AppendParameter(value);
+                list.Add(new Parameter(AddParameter(value)));
             }
-            query.Append(')');
+            return new Values(list);
         }
 
         internal TableAlias RegisterTable(Type type, string tableAlias)

@@ -46,21 +46,21 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_LikeExtension()
         {
             fluentSelectBuilder.Values(x => x.Text.Like("toto"));
-            Assert.Equal("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
+            Assert.Equal("SELECT( `t`.`Text` LIKE @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_Select_StringStartsWith()
         {
             fluentSelectBuilder.Values(x => x.Text.StartsWith("toto"));
-            Assert.Equal("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
+            Assert.Equal("SELECT( `t`.`Text` LIKE @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_Select_StringContains()
         {
             fluentSelectBuilder.Values(x => x.Text.Contains("toto"));
-            Assert.Equal("SELECT `t`.`Text` LIKE @Item0", queryBuilder.Sql);
+            Assert.Equal("SELECT( `t`.`Text` LIKE @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
@@ -159,13 +159,13 @@ namespace Folke.Elm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child).Where(x => child == null);
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE( `t1`.`Id` IS NULL)", queryBuilder.Sql);
+            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE `t1`.`Id` IS NULL", queryBuilder.Sql);
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_LocalVariableIsParameter()
         {
-            FakeChildClass child = null;
+            FakeChildClass child = new FakeChildClass { Id = 25 };
             fluentSelectBuilder.CountAll().From().Where(x => x.Child == child);
             Assert.Equal("SELECT  COUNT(*) FROM `FakeClass` as t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
         }
@@ -173,7 +173,7 @@ namespace Folke.Elm.Mysql.Test
         [Fact]
         public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereProperty()
         {
-            FakeChildClass child = null;
+            FakeChildClass child = new FakeChildClass { Id = 18 };
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child.Id == child.Id);
             Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
         }
