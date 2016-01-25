@@ -277,7 +277,7 @@ namespace Folke.Elm
             }
 
             parameters.Add(parameter);
-            
+
             query.Append(" @Item" + parameterIndex);
         }
 

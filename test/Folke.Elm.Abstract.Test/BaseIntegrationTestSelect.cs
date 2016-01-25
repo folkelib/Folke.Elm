@@ -42,6 +42,15 @@ namespace Folke.Elm.Abstract.Test
             Assert.Equal(newPoco.Id, foundPoco.Id);
         }
 
+        public void SelectAllFrom_TableType_WhereVariableIsNull_Single()
+        {
+            var newPoco = new TestPoco { Name = null };
+            connection.Save(newPoco);
+            string variable = null;
+            var foundPoco = connection.SelectAllFrom<TestPoco>().Single(t => t.Name == variable);
+            Assert.Equal(newPoco.Id, foundPoco.Id);
+        }
+
         public void SelectAllFrom_TableType_WhereObject_ReturnedItemsHaveReferenceToCachedItem_List()
         {
             var newPoco = new TestPoco { Name = null };

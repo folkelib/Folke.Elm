@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using Folke.Elm.Abstract.Test;
-using Microsoft.Data.Sqlite;
+﻿using Folke.Elm.Abstract.Test;
 using Xunit;
 
 namespace Folke.Elm.Sqlite.Test
@@ -186,6 +184,12 @@ namespace Folke.Elm.Sqlite.Test
         public void Select_TableWithGuid_WhereParameter_List()
         {
             integrationTestSelect.Select_TableWithGuid_WhereParameter_List();
+        }
+
+        [Fact]
+        public void SelectAllFrom_TableType_WhereVariableIsNull_Single()
+        {
+            integrationTestSelect.SelectAllFrom_TableType_WhereVariableIsNull_Single();
         }
     }
 }

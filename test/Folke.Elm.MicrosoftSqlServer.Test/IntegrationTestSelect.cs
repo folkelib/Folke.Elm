@@ -185,5 +185,11 @@ namespace Folke.Elm.MicrosoftSqlServer.Test
         {
             integrationTestSelect.Select_TableWithGuid_WhereParameter_List();
         }
+
+        [Fact]
+        public void SelectAllFrom_TableType_WhereVariableIsNull_Single()
+        {
+            integrationTestSelect.SelectAllFrom_TableType_WhereVariableIsNull_Single();
+        }
     }
 }
