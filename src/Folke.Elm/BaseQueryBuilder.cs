@@ -322,13 +322,6 @@ namespace Folke.Elm
 
         internal void AddExpression(Expression expression, bool registerTable = false)
         {
-            var lambda = expression as LambdaExpression;
-            if (lambda != null)
-            {
-                AddExpression(lambda.Body, registerTable);
-                return;
-            }
-
             var visitable = ParseExpression(expression, registerTable);
             var visitor = new SqlVisitor(query, noAlias);
             visitable.Accept(visitor);
@@ -347,6 +340,12 @@ namespace Folke.Elm
                     var enumIndex = (int)constantExpression.Value;
                     return new Parameter(AddParameter(Enum.GetValues(enumType).GetValue(enumIndex)));
                 }
+            }
+
+            var lambda = expression as LambdaExpression;
+            if (lambda != null)
+            {
+                return ParseExpression(lambda.Body, registerTable);
             }
 
             var unary = expression as UnaryExpression;
@@ -401,19 +400,7 @@ namespace Folke.Elm
                 {
                     left = ParseExpression(binary.Left, registerTable);
                 }
-
-                /*if (binary.Right.NodeType == ExpressionType.Constant && ((ConstantExpression) binary.Right).Value == null)
-                {
-                    if (binary.NodeType == ExpressionType.Equal)
-                        query.Append(" IS NULL");
-                    else if (binary.NodeType == ExpressionType.NotEqual)
-                        query.Append(" IS NOT NULL");
-                    else
-                        throw new Exception("Operator not supported with null right member in " + binary);
-                    query.Append(")");
-                    return;
-                }*/
-
+                
                 BinaryOperatorType type;
 
                 switch (binary.NodeType)
@@ -499,16 +486,14 @@ namespace Folke.Elm
             var constant = expression as ConstantExpression;
             if (constant != null)
             {
-                /*if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
+                if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
                 {
-                TODO
                     var queryable = (ElmQueryable)constant.Value;
-                    AppendSelect();
-                    AppendAllSelects(queryable.ElementType, null);
-                    AppendFrom();
-                    AppendTable(queryable.ElementType, (string)null);
+                    var table = RegisterTable(queryable.ElementType, null);
+                    return new Select(ParseSelectedColumn(table),
+                        new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.name));
                 }
-                else*/
+                else
                 {
                     return ParseParameter(constant.Value);
                 }
@@ -541,10 +526,10 @@ namespace Folke.Elm
                             return new Where(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
 
                         case nameof(Queryable.Skip):
-                            return new Skip(ParseExpression(call.Arguments[0], registerTable), Convert.ToInt32(call.Arguments[1]));
+                            return new Skip(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1]));
 
                         case nameof(Queryable.Take):
-                            return new Take(ParseExpression(call.Arguments[0], registerTable), Convert.ToInt32(call.Arguments[1]));
+                            return new Take(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1]));
 
                         case nameof(Queryable.OrderBy):
                             return new OrderBy(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
@@ -831,6 +816,20 @@ namespace Folke.Elm
                 AppendColumn(table.name, column);
             }
             return table;
+        }
+
+        private IVisitable ParseSelectedColumn(TableAlias table)
+        {
+            if (selectedFields == null)
+                selectedFields = new List<FieldAlias>();
+            var columns = table.Mapping.Columns;
+            var fields = new List<IVisitable>();
+            foreach (var column in columns.Values)
+            {
+                selectedFields.Add(new FieldAlias { PropertyMapping = column, tableAlias = table.alias, index = selectedFields.Count });
+                fields.Add(new Column(table.name, column.ColumnName));
+            }
+            return new Fields(fields);
         }
 
         internal void AppendFrom()

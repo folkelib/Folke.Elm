@@ -2,19 +2,20 @@
 {
     public class Skip : IVisitable
     {
-        public int Count { get; set; }
         private readonly IVisitable collection;
+        private readonly IVisitable count;
 
-        public Skip(IVisitable collection, int count)
+        public Skip(IVisitable collection, IVisitable count)
         {
-            Count = count;
             this.collection = collection;
+            this.count = count;
         }
 
         public void Accept(IVisitor visitor)
         {
             collection.Accept(visitor);
             visitor.During(this);
+            count.Accept(visitor);
         }
     }
 }

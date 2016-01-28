@@ -23,5 +23,11 @@
         void Before(MathFunction unaryOperator);
         void After(MathFunction binaryOperator);
         void During(LastInsertedId binaryOperator);
+        void During(Fields fields);
+        void During(AliasDefinition aliasDefinition);
+        void Before(Select selectNode);
+        void During(Select selectNode);
+        void During(Table table);
+        void After(Take binaryOperator);
     }
 }

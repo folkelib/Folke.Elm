@@ -53,7 +53,7 @@ namespace Folke.Elm.Test
 
             // Assert
             Assert.Empty(result);
-            Assert.Equal("SELECT  \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" as t WHERE( \"t\".\"Name\"= @Item0)", commandMock.Object.CommandText);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" AS t WHERE( \"t\".\"Name\"= @Item0)", commandMock.Object.CommandText);
         }
 
         [Fact]
@@ -66,7 +66,7 @@ namespace Folke.Elm.Test
 
             // Assert
             Assert.Empty(result);
-            Assert.Equal("SELECT  \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" as t", commandMock.Object.CommandText);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" AS t", commandMock.Object.CommandText);
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace Folke.Elm.Test
 
             // Assert
             Assert.Empty(result);
-            Assert.Equal("SELECT  \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" as t ORDER BY  \"t\".\"Name\" LIMIT 10,15", commandMock.Object.CommandText);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" AS t ORDER BY  \"t\".\"Name\" LIMIT @Item0, @Item1", commandMock.Object.CommandText);
         }
     }
 }

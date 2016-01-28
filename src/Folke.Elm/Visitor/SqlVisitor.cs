@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
 
 namespace Folke.Elm.Visitor
 {
@@ -102,22 +101,22 @@ namespace Folke.Elm.Visitor
             switch (binaryOperator.OperatorType)
             {
                 case UnaryOperatorType.IsNull:
-                    query.Append(" IS NULL");
+                    query.AppendAfterSpace("IS NULL");
                     break;
                 case UnaryOperatorType.IsNotNull:
-                    query.Append(" IS NOT NULL");
+                    query.AppendAfterSpace("IS NOT NULL");
                     break;
             }
         }
 
         public void During(Parameter binaryOperator)
         {
-            query.Append(" @Item" + binaryOperator.Index);
+            query.AppendAfterSpace("@Item" + binaryOperator.Index);
         }
 
         public void During(NamedParameter binaryOperator)
         {
-            query.Append(" @" + binaryOperator.Name);
+            query.AppendAfterSpace("@" + binaryOperator.Name);
         }
 
         public void During(Column binaryOperator)
@@ -133,25 +132,22 @@ namespace Folke.Elm.Visitor
 
         public void During(Where binaryOperator)
         {
-            query.Append("WHERE");
+            query.AppendAfterSpace("WHERE");
         }
 
         public void During(Skip binaryOperator)
         {
             query.BeforeLimit();
-            query.Append(binaryOperator.Count);
         }
 
         public void During(Take binaryOperator)
         {
             query.DuringLimit();
-            query.Append(binaryOperator.Count);
-            query.AfterLimit();
         }
 
         public void During(OrderBy binaryOperator)
         {
-            query.Append("ORDER BY ");
+            query.AppendAfterSpace("ORDER BY ");
         }
 
         public void During(Values binaryOperator)
@@ -171,12 +167,12 @@ namespace Folke.Elm.Visitor
 
         public void Before(Between unaryOperator)
         {
-            query.Append(" BETWEEN ");
+            query.AppendAfterSpace("BETWEEN");
         }
 
         public void During(Between binaryOperator)
         {
-            query.Append(" AND ");
+            query.AppendAfterSpace("AND");
         }
 
         public void Before(MathFunction unaryOperator)
@@ -184,19 +180,19 @@ namespace Folke.Elm.Visitor
             switch (unaryOperator.Type)
             {
                 case MathFunctionType.Abs:
-                    query.Append(" ABS(");
+                    query.AppendAfterSpace("ABS(");
                     break;
                 case MathFunctionType.Cos:
-                    query.Append(" COS(");
+                    query.AppendAfterSpace("COS(");
                     break;
                 case MathFunctionType.Max:
-                    query.Append(" MAX(");
+                    query.AppendAfterSpace("MAX(");
                     break;
                 case MathFunctionType.Sin:
-                    query.Append(" SIN(");
+                    query.AppendAfterSpace("SIN(");
                     break;
                 case MathFunctionType.Sum:
-                    query.Append(" SUM(");
+                    query.AppendAfterSpace("SUM(");
                     break;
             }
         }
@@ -209,6 +205,46 @@ namespace Folke.Elm.Visitor
         public void During(LastInsertedId binaryOperator)
         {
             query.AppendLastInsertedId();
+        }
+
+        public void During(Fields fields)
+        {
+            query.Append(",");
+        }
+
+        public void During(AliasDefinition aliasDefinition)
+        {
+            if (!noAlias)
+            {
+                query.AppendAfterSpace("AS ");
+                query.Append(aliasDefinition.Alias);
+            }
+        }
+
+        public void Before(Select selectNode)
+        {
+            query.Append("SELECT");
+        }
+
+        public void During(Select selectNode)
+        {
+            query.AppendAfterSpace("FROM");
+        }
+
+        public void During(Table table)
+        {
+            query.AppendSpace();
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                query.AppendSymbol(table.Schema);
+                query.Append('.');
+            }
+            query.AppendSymbol(table.Name);
+        }
+
+        public void After(Take binaryOperator)
+        {
+            query.AfterLimit();
         }
     }
 }
