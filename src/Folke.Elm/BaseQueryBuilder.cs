@@ -149,7 +149,7 @@ namespace Folke.Elm
 
         public object[] Parameters => parameters?.ToArray();
 
-        public MappedClass MappedClass => baseMappedClass;
+        public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType));
 
         internal void AppendTableName(TypeMapping type)
         {
@@ -490,8 +490,7 @@ namespace Folke.Elm
                 {
                     var queryable = (ElmQueryable)constant.Value;
                     var table = RegisterTable(queryable.ElementType, null);
-                    return new Select(ParseSelectedColumn(table),
-                        new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.name));
+                    return new Select(ParseSelectedColumn(table), new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.name));
                 }
                 else
                 {
@@ -836,7 +835,6 @@ namespace Folke.Elm
         {
             if (currentContext == ContextEnum.Select || currentContext == ContextEnum.Delete)
             {
-                baseMappedClass = MappedClass.MapClass(selectedFields, defaultType);
                 query.Append(" FROM");
             }
             else if (currentContext == ContextEnum.From)

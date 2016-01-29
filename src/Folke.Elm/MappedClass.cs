@@ -106,6 +106,11 @@ namespace Folke.Elm
             return value;
         }
 
+        /// <summary>A factory for a MappedClass instance</summary>
+        /// <param name="fieldAliases">The fields that have been selected in the query and that should fill the class properties</param>
+        /// <param name="type">The class</param>
+        /// <param name="alias">An optional alias for the table whose column are selected (null for the root mapped class)</param>
+        /// <returns></returns>
         public static MappedClass MapClass(IList<BaseQueryBuilder.FieldAlias> fieldAliases, TypeMapping type, string alias = null)
         {
             if (fieldAliases == null)
@@ -121,9 +126,9 @@ namespace Folke.Elm
                 mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty.PropertyInfo };
             }
 
-            foreach (var pair in type.Columns)
+            foreach (var columnPair in type.Columns)
             {
-                var propertyMapping = pair.Value;
+                var propertyMapping = columnPair.Value;
                 if (idProperty != null && propertyMapping == idProperty)
                     continue;
 
@@ -135,7 +140,7 @@ namespace Folke.Elm
 
                     if (isForeign)
                     {
-                        mappedField.mappedClass = MapClass(fieldAliases, propertyMapping.Reference, alias == null ? pair.Key : alias + "." + pair.Key);
+                        mappedField.mappedClass = MapClass(fieldAliases, propertyMapping.Reference, alias == null ? columnPair.Key : alias + "." + columnPair.Key);
                     }
                     mappedClass.fields.Add(mappedField);
                 }
