@@ -730,7 +730,7 @@ namespace Folke.Elm
                     {
                         // Asking the id of the item pointed by a foreign key is the same as asking the foreign key
                         var keyOfTable = Mapper.GetKey(memberExpression.Type);
-                        if (keyOfTable != null && columnMember.Member == keyOfTable.PropertyInfo)
+                        if (keyOfTable != null && AreSameProperties(columnMember.Member, keyOfTable.PropertyInfo))
                         {
                             return ExpressionToColumn(memberExpression);
                         }
@@ -769,6 +769,12 @@ namespace Folke.Elm
                 return new TableColumn {Column = columnAsTable.Mapping.Key, Table = columnAsTable};
             }
             return null;
+        }
+
+        private bool AreSameProperties(MemberInfo member, PropertyInfo propertyInfo)
+        {
+            return member.Module == propertyInfo.Module && member.Name == propertyInfo.Name &&
+                   member.DeclaringType == propertyInfo.DeclaringType;
         }
 
         /// <summary>
