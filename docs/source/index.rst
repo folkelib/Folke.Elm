@@ -5,14 +5,17 @@ Welcome to Elm's documentation. Elm is an Object-Relational Mapping (ORM) librar
 
 This project uses the standard MIT License.
 
-Contents:
+.. _project page: https://github.com/folkelib/Folke.Elm
+.. _file a bug: https://github.com/folkelib/Folke.Elm/issues
 
+Content:
+^^^^^^^^^
 .. toctree::
    :maxdepth: 2
-   
-   quickstart 
+
+   quickstart
+   annotations
    license
-   
 
 Indices and tables
 ==================
