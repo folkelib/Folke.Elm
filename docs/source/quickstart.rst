@@ -57,22 +57,26 @@ Demo Classes
 
 For the purposes of this sample application we'll use two classes: ``Product`` and ``Order``. As you can imagine, we'll create fake Products and then generate some fake Orders containing these fake Products. Note that for the sake of simplicity these classes will be created in the same project as the Console Application, but you are of course completely free to create them in a separate project (and you probably should).
 
-Here's the first class, ``Product.cs``: ::
+Here's the first class, ``Product.cs``:
 
- namespace Folke.Elm.Demo.Data
- {
-     public class Product: IFolkeTable
-     {
-         public int Id { get; set; }
-         public string PartNumber { get; set; }
-         public string Name { get; set; }
-         public string Price { get; set; }
-         public string Description { get; set; }
-         public string Comment { get; set; }
-     }
- }
+.. code-block:: c#
 
-There are two things your class must have. It must implement the ``IFolkeTable`` interface, and for that it must have an ``Id`` property. This property can be an Integer (for typical database primary key usage) or it can also be a String (for instance if you want your Primary Key to be a GUID). For the rest, you are free to create the fields you want. Elm also supports Annotations and will use them as instructions when creating the database schema. For instance, let's say we want to limit the size of the PartNumber to 36 characters. We just need to modify the class to this: ::
+    namespace Folke.Elm.Demo.Data
+    {
+        public class Product: IFolkeTable
+        {
+            public int Id { get; set; }
+            public string PartNumber { get; set; }
+            public string Name { get; set; }
+            public string Price { get; set; }
+            public string Description { get; set; }
+            public string Comment { get; set; }
+        }
+    }
+
+There are two things your class must have. It must implement the ``IFolkeTable`` interface, and for that it must have an ``Id`` property. This property can be an Integer (for typical database primary key usage) or it can also be a String (for instance if you want your Primary Key to be a GUID). For the rest, you are free to create the fields you want. Elm also supports Annotations and will use them as instructions when creating the database schema. For instance, let's say we want to limit the size of the PartNumber to 36 characters. We just need to modify the class to this:
+
+.. code-block:: c#
 
  using System.ComponentModel.DataAnnotations;
 
@@ -92,7 +96,9 @@ There are two things your class must have. It must implement the ``IFolkeTable``
  
 Note that we had to add the ``System.ComponentModel.DataAnnotations`` namespace. Make sure to add this package to the .NET Core dependencies (.NET 4.5 doesn't need this to be explicitely added since it's part of that framework). There are many more supported :doc:`annotations`.
  
-The second class is ``Order.cs`` and looks like this:  ::
+The second class is ``Order.cs`` and looks like this:
+
+.. code-block:: c#
  
  using System.Collections.Generic;
 
@@ -114,21 +120,27 @@ Creating the database
 
 For this setp we'll put all of the database creation in one big method. There are better ways to do this, by ways of Dependency Injection for instance. Read the :doc:`dotnetcore` page for more details on this.
  
-The object type for establishing connections (or you could call them `sessions` as well) is ``FolkeConnection``. This class has a ``Create()`` method that you can use as a factory. ::
+The object type for establishing connections (or you could call them `sessions` as well) is ``FolkeConnection``. This class has a ``Create()`` method that you can use as a factory.
+
+.. code-block:: c#
     
     FolkeConnection.Create(
             IDatabaseDriver databaseDriver, 
             IMapper mapper, 
             string connectionString);
     
-Since we use SQLite in this example the session will be created like this: ::
+Since we use SQLite in this example the session will be created like this:
+
+.. code-block:: c#
 
     IFolkeConnection session = FolkeConnection.Create(
                                             new Sqlite.SqliteDriver(), 
                                             new Mapping.Mapper(), 
                                             "Data Source=test.db");
 
-Then we need to tell that session to update the schema (this method will create it instead if it doesn't exist). ::
+Then we need to tell that session to update the schema (this method will create it instead if it doesn't exist).
+
+.. code-block:: c#
 
     session.UpdateSchema(typeof(Product).GetTypeInfo().Assembly);
     
@@ -137,7 +149,9 @@ Here we just specify the Assembly from one of our Classes. Elm will automaticall
 Saving to the database
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Now we need an object to save into the database. Let's start with a Product. ::
+Now we need an object to save into the database. Let's start with a Product.
+
+.. code-block:: c#
 
     Product product = new Product
             {
@@ -148,7 +162,9 @@ Now we need an object to save into the database. Let's start with a Product. ::
                 Price = "10000"
             };
             
-And now to save it, we only need to create a transaction. ::
+And now to save it, we only need to create a transaction.
+
+.. code-block:: c#
  
     using (var t = session.BeginTransaction())
             {
@@ -158,7 +174,9 @@ And now to save it, we only need to create a transaction. ::
             
 And that's it, the product is saved!
 
-Now we can create an ``Order`` object that references that product. ::
+Now we can create an ``Order`` object that references that product.
+
+.. code-block:: c#
 
     Order order = new Order();
     order.Products.Add(product);
@@ -172,11 +190,15 @@ Now we can create an ``Order`` object that references that product. ::
 Reading from the database
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now that the ``product`` object has been saved into the database, its relevant properties have been automatically updated. In our case, the ``Id`` has been set. We can access it directly in the follow up code. ::
+Now that the ``product`` object has been saved into the database, its relevant properties have been automatically updated. In our case, the ``Id`` has been set. We can access it directly in the follow up code.
+
+.. code-block:: c#
 
     Console.WriteLine("New product Id is {0}", product.Id);
    
-But most of the time the object will be saved in a different scope than the one you want to read it from. In that case, there are two methods you can use: ``IFolkeConnection.Get<ObjectType>(Id)`` or ``IFolkeConnection.Load<ObjectType>(Id)``. The only difference between these two methods is that ``Load()`` will throw an error if the object cannot be found in database whereas ``Get()`` will return ``null``. ::
+But most of the time the object will be saved in a different scope than the one you want to read it from. In that case, there are two methods you can use: ``IFolkeConnection.Get<ObjectType>(Id)`` or ``IFolkeConnection.Load<ObjectType>(Id)``. The only difference between these two methods is that ``Load()`` will throw an error if the object cannot be found in database whereas ``Get()`` will return ``null``.
+
+.. code-block:: c#
  
     // Returns the correct product
     Product loadedProduct = session.Load<Product>(product.Id);
@@ -193,17 +215,23 @@ But most of the time the object will be saved in a different scope than the one 
 Selecting from the database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Elm supports the Fluent syntax for selecting from the database. You can apply any number of filters. Make sure to add the ``using Folke.Elm.Fluent;`` statement. For instance, to select all the Products you would do this: ::
+Elm supports the Fluent syntax for selecting from the database. You can apply any number of filters. Make sure to add the ``using Folke.Elm.Fluent;`` statement. For instance, to select all the Products you would do this:
+
+.. code-block:: c#
 
     var Products = session.SelectAllFrom<Product>().ToList();
     
-We can order them, for instance by ``Id`` to get them by chronological order. ::
+We can order them, for instance by ``Id`` to get them by chronological order.
+
+.. code-block:: c#
 
     var Products = session.SelectAllFrom<Product>()
                             .OrderBy(x => x.Id).Desc
                             .ToList();
                             
-Maybe we want to select only the ``Id`` and ``PartNumber`` fields. ::
+Maybe we want to select only the ``Id`` and ``PartNumber`` fields.
+
+.. code-block:: c#
 
     var Products = session.SelectAllFrom<Product>(x => x.Id, x => x.PartNumber)
                             .OrderBy(x => x.Id).Desc
