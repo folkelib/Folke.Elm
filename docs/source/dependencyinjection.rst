@@ -1,8 +1,8 @@
 Dependency Injection
 ====================
 
-Registering the services
-^^^^^^^^^^^^^^^^^^^^^^^^
+Registering the Service
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Elm supports Dependency Injection out of the box and it's fairly simple to set up. In this page we'll use an ASP.NET Core WebApi/MVC6 project as an example but this would work with a Console project as well.
 
