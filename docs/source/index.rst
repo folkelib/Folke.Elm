@@ -14,13 +14,6 @@ Content:
    :maxdepth: 2
 
    quickstart
+   dependencyinjection
    annotations
    license
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
