@@ -1,7 +1,9 @@
 Folke.Elm
 =========
 
- Object-Relational Mapping library written in C#
+Object-Relational Mapping library written in C#.
+
+[![Documentation Status](https://readthedocs.org/projects/folkeelm/badge/?version=latest)](http://folkeelm.readthedocs.org/en/latest/?badge=latest)
 
 ##Usage
 
