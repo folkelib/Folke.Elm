@@ -110,3 +110,4 @@ UpgradeLog*.XML
 *.ncrunchproject
 *.lock.json
 .vs
+build
