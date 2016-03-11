@@ -20,6 +20,13 @@ namespace Folke.Elm
         private bool askRollback;
         private readonly ElmQueryProvider queryProvider;
 
+        /// <summary>
+        /// Creates a new instance of <see cref="FolkeConnection"/>. Intended to be used
+        /// for IoC. Otherwise, use the Create method to construct a connection.
+        /// </summary>
+        /// <param name="databaseDriver"></param>
+        /// <param name="mapper"></param>
+        /// <param name="options"></param>
         public FolkeConnection(IDatabaseDriver databaseDriver, IMapper mapper, IOptions<ElmOptions> options):
             this(databaseDriver, mapper, options.Value.ConnectionString)
         {
@@ -102,12 +109,6 @@ namespace Folke.Elm
             foreach (var fetch in fetches)
                 fromQuery.LeftJoinOnId(fetch);
             return fromQuery;
-        }
-
-        [Obsolete("Use SelectAll")]
-        public IFromResult<T, FolkeTuple> QueryOver<T>(params Expression<Func<T, object>>[] fetches) where T : class, new()
-        {
-            return SelectAllFrom<T>(fetches);
         }
         
         public void Delete<T>(T value) where T : class, new()
@@ -280,8 +281,15 @@ namespace Folke.Elm
 
         public void UpdateSchema(Assembly assembly)
         {
+            var mappings = Mapper.GetTypeMappings(assembly).ToList();
             var schemaUpdater = new SchemaUpdater(this);
-            schemaUpdater.CreateOrUpdateAll(assembly);
+            schemaUpdater.CreateOrUpdate(mappings);
+        }
+
+        public void UpdateSchema()
+        {
+            var schemaUpdater = new SchemaUpdater(this);
+            schemaUpdater.CreateOrUpdate(Mapper.GetTypeMappings().ToList());
         }
 
         /// <summary>

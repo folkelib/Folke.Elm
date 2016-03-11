@@ -10,28 +10,15 @@ namespace Folke.Elm.Mapping
     /// <summary>The mapping from a class to a table</summary>
     public class TypeMapping
     {
-        /// <summary>The type that is mapped</summary>
-        public Type Type { get; set; }
-
-        /// <summary>The table name</summary>
-        public string TableName { get; set; }
-
-        /// <summary>The table schema</summary>
-        public string TableSchema { get; set; }
-
-        /// <summary>The mapping to the primary key</summary>
-        public PropertyMapping Key { get; set; }
-
-        /// <summary>The columns, mapped by name</summary>
-        public Dictionary<string, PropertyMapping> Columns { get; set; }
-
-        /// <summary>The collections</summary>
-        public Dictionary<string, MappedCollection> Collections { get; set; }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TypeMapping"/> class.
+        /// </summary>
+        /// <param name="type">The type to map</param>
+        /// <param name="mapper">A <see cref="IMapper"/> where the related properties
+        /// mapping are looked for.</param>
         public TypeMapping(Type type, IMapper mapper)
         {
             Type = type;
-            mapper.AddMapping(this);
             Columns = new Dictionary<string, PropertyMapping>();
             Collections = new Dictionary<string, MappedCollection>();
             var tableAttribute = type.GetTypeInfo().GetCustomAttribute<TableAttribute>();
@@ -51,7 +38,7 @@ namespace Folke.Elm.Mapping
                     continue;
                 
                 var propertyType = propertyInfo.PropertyType;
-                bool nullable = false;
+                var nullable = false;
                 if (Nullable.GetUnderlyingType(propertyType) != null)
                 {
                     propertyType = Nullable.GetUnderlyingType(propertyType);
@@ -81,11 +68,12 @@ namespace Folke.Elm.Mapping
                                 Collections[propertyInfo.Name] = mappedCollection;
                             }
                         }
+
                         continue;
                     }
                 }
 
-                var propertyMapping = new PropertyMapping(propertyInfo) {Nullable = nullable};
+                var propertyMapping = new PropertyMapping(propertyInfo) { Nullable = nullable };
                 Columns[propertyInfo.Name] = propertyMapping;
 
                 if (mapper.IsMapped(propertyInfo.PropertyType))
@@ -143,5 +131,23 @@ namespace Folke.Elm.Mapping
                 propertyMapping.Readonly = propertyMapping.IsAutomatic;
             }
         }
+
+        /// <summary>Gets or sets the type that is mapped</summary>
+        public Type Type { get; set; }
+
+        /// <summary>Gets or sets the table name</summary>
+        public string TableName { get; set; }
+
+        /// <summary>Gets or sets the table schema</summary>
+        public string TableSchema { get; set; }
+
+        /// <summary>Gets or sets the mapping to the primary key</summary>
+        public PropertyMapping Key { get; set; }
+
+        /// <summary>Gets or sets the columns, mapped by name</summary>
+        public Dictionary<string, PropertyMapping> Columns { get; set; }
+
+        /// <summary>Gets or sets the list of collections</summary>
+        public Dictionary<string, MappedCollection> Collections { get; set; }
     }
 }

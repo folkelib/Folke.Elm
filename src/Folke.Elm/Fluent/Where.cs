@@ -8,13 +8,17 @@ namespace Folke.Elm.Fluent
     {
     }
 
+    public interface IWhereResult<T, TMe> : IQueryableCommand<T>, IGroupByTarget<T, TMe>, IAndWhereTarget<T, TMe>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>
+    {
+    }
+
     public static class WhereFluentBuilderExtensions
     {
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, bool>> expression)
         {
             fluentBuilder.QueryBuilder.AppendWhere();
             fluentBuilder.QueryBuilder.AddBooleanExpression(expression.Body);
-            return (IWhereResult<T, TMe>) fluentBuilder;
+            return (IWhereResult<T, TMe>)fluentBuilder;
         }
 
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, TMe, bool>> expression)
@@ -36,8 +40,9 @@ namespace Folke.Elm.Fluent
                     fluentBuilder.QueryBuilder.Append("NOT EXISTS");
                     break;
             }
+
             fluentBuilder.SubQuery(subQuery);
-            return (IWhereResult<T, TMe>) fluentBuilder;
+            return (IWhereResult<T, TMe>)fluentBuilder;
         }
 
         public static IWhereResult<T, TMe> WhereNotExists<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Action<ISelectResult<T, TMe>> subQuery)
@@ -54,7 +59,7 @@ namespace Folke.Elm.Fluent
         {
             fluentBuilder.QueryBuilder.AppendWhere();
             fluentBuilder.QueryBuilder.Append("(");
-            expression((IAndWhereTarget<T, TMe>) fluentBuilder);
+            expression((IAndWhereTarget<T, TMe>)fluentBuilder);
             fluentBuilder.QueryBuilder.AppendSubWhereEnd();
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
@@ -66,7 +71,7 @@ namespace Folke.Elm.Fluent
         /// <typeparam name="TMe">The parameters</typeparam>
         /// <param name="fluentBuilder">A fluent query builder</param>
         /// <param name="expression">The expression that filters the results</param>
-        /// <returns></returns>
+        /// <returns>The single result</returns>
         public static T Single<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, bool>> expression)
         {
             return fluentBuilder.Where(expression).Single();
@@ -106,9 +111,5 @@ namespace Folke.Elm.Fluent
         {
             return fluentBuilder.Where(expression).FirstOrDefaultAsync();
         }
-    }
-
-    public interface IWhereResult<T, TMe> : IQueryableCommand<T>, IGroupByTarget<T, TMe>, IAndWhereTarget<T, TMe>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>
-    {
     }
 }

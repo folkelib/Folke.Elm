@@ -10,51 +10,39 @@ namespace Folke.Elm.Mapping
     {
         private readonly IDictionary<Type, TypeMapping> typeMappings = new Dictionary<Type, TypeMapping>();
 
-        public Mapper()
-        {
-        }
-
-        /// <summary>
-        /// Get the mapping of a type to a table. Create it if it did not exist.
-        /// </summary>
-        /// <param name="type">The type to map</param>
-        /// <returns>The mapping</returns>
+        /// <inheritdoc/>
         public TypeMapping GetTypeMapping(Type type)
         {
             if (type == typeof(object))
-                throw new Exception("Unexpected type to map");
-            return !this.typeMappings.ContainsKey(type) ? this.MapType(type) : this.typeMappings[type];
+                throw new InvalidOperationException("Unexpected type to map");
+            TypeMapping typeMapping;
+            if (typeMappings.TryGetValue(type, out typeMapping))
+            {
+                return typeMapping;
+            }
+
+            typeMapping = new TypeMapping(type, this);
+            typeMappings.Add(type, typeMapping);
+            return typeMapping;
+        }
+
+        public IEnumerable<TypeMapping> GetTypeMappings(Assembly assembly)
+        {
+            var types = assembly.DefinedTypes.Where(x => x.IsClass && IsMapped(x.AsType()));
+            return types.Select(x => GetTypeMapping(x.AsType()));
         }
 
         public FluentTypeMapping<T> GetTypeMapping<T>()
         {
-            return new FluentTypeMapping<T>(GetTypeMapping(typeof (T)));
+            return new FluentTypeMapping<T>(GetTypeMapping(typeof(T)));
         }
-
-        /// <summary>
-        /// Add a new mapping, or replace an existing mapping
-        /// </summary>
-        /// <param name="mapping"></param>
-        public void AddMapping(TypeMapping mapping)
+        
+        /// <inheritdoc/>
+        public IEnumerable<TypeMapping> GetTypeMappings()
         {
-            typeMappings[mapping.Type] = mapping;
+            return typeMappings.Values;
         }
-
-        private TypeMapping MapType(Type type)
-        {
-            return new TypeMapping(type, this);
-        }
-
-        public string GetColumnName(MemberInfo memberInfo)
-        {
-            return GetTypeMapping(memberInfo.DeclaringType).Columns[memberInfo.Name].ColumnName;
-        }
-
-        public PropertyMapping GetKey(Type type)
-        {
-            return GetTypeMapping(type).Key;
-        }
-
+        
         public bool IsMapped(Type type)
         {
             return typeMappings.ContainsKey(type) || type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null 

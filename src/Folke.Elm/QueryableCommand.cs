@@ -3,9 +3,9 @@
 namespace Folke.Elm
 {
     /// <summary>
-    /// Implementation of IQueryableCommand.
+    /// Implementation of <see cref="IQueryableCommand{T}"/>.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The element type</typeparam>
     public class QueryableCommand<T> : IQueryableCommand<T>
     {
         public QueryableCommand(IFolkeConnection connection, MappedClass mappedClass, string sql, params object[] parameters)
@@ -17,13 +17,16 @@ namespace Folke.Elm
         }
 
         public IFolkeConnection Connection { get; }
+
         public string Sql { get; }
+
         public object[] Parameters { get; }
+
+        public MappedClass MappedClass { get; }
+
         public IEnumerator<T> GetEnumerator()
         {
             return this.Enumerate().GetEnumerator();
         }
-        
-        public MappedClass MappedClass { get; }
     }
 }

@@ -87,27 +87,27 @@ namespace Folke.Elm
             WhereExpression
         }
 
-        protected SqlStringBuilder query;
-        protected IList<object> parameters;
-        protected readonly IFolkeConnection connection;
-        protected MappedClass baseMappedClass;
-        protected IDatabaseDriver driver;
-        protected IList<FieldAlias> selectedFields;
-        protected IList<TableAlias> tables;
+        private readonly SqlStringBuilder query;
+        private IList<object> parameters;
 
-        protected TableAlias defaultTable;
-        protected TypeMapping defaultType;
-        protected Type parametersType;
-        protected ContextEnum currentContext = ContextEnum.Unknown;
-        protected bool noAlias;
+        private MappedClass baseMappedClass;
 
-        internal TableAlias DefaultTable => defaultTable;
-        internal IList<FieldAlias> SelectedFields => selectedFields;
+        private IList<SelectedField> selectedFields;
+        private readonly IList<SelectedTable> tables;
+
+        private SelectedTable defaultTable;
+        private readonly TypeMapping defaultType;
+        private readonly Type parametersType;
+        private ContextEnum currentContext = ContextEnum.Unknown;
+        private bool noAlias;
+
+        internal SelectedTable DefaultTable => defaultTable;
+        internal IList<SelectedField> SelectedFields => selectedFields;
 
         public BaseQueryBuilder(IFolkeConnection connection, Type type = null, Type parametersType = null)
             : this(connection.Driver, connection.Mapper, type, parametersType)
         {
-            this.connection = connection;
+            this.Connection = connection;
         }
 
         public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper, Type defaultType, Type parametersType = null)
@@ -120,7 +120,7 @@ namespace Folke.Elm
         public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper):this(databaseDriver.CreateSqlStringBuilder())
         {
             Mapper = mapper;
-            driver = databaseDriver;
+            Driver = databaseDriver;
         }
 
         public IMapper Mapper { get; set; }
@@ -138,31 +138,19 @@ namespace Folke.Elm
         public BaseQueryBuilder(SqlStringBuilder stringBuilder = null)
         {
             query = stringBuilder ?? new SqlStringBuilder();
-            tables = new List<TableAlias>();
+            tables = new List<SelectedTable>();
         }
 
         public string Sql => query.ToString();
 
-        public IFolkeConnection Connection => connection;
+        public IFolkeConnection Connection { get; }
 
-        internal IDatabaseDriver Driver => driver;
+        internal IDatabaseDriver Driver { get; }
 
         public object[] Parameters => parameters?.ToArray();
 
         public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType));
-
-        internal void AppendTableName(TypeMapping type)
-        {
-            query.AppendSpace();
-            if (type.TableSchema != null)
-            {
-                query.AppendSymbol(type.TableSchema);
-                query.Append('.');
-            }
-
-            query.AppendSymbol(type.TableName);
-        }
-
+        
         internal string GetTableAlias(Expression tableExpression)
         {
             if (tableExpression.NodeType == ExpressionType.Parameter)
@@ -211,17 +199,17 @@ namespace Folke.Elm
             return aliasValue;
         }
 
-        protected internal TableAlias GetTable(string tableAlias)
+        protected internal SelectedTable GetTable(string tableAlias)
         {
-            return tables.SingleOrDefault(t => t.alias == tableAlias);
+            return tables.SingleOrDefault(t => t.Alias == tableAlias);
         }
 
-        protected internal TableAlias GetTable(Expression alias)
+        protected internal SelectedTable GetTable(Expression alias)
         {
             return GetTable(GetTableAlias(alias));
         }
 
-        protected internal TableAlias GetTable(Expression aliasExpression, bool register)
+        protected internal SelectedTable GetTable(Expression aliasExpression, bool register)
         {
             var alias = GetTableAlias(aliasExpression);
             if (register)
@@ -247,7 +235,7 @@ namespace Folke.Elm
 
         internal void AppendColumn(TableColumn tableColumn)
         {
-            AppendColumn(tableColumn.Table.name, tableColumn.Column);
+            AppendColumn(tableColumn.Table.Name, tableColumn.Column);
         }
 
         internal void AppendColumn(Expression expression, bool registerTable = false)
@@ -367,12 +355,9 @@ namespace Folke.Elm
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
 
-                IVisitable subExpression;
-
-                if (unary.NodeType == ExpressionType.Not)
-                    subExpression = ParseBooleanExpression(unary.Operand, registerTable);
-                else
-                    subExpression = ParseExpression(unary.Operand, registerTable);
+                var subExpression = unary.NodeType == ExpressionType.Not ?
+                    ParseBooleanExpression(unary.Operand, registerTable)
+                    : ParseExpression(unary.Operand, registerTable);
                 return new UnaryOperator(unaryOperatorType, subExpression);
             }
 
@@ -391,15 +376,9 @@ namespace Folke.Elm
                         break;
                 }
 
-                IVisitable left;
-                if (booleanOperator)
-                {
-                    left = ParseBooleanExpression(binary.Left, registerTable);
-                }
-                else
-                {
-                    left = ParseExpression(binary.Left, registerTable);
-                }
+                var left = booleanOperator ? 
+                                      ParseBooleanExpression(binary.Left, registerTable) 
+                                      : ParseExpression(binary.Left, registerTable);
                 
                 BinaryOperatorType type;
 
@@ -448,16 +427,9 @@ namespace Folke.Elm
                         throw new Exception("Expression type not supported");
                 }
 
-                IVisitable right;
-
-                if (booleanOperator)
-                {
-                    right = ParseBooleanExpression(binary.Right, registerTable);
-                }
-                else
-                {
-                    right = ParseExpression(binary.Right, registerTable);
-                }
+                var right = booleanOperator ? 
+                                       ParseBooleanExpression(binary.Right, registerTable)
+                                       : ParseExpression(binary.Right, registerTable);
 
                 if (binary.Left.NodeType == ExpressionType.Convert && binary.Left.NodeType == ExpressionType.Convert
                     && ((UnaryExpression)binary.Left).Operand.Type.GetTypeInfo().IsEnum)
@@ -490,7 +462,7 @@ namespace Folke.Elm
                 {
                     var queryable = (ElmQueryable)constant.Value;
                     var table = RegisterTable(queryable.ElementType, null);
-                    return new Select(ParseSelectedColumn(table), new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.name));
+                    return new Select(ParseSelectedColumn(table), new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.Name));
                 }
                 else
                 {
@@ -510,7 +482,7 @@ namespace Folke.Elm
             var column = ExpressionToColumn(expression, registerTable);
             if (column != null)
             {
-                return new Column(column.Table.name, column.Column.ColumnName);
+                return new Column(column.Table.Name, column.Column.ColumnName);
             }
 
             if (expression.NodeType == ExpressionType.Call)
@@ -643,22 +615,22 @@ namespace Folke.Elm
             return new Values(list);
         }
 
-        internal TableAlias RegisterTable(Type type, string tableAlias)
+        internal SelectedTable RegisterTable(Type type, string tableAlias)
         {
             if (tableAlias == null)
             {
                 if (defaultTable == null)
                 {
-                    defaultTable = new TableAlias { name = "t", alias = null, Mapping = defaultType };
+                    defaultTable = new SelectedTable { Name = "t", Alias = null, Mapping = defaultType };
                     tables.Add(defaultTable);
                 }
                 return defaultTable;
             }
 
-            var table = tables.SingleOrDefault(t => t.alias == tableAlias);
+            var table = tables.SingleOrDefault(t => t.Alias == tableAlias);
             if (table == null)
             {
-                table = new TableAlias { name = "t" + tables.Count, alias = tableAlias, Mapping = Mapper.GetTypeMapping(type) };
+                table = new SelectedTable { Name = "t" + tables.Count, Alias = tableAlias, Mapping = Mapper.GetTypeMapping(type) };
                 tables.Add(table);
             }
             return table;
@@ -667,8 +639,8 @@ namespace Folke.Elm
         internal void SelectField(TableColumn column)
         {
             if (selectedFields == null)
-                selectedFields = new List<FieldAlias>();
-            selectedFields.Add(new FieldAlias {PropertyMapping = column.Column, tableAlias = column.Table?.alias, index = selectedFields.Count});
+                selectedFields = new List<SelectedField>();
+            selectedFields.Add(new SelectedField {PropertyMapping = column.Column, Table = column.Table, Index = selectedFields.Count});
         }
 
         internal void SelectField(Expression column)
@@ -729,7 +701,8 @@ namespace Folke.Elm
                     if (table == null)
                     {
                         // Asking the id of the item pointed by a foreign key is the same as asking the foreign key
-                        var keyOfTable = Mapper.GetKey(memberExpression.Type);
+                        var mapping = Mapper.GetTypeMapping(memberExpression.Type);
+                        var keyOfTable = mapping.Key;
                         if (keyOfTable != null && AreSameProperties(columnMember.Member, keyOfTable.PropertyInfo))
                         {
                             return ExpressionToColumn(memberExpression);
@@ -773,7 +746,7 @@ namespace Folke.Elm
 
         private bool AreSameProperties(MemberInfo member, PropertyInfo propertyInfo)
         {
-            return member.Module == propertyInfo.Module && member.Name == propertyInfo.Name &&
+            return member.Module.Name == propertyInfo.Module.Name && member.Name == propertyInfo.Name &&
                    member.DeclaringType == propertyInfo.DeclaringType;
         }
 
@@ -802,37 +775,37 @@ namespace Folke.Elm
         /// <param name="tableAlias"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        internal TableAlias AppendSelectedColumns(Type tableType, string tableAlias, IEnumerable<PropertyMapping> columns)
+        internal SelectedTable AppendSelectedColumns(Type tableType, string tableAlias, IEnumerable<PropertyMapping> columns)
         {
             var table = RegisterTable(tableType, tableAlias);
             query.AppendSpace();
             bool first = true;
             if (selectedFields == null)
-                selectedFields = new List<FieldAlias>();
+                selectedFields = new List<SelectedField>();
 
             foreach (var column in columns)
             {
-                selectedFields.Add(new FieldAlias { PropertyMapping = column, tableAlias = table.alias, index = selectedFields.Count });
+                selectedFields.Add(new SelectedField { PropertyMapping = column, Table = table, Index = selectedFields.Count });
 
                 if (first)
                     first = false;
                 else
                     query.Append(',');
-                AppendColumn(table.name, column);
+                AppendColumn(table.Name, column);
             }
             return table;
         }
 
-        private IVisitable ParseSelectedColumn(TableAlias table)
+        private IVisitable ParseSelectedColumn(SelectedTable table)
         {
             if (selectedFields == null)
-                selectedFields = new List<FieldAlias>();
+                selectedFields = new List<SelectedField>();
             var columns = table.Mapping.Columns;
             var fields = new List<IVisitable>();
             foreach (var column in columns.Values)
             {
-                selectedFields.Add(new FieldAlias { PropertyMapping = column, tableAlias = table.alias, index = selectedFields.Count });
-                fields.Add(new Column(table.name, column.ColumnName));
+                selectedFields.Add(new SelectedField { PropertyMapping = column, Table = table, Index = selectedFields.Count });
+                fields.Add(new Column(table.Name, column.ColumnName));
             }
             return new Fields(fields);
         }
@@ -873,7 +846,7 @@ namespace Folke.Elm
             currentContext = ContextEnum.Where;
         }
 
-        internal TableAlias AppendAllSelects(Type tableType, string tableAlias)
+        internal SelectedTable AppendAllSelects(Type tableType, string tableAlias)
         {
             var mapping = Mapper.GetTypeMapping(tableType);
             return AppendSelectedColumns(tableType, tableAlias, mapping.Columns.Values);
@@ -896,23 +869,28 @@ namespace Folke.Elm
             }
         }
 
-        public class TableAlias
+        public class SelectedTable
         {
             public TypeMapping Mapping { get; set; }
-            public string name;
-            public string alias;
+
+            public string Name { get; set; }
+
+            public string Alias { get; set; }
         }
 
-        public class FieldAlias
+        public class SelectedField
         {
             public PropertyMapping PropertyMapping { get; set; }
-            public string tableAlias;
-            public int index;
+
+            public SelectedTable Table { get; set; }
+
+            public int Index { get; set; }
         }
 
         public class TableColumn
         {
-            public TableAlias Table { get; set; }
+            public SelectedTable Table { get; set; }
+
             public PropertyMapping Column { get; set; }
         }
 
@@ -930,15 +908,15 @@ namespace Folke.Elm
         {
             var table = RegisterTable(tableType, tableAlias);
             
-            AppendTableName(Mapper.GetTypeMapping(tableType));
+            query.AppendTableName(Mapper.GetTypeMapping(tableType));
             if (!noAlias)
             {
                 query.Append(" as ");
-                query.Append(table.name);
+                query.Append(table.Name);
             }
         }
 
-        internal TableAlias RegisterTable()
+        internal SelectedTable RegisterTable()
         {
             return RegisterTable(null, null);
         }
@@ -1000,7 +978,7 @@ namespace Folke.Elm
             }
         }
 
-        public void AppendInParenthesis(string sql)
+        internal void AppendInParenthesis(string sql)
         {
             query.Append(" (");
             query.Append(sql);

@@ -30,7 +30,7 @@ namespace Folke.Elm.Fluent
 
                 target.QueryBuilder.AppendSet();
 
-                target.QueryBuilder.AppendColumn(table.name, property);
+                target.QueryBuilder.AppendColumn(table.Name, property);
                 target.QueryBuilder.Append("=");
                 target.QueryBuilder.AppendParameter(property.PropertyInfo.GetValue(value));
             }

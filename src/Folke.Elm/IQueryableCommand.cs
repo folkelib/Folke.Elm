@@ -10,6 +10,7 @@ namespace Folke.Elm
     public interface IQueryableCommand<out T> : IQueryableCommand
     {
         MappedClass MappedClass { get; }
+
         IEnumerator<T> GetEnumerator();
     }
 
@@ -18,15 +19,5 @@ namespace Folke.Elm
     /// </summary>
     public interface IQueryableCommand : IBaseCommand
     {
-    }
-    
-    /// <summary>
-    /// An SQL command, with its parameters and its SQL
-    /// </summary>
-    public interface IBaseCommand
-    {
-        IFolkeConnection Connection { get; }
-        string Sql { get; }
-        object[] Parameters { get; }
     }
 }

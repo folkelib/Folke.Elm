@@ -22,7 +22,7 @@ namespace Folke.Elm.Fluent
             joinTarget.SubQuery(subQuery);
             joinTarget.QueryBuilder.Append("AS");
             var table = joinTarget.QueryBuilder.RegisterTable(tableAlias.Body.Type, joinTarget.QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
-            joinTarget.QueryBuilder.Append(table.name);
+            joinTarget.QueryBuilder.Append(table.Name);
             return (IJoinResult<T, TMe>)joinTarget;
         }
 

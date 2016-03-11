@@ -49,7 +49,7 @@ namespace Folke.Elm.Fluent
         public static IInsertIntoResult<T, TMe> InsertInto(BaseQueryBuilder baseQueryBuilder) 
         {
             baseQueryBuilder.Append("INSERT INTO");
-            baseQueryBuilder.AppendTableName(baseQueryBuilder.Mapper.GetTypeMapping(typeof(T)));
+            baseQueryBuilder.StringBuilder.AppendTableName(baseQueryBuilder.Mapper.GetTypeMapping(typeof(T)));
             return new FluentBaseBuilder<T, TMe>(baseQueryBuilder);
         }
 

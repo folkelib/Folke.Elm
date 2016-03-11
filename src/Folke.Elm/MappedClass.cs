@@ -10,17 +10,16 @@ namespace Folke.Elm
     /// <summary>A class that has been mapped to selected fields</summary>
     public class MappedClass
     {
-        public readonly IList<MappedField> fields = new List<MappedField>();
-        public IList<MappedCollection> collections;
-        /// <summary>The primary key mapping</summary>
-        public MappedField idField;
-        public ConstructorInfo constructor;
+        private readonly IList<MappedField> fields = new List<MappedField>();
+        private IList<MappedCollection> collections;
+        private MappedField primaryKeyField;
+        private ConstructorInfo constructor;
 
         public object Construct(IFolkeConnection connection, Type type, object id)
         {
             var ret = constructor.Invoke(null);
 
-            idField?.propertyInfo.SetValue(ret, id);
+            primaryKeyField?.propertyInfo.SetValue(ret, id);
 
             if (collections != null)
             {
@@ -36,7 +35,7 @@ namespace Folke.Elm
         {
             var cache = folkeConnection.Cache;
             object value;
-            var idMappedField = idField;
+            var idMappedField = primaryKeyField;
 
             // If the key field is mapped or if its value is already known, create a new item and
             // store it in cache
@@ -50,7 +49,7 @@ namespace Folke.Elm
 
                 if (idMappedField.selectedField != null)
                 {
-                    var index = idMappedField.selectedField.index;
+                    var index = idMappedField.selectedField.Index;
 
                     if (expectedId == null && reader.IsDBNull(index))
                         return null;
@@ -84,21 +83,21 @@ namespace Folke.Elm
             {
                 var fieldInfo = mappedField.selectedField;
                 
-                if (fieldInfo != null && reader.IsDBNull(fieldInfo.index))
+                if (fieldInfo != null && reader.IsDBNull(fieldInfo.Index))
                     continue;
                 
                 if (mappedField.mappedClass == null)
                 {
                     if (fieldInfo == null)
                         throw new Exception("Unknown error");
-                    object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.propertyInfo.PropertyType, fieldInfo.index);
+                    object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.propertyInfo.PropertyType, fieldInfo.Index);
                     mappedField.propertyInfo.SetValue(value, field);
                 }
                 else 
                 {
-                    object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.index);
+                    object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.Index);
                     if (id != null)
-                        id = folkeConnection.Driver.ConvertReaderValueToProperty(id, mappedField.mappedClass.idField.propertyInfo.PropertyType);
+                        id = folkeConnection.Driver.ConvertReaderValueToProperty(id, mappedField.mappedClass.primaryKeyField.propertyInfo.PropertyType);
                     object other = mappedField.mappedClass.Read(folkeConnection, mappedField.propertyInfo.PropertyType, reader, id);
                     mappedField.propertyInfo.SetValue(value, other);
                 }
@@ -111,7 +110,7 @@ namespace Folke.Elm
         /// <param name="type">The class</param>
         /// <param name="alias">An optional alias for the table whose column are selected (null for the root mapped class)</param>
         /// <returns></returns>
-        public static MappedClass MapClass(IList<BaseQueryBuilder.FieldAlias> fieldAliases, TypeMapping type, string alias = null)
+        public static MappedClass MapClass(IList<BaseQueryBuilder.SelectedField> fieldAliases, TypeMapping type, string alias = null)
         {
             if (fieldAliases == null)
                 return null;
@@ -122,8 +121,8 @@ namespace Folke.Elm
             mappedClass.constructor = type.Type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
-                var selectedField = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.PropertyMapping == idProperty);
-                mappedClass.idField = new MappedField { selectedField = selectedField, propertyInfo = idProperty.PropertyInfo };
+                var selectedField = fieldAliases.SingleOrDefault(f => f.Table.Alias == alias && f.PropertyMapping == idProperty);
+                mappedClass.primaryKeyField = new MappedField { selectedField = selectedField, propertyInfo = idProperty.PropertyInfo };
             }
 
             foreach (var columnPair in type.Columns)
@@ -132,9 +131,9 @@ namespace Folke.Elm
                 if (idProperty != null && propertyMapping == idProperty)
                     continue;
 
-                var fieldInfo = fieldAliases.SingleOrDefault(f => f.tableAlias == alias && f.PropertyMapping == propertyMapping);
+                var fieldInfo = fieldAliases.SingleOrDefault(f => f.Table.Alias == alias && f.PropertyMapping == propertyMapping);
                 bool isForeign = propertyMapping.Reference != null;
-                if (fieldInfo != null || (isForeign && (mappedClass.idField == null || mappedClass.idField.selectedField != null)))
+                if (fieldInfo != null || (isForeign && (mappedClass.primaryKeyField == null || mappedClass.primaryKeyField.selectedField != null)))
                 {
                     var mappedField = new MappedField { propertyInfo = propertyMapping.PropertyInfo, selectedField = fieldInfo };
 

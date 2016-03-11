@@ -32,7 +32,7 @@ namespace Folke.Elm.Fluent
             fromTarget.QueryBuilder.Append("AS");
 
             var table = fromTarget.QueryBuilder.RegisterTable(typeof(T), null);
-            fromTarget.QueryBuilder.Append(table.name);
+            fromTarget.QueryBuilder.Append(table.Name);
             return (IFromResult<T, TMe>)fromTarget;
         }
         

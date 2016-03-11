@@ -1,11 +1,12 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Reflection;
+
 using Folke.Elm.Mapping;
 
 namespace Folke.Elm
 {
+    using System.Collections.Generic;
+
     internal class SchemaUpdater
     {
         private readonly FolkeConnection connection;
@@ -42,10 +43,8 @@ namespace Folke.Elm
                 alterTable.Execute();
         }
 
-        public void CreateOrUpdateAll(Assembly assembly)
+        public void CreateOrUpdate(List<TypeMapping> tables)
         {
-            var tables = assembly.DefinedTypes.Where(t => t.IsClass && (t.ImplementedInterfaces.FirstOrDefault(x => x.Name == "IFolkeTable") != null
-                || t.GetCustomAttribute<TableAttribute>() != null)).Select(x => connection.Mapper.GetTypeMapping(x.AsType())).ToList();
             using (var transaction = connection.BeginTransaction())
             {
                 var existingTableTables = connection.Driver.GetTableDefinitions(connection).Select(t => t.Name.ToLower()).ToList();
@@ -61,6 +60,7 @@ namespace Folke.Elm
                 {
                     CreateOrUpdate(table);
                 }
+
                 transaction.Commit();
             }
         }

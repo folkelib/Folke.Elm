@@ -3,13 +3,20 @@ using System.Linq.Expressions;
 
 namespace Folke.Elm.Fluent
 {
-    public interface IAndOnTarget<T,TMe> : IFluentBuilder
+    public interface IAndOnTarget<T, TMe> : IFluentBuilder
+    {
+    }
+
+    /// <summary>A result of an AND statement in a ON clause.</summary>
+    /// <typeparam name="T">The return type</typeparam>
+    /// <typeparam name="TMe">The parameter type</typeparam>
+    public interface IAndOnResult<T, TMe> : IFluentBuilder, IAndOnTarget<T, TMe>, IQueryableCommand<T>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>, IJoinTarget<T, TMe>
     {
     }
 
     public static class AndOnTargetExtensions
     {
-        public static IAndOnResult<T, TMe> AndOn<T,TMe>(this IAndOnTarget<T,TMe> andOnTarget, Expression<Func<T, bool>> expression)
+        public static IAndOnResult<T, TMe> AndOn<T, TMe>(this IAndOnTarget<T, TMe> andOnTarget, Expression<Func<T, bool>> expression)
         {
             andOnTarget.QueryBuilder.Append(" AND ");
             andOnTarget.QueryBuilder.AddBooleanExpression(expression.Body);
@@ -22,10 +29,5 @@ namespace Folke.Elm.Fluent
             andOnTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IAndOnResult<T, TMe>)andOnTarget;
         }
-    }
-
-    public interface IAndOnResult<T, TMe> : IFluentBuilder, IAndOnTarget<T,TMe>, IQueryableCommand<T>, ILimitTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>, IJoinTarget<T, TMe>
-    {
-        
     }
 }

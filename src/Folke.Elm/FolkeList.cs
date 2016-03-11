@@ -29,7 +29,7 @@ namespace Folke.Elm
                 if (results == null)
                 {
                     var query = connection.Select<T>().All();
-                    var joinTables = new List<BaseQueryBuilder.TableAlias>();
+                    var joinTables = new List<BaseQueryBuilder.SelectedTable>();
                     var queryBuilder = query.QueryBuilder;
                     var type = typeof (T);
                     var typeMapping = queryBuilder.Mapper.GetTypeMapping(type);
@@ -47,10 +47,10 @@ namespace Folke.Elm
 
                     foreach (var joinTable in joinTables)
                     {
-                        var property = typeof(T).GetProperty(joinTable.alias);
+                        var property = typeof(T).GetProperty(joinTable.Alias);
                         var joinKeyProperty = joinTable.Mapping.Key;
                         queryBuilder.Append(" LEFT JOIN ");
-                        queryBuilder.AppendTable(joinTable.Mapping.Type, joinTable.alias);
+                        queryBuilder.AppendTable(joinTable.Mapping.Type, joinTable.Alias);
                         queryBuilder.Append(" ON ");
                         queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
                         queryBuilder.Append(" = ");

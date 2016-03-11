@@ -3,6 +3,8 @@ using System.Text;
 
 namespace Folke.Elm
 {
+    using Folke.Elm.Mapping;
+
     public class SqlStringBuilder
     {
         protected readonly StringBuilder stringBuilder = new StringBuilder();
@@ -20,9 +22,21 @@ namespace Folke.Elm
             return this;
         }
 
+        internal void AppendTableName(TypeMapping type)
+        {
+            AppendSpace();
+            if (type.TableSchema != null)
+            {
+                AppendSymbol(type.TableSchema);
+                Append('.');
+            }
+
+            AppendSymbol(type.TableName);
+        }
+
         public virtual void AppendSpace()
         {
-            if (stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length-1] != ' ')
+            if (stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != ' ')
                 stringBuilder.Append(' ');
         }
 
@@ -54,8 +68,7 @@ namespace Folke.Elm
             stringBuilder.Append(symbol);
             stringBuilder.Append('"');
         }
-
-
+        
         public virtual void AppendAutoIncrement()
         {
             stringBuilder.Append(" AUTO_INCREMENT");

@@ -6,10 +6,16 @@ using Folke.Elm.Mapping;
 
 namespace Folke.Elm
 {
-    public class SchemaQueryBuilder<T> : BaseQueryBuilder<T> where T : class, new()
+    public class SchemaQueryBuilder<T> : IBaseCommand
     {
-        public SchemaQueryBuilder(FolkeConnection connection):base(connection)
+        private readonly FolkeConnection connection;
+
+        private readonly SqlStringBuilder query;
+
+        public SchemaQueryBuilder(FolkeConnection connection)
         {
+            this.connection = connection;
+            query = new SqlStringBuilder();
         }
 
         private void AppendColumnName(PropertyMapping property)
@@ -25,7 +31,7 @@ namespace Folke.Elm
             if (property.Reference != null)
             {
                 var foreignPrimaryKey = property.Reference.Key;
-                query.Append(Connection.Driver.GetSqlType(foreignPrimaryKey.PropertyInfo, foreignPrimaryKey.MaxLength));
+                query.Append(connection.Driver.GetSqlType(foreignPrimaryKey.PropertyInfo, foreignPrimaryKey.MaxLength));
                 query.AppendAfterSpace("NULL");
             }
             else if (property.MaxLength != 0)
@@ -41,7 +47,7 @@ namespace Folke.Elm
                     throw new Exception("MaxLength attribute not supported for " + property.PropertyInfo.PropertyType);
             }
             else
-                query.Append(Connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength));
+                query.Append(connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength));
 
             if (property.IsKey)
             {
@@ -82,7 +88,7 @@ namespace Folke.Elm
         private void AppendReferences(PropertyMapping column)
         { 
             query.Append(" REFERENCES ");
-            AppendTableName(column.Reference);
+            query.AppendTableName(column.Reference);
             query.Append("(");
             query.Append(column.Reference.Key.ColumnName);
             query.Append(")");
@@ -135,11 +141,11 @@ namespace Folke.Elm
 
         public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
         {
-            var mapping = Mapper.GetTypeMapping(type);
+            var mapping = connection.Mapper.GetTypeMapping(type);
             query.Append("CREATE TABLE ");
             query.AppendSymbol(mapping.TableName);
             query.Append(" (");
-            bool canCreateIndex = driver.CanAddIndexInCreateTable();
+            bool canCreateIndex = connection.Driver.CanAddIndexInCreateTable();
 
             foreach (var column in mapping.Columns.Values)
             {
@@ -211,7 +217,7 @@ namespace Folke.Elm
 
         public SchemaQueryBuilder<T> DropTable(Type type)
         {
-            query.AppendDropTable(Mapper.GetTypeMapping(type).TableName);
+            query.AppendDropTable(connection.Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 
@@ -223,7 +229,7 @@ namespace Folke.Elm
         internal SchemaQueryBuilder<T> AlterTable(Type type)
         {
             query.AppendAfterSpace("ALTER TABLE ");
-            query.AppendSymbol(Mapper.GetTypeMapping(type).TableName);
+            query.AppendSymbol(connection.Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 
@@ -256,7 +262,7 @@ namespace Folke.Elm
         internal bool AlterColumns(Type type, IList<IColumnDefinition> columns)
         {
             bool changes = false;
-            var mapping = Mapper.GetTypeMapping(type);
+            var mapping = connection.Mapper.GetTypeMapping(type);
             
  	        foreach (var property in mapping.Columns.Values)
             {
@@ -278,12 +284,12 @@ namespace Folke.Elm
                         AppendReferences(property);
                     }
 
-                    if (driver.CanAddIndexInCreateTable())
+                    if (connection.Driver.CanAddIndexInCreateTable())
                     {
                         // TODO add indexes to existing columns if not present
                         if (property.Index != null || foreign)
                         {
-                            if (driver.CanDoMultipleActionsInAlterTable())
+                            if (connection.Driver.CanDoMultipleActionsInAlterTable())
                             {
                                 AddComma();
                                 query.Append("ADD ");
@@ -315,8 +321,8 @@ namespace Folke.Elm
                 else
                 {
                     var columnProperty = foreign ? property.Reference.Key : property;
-                    var newType = Connection.Driver.GetSqlType(columnProperty.PropertyInfo, columnProperty.MaxLength);
-                    if (!Connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
+                    var newType = connection.Driver.GetSqlType(columnProperty.PropertyInfo, columnProperty.MaxLength);
+                    if (!connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
                         DuringAlterTable(type);
                         query.BeforeAlterColumn(property.ColumnName);
@@ -330,7 +336,7 @@ namespace Folke.Elm
 
         private void DuringAlterTable(Type type)
         {
-            if (driver.CanDoMultipleActionsInAlterTable())
+            if (connection.Driver.CanDoMultipleActionsInAlterTable())
             {
                 AddComma();
             }
@@ -347,5 +353,11 @@ namespace Folke.Elm
                 }
             }
         }
+
+        public IFolkeConnection Connection => connection;
+
+        public string Sql => query.ToString();
+
+        public object[] Parameters => null;
     }
 }
