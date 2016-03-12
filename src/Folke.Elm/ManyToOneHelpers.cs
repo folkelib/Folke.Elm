@@ -16,19 +16,21 @@ namespace Folke.Elm
         /// <param name="newValues">The new values</param>
         /// <param name="factory">A factory that create a new item</param>
         /// <param name="updater">A delegate that updates an existing item</param>
-        public static void UpdateCollectionFromViews<TChild, TChildView>(this IFolkeConnection connection, IReadOnlyCollection<TChild> currentValues, IReadOnlyCollection<TChildView> newValues,
+        public static List<TChild> UpdateCollectionFromViews<TChild, TChildView>(this IFolkeConnection connection, IReadOnlyCollection<TChild> currentValues, IReadOnlyCollection<TChildView> newValues,
             Func<TChildView, TChild> factory, Func<TChildView, TChild, bool> updater)
             where TChild: class, IFolkeTable, new()
             where TChildView: class, IFolkeTable, new()
         {
+            var ret = new List<TChild>();
             if (currentValues == null || !currentValues.Any())
             {
                 foreach (var childValue in newValues)
                 {
                     var child = factory(childValue);
+                    ret.Add(child);
                     connection.Save(child);
                 }
-                return;
+                return ret;
             }
 
             var newValueToAdd = newValues.Where(x => currentValues.All(y => y.Id != x.Id));
@@ -41,18 +43,20 @@ namespace Folke.Elm
                 }
                 else
                 {
-                    if (updater(newValue, currentValue))
+                    if (updater != null && updater(newValue, currentValue))
                         connection.Update(currentValue);
+                    ret.Add(currentValue);
                 }
             }
 
             foreach (var childDto in newValueToAdd)
             {
                 var child = factory(childDto);
+                ret.Add(child);
                 connection.Save(child);
             }
+            return ret;
         }
-
         /// <summary>
         /// Update a collection of items using a collection of values. These values don't have an id to identity them, so a areEqual delegate
         /// must be given as a parameter. Existing items that is not in newValues are deleted. 
