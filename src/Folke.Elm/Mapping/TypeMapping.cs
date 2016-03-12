@@ -14,14 +14,20 @@ namespace Folke.Elm.Mapping
         /// Initializes a new instance of the <see cref="TypeMapping"/> class.
         /// </summary>
         /// <param name="type">The type to map</param>
-        /// <param name="mapper">A <see cref="IMapper"/> where the related properties
-        /// mapping are looked for.</param>
-        public TypeMapping(Type type, IMapper mapper)
+        public TypeMapping(Type type)
         {
             Type = type;
             Columns = new Dictionary<string, PropertyMapping>();
             Collections = new Dictionary<string, MappedCollection>();
-            var tableAttribute = type.GetTypeInfo().GetCustomAttribute<TableAttribute>();
+        }
+
+        /// <summary>
+        /// Maps automatically the properties using the attributes as hints
+        /// </summary>
+        /// <param name="mapper"></param>
+        public void AutoMap(IMapper mapper)
+        {
+            var tableAttribute = Type.GetTypeInfo().GetCustomAttribute<TableAttribute>();
             if (tableAttribute != null)
             {
                 TableName = tableAttribute.Name;
@@ -29,10 +35,10 @@ namespace Folke.Elm.Mapping
             }
             else
             {
-                TableName = type.Name;
+                TableName = Type.Name;
             }
             
-            foreach (var propertyInfo in type.GetProperties())
+            foreach (var propertyInfo in Type.GetProperties())
             {
                 if (propertyInfo.GetCustomAttribute<NotMappedAttribute>() != null)
                     continue;
@@ -119,7 +125,7 @@ namespace Folke.Elm.Mapping
                     propertyMapping.Index = indexAttribute.Name ?? TableName + "_" + propertyMapping.ColumnName;
                 }
 
-                if ((propertyInfo.Name == "Id" && type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
+                if ((propertyInfo.Name == "Id" && Type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
                     propertyInfo.GetCustomAttribute<KeyAttribute>() != null)
                 {
                     Key = propertyMapping;

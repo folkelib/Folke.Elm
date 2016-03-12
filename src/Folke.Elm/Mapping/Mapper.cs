@@ -21,8 +21,9 @@ namespace Folke.Elm.Mapping
                 return typeMapping;
             }
 
-            typeMapping = new TypeMapping(type, this);
+            typeMapping = new TypeMapping(type);
             typeMappings.Add(type, typeMapping);
+            typeMapping.AutoMap(this);
             return typeMapping;
         }
 
