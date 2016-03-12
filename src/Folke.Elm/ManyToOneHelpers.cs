@@ -64,18 +64,20 @@ namespace Folke.Elm
         /// <param name="newValues">The new values</param>
         /// <param name="areEqual">Must return true if the two values are equal</param>
         /// <param name="factory">Create a new item</param>
-        public static void UpdateCollectionFromValues<TChild, TChildView>(this IFolkeConnection connection, IReadOnlyCollection<TChild> currentValues, IReadOnlyCollection<TChildView> newValues,
+        public static List<TChild> UpdateCollectionFromValues<TChild, TChildView>(this IFolkeConnection connection, IReadOnlyCollection<TChild> currentValues, IReadOnlyCollection<TChildView> newValues,
             Func<TChildView, TChild> factory, Func<TChildView, TChild, bool> areEqual)
             where TChild : class, IFolkeTable, new()
         {
+            var ret = new List<TChild>();
             if (currentValues == null || !currentValues.Any())
             {
                 foreach (var childValue in newValues)
                 {
                     var child = factory(childValue);
                     connection.Save(child);
+                    ret.Add(child);
                 }
-                return;    
+                return ret;    
             }
 
             var newValueToAdd = newValues.Where(x => currentValues.All(y => !areEqual(x, y)));
@@ -85,13 +87,19 @@ namespace Folke.Elm
                 {
                     connection.Delete(currentValue);
                 }
+                else
+                {
+                    ret.Add(currentValue);
+                }
             }
 
             foreach (var childDto in newValueToAdd)
             {
                 var child = factory(childDto);
                 connection.Save(child);
+                ret.Add(child);
             }
+            return ret;
         }
     }
 }

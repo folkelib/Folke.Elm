@@ -15,7 +15,7 @@ namespace Folke.Elm
         public SchemaQueryBuilder(FolkeConnection connection)
         {
             this.connection = connection;
-            query = new SqlStringBuilder();
+            query = connection.Driver.CreateSqlStringBuilder();
         }
 
         private void AppendColumnName(PropertyMapping property)
