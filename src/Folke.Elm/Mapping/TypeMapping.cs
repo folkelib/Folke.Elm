@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Folke.Elm.Mapping
 {
@@ -35,7 +36,7 @@ namespace Folke.Elm.Mapping
             }
             else
             {
-                TableName = Type.Name;
+                TableName = Regex.Replace(Type.Name, @"`\d+", "");
             }
             
             foreach (var propertyInfo in Type.GetProperties())

@@ -4,7 +4,7 @@
   "authors": [ "Sidoine De Wispelaere" ],
   "tags": [ "sqlite orm" ],
   "projectUrl": "https://github.com/folkelib/orm",
-  "licenseUrl": "http://opensource.org/licenses/GPL-2.0",
+  "licenseUrl": "http://opensource.org/licenses/MIT",
 
   "dependencies": {
     "Folke.Elm": "",

@@ -33,7 +33,7 @@ namespace Folke.Elm.Fluent
         }
     }
 
-    public interface IOnResult<T, TMe> : IFluentBuilder, IJoinTarget<T, TMe>, IAndOnTarget<T,TMe>, IWhereTarget<T, TMe>, IQueryableCommand<T>, ILimitTarget<T, TMe>
+    public interface IOnResult<T, TMe> : IFluentBuilder, IJoinTarget<T, TMe>, IAndOnTarget<T,TMe>, IWhereTarget<T, TMe>, IQueryableCommand<T>, ILimitTarget<T, TMe>, IOrderByTarget<T, TMe>
     {
         
     }

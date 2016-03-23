@@ -107,7 +107,7 @@ namespace Folke.Elm
         public BaseQueryBuilder(IFolkeConnection connection, Type type = null, Type parametersType = null)
             : this(connection.Driver, connection.Mapper, type, parametersType)
         {
-            this.Connection = connection;
+            Connection = connection;
         }
 
         public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper, Type defaultType, Type parametersType = null)
