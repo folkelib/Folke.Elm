@@ -10,29 +10,31 @@ namespace Folke.Elm.Fluent
     public static class FromTargetExtensions
     {
         /// <summary>Chose the bean table as the table to select from</summary>
-        /// <returns> The <see cref="FluentFromBuilder{T,TMe}"/>. </returns>
+        /// <returns> The <see cref="IFromResult{T,TMe}"/>. </returns>
         public static IFromResult<T, TMe> From<T, TMe>(this IFromTarget<T, TMe> fromTarget)
         {
-            fromTarget.QueryBuilder.AppendFrom();
-            fromTarget.QueryBuilder.AppendTable(typeof(T), (string)null);
+            fromTarget.AppendFrom();
+            fromTarget.QueryBuilder.StringBuilder.AppendTable(fromTarget.QueryBuilder.RegisterRootTable());
             return (IFromResult<T, TMe>) fromTarget;
         }
 
         public static IFromResult<T, TMe> From<T, TMe, TU>(this IFromTarget<T, TMe> fromTarget, Expression<Func<T, TU>> expression)
         {
-            fromTarget.QueryBuilder.AppendFrom();
-            fromTarget.QueryBuilder.AppendTable(expression.Body);
+            fromTarget.AppendFrom();
+            BaseQueryBuilder queryBuilder = fromTarget.QueryBuilder;
+            var selectedTable = queryBuilder.RegisterTable(expression.Body);
+            queryBuilder.StringBuilder.AppendTable(selectedTable);
             return (IFromResult<T, TMe>)fromTarget;
         }
 
         public static IFromResult<T, TMe> From<T, TMe>(this IFromTarget<T, TMe> fromTarget, Action<ISelectResult<T, TMe>> subQuery)
         {
-            fromTarget.QueryBuilder.AppendFrom();
+            fromTarget.AppendFrom();
             fromTarget.SubQuery(subQuery);
-            fromTarget.QueryBuilder.Append("AS");
+            fromTarget.QueryBuilder.StringBuilder.Append("AS");
 
-            var table = fromTarget.QueryBuilder.RegisterTable(typeof(T), null);
-            fromTarget.QueryBuilder.Append(table.Name);
+            var table = fromTarget.QueryBuilder.RegisterRootTable();
+            fromTarget.QueryBuilder.StringBuilder.Append(table.Alias);
             return (IFromResult<T, TMe>)fromTarget;
         }
         
@@ -41,11 +43,14 @@ namespace Folke.Elm.Fluent
             var queryBuilder = new BaseQueryBuilder(fluentBuilder.QueryBuilder);
             var builder = FluentBaseBuilder<T, TMe>.Select(queryBuilder);
             subQuery(builder);
-            fluentBuilder.QueryBuilder.AppendInParenthesis(queryBuilder.Sql);
+            BaseQueryBuilder tempQualifier = fluentBuilder.QueryBuilder;
+            tempQualifier.StringBuilder.Append(" (");
+            tempQualifier.StringBuilder.Append(queryBuilder.Sql);
+            tempQualifier.StringBuilder.Append(')');
         }
     }
 
-    public interface IFromResult<T, TMe> : IFromTarget<T, TMe>, IQueryableCommand<T>, IJoinTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>
+    public interface IFromResult<T, TMe> : IQueryableCommand<T>, IJoinTarget<T, TMe>, IWhereTarget<T, TMe>, IOrderByTarget<T, TMe>
     {
     }
 }

@@ -1,5 +1,8 @@
 ﻿namespace Folke.Elm.Visitor
 {
+    /// <summary>
+    /// A column name with the table name.
+    /// </summary>
     public class Column : IVisitable
     {
         public string TableName { get; set; }
@@ -13,7 +16,7 @@
 
         public void Accept(IVisitor visitor)
         {
-            visitor.During(this);
+            visitor.DuringColumn(this.TableName, this.ColumnName);
         }
     }
 }

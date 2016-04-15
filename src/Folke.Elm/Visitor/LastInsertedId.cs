@@ -4,7 +4,7 @@
     {
         public void Accept(IVisitor visitor)
         {
-            visitor.During(this);
+            visitor.DuringLastInsertedId();
         }
     }
 }

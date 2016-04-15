@@ -8,13 +8,13 @@
     {
         public static IAscResult<T, TMe> Desc<T, TMe>(this IAscTarget<T, TMe> ascTarget)
         {
-            ascTarget.QueryBuilder.Append("DESC");
+            ascTarget.QueryBuilder.StringBuilder.AppendAfterSpace("DESC");
             return (IAscResult<T, TMe>)ascTarget;
         }
 
         public static IAscResult<T, TMe> Asc<T, TMe>(this IAscTarget<T, TMe> ascTarget)
         {
-            ascTarget.QueryBuilder.Append("ASC");
+            ascTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ASC");
             return (IAscResult<T, TMe>)ascTarget;
         }
     }

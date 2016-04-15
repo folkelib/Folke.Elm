@@ -108,9 +108,9 @@ namespace Folke.Elm
         /// <summary>A factory for a MappedClass instance</summary>
         /// <param name="fieldAliases">The fields that have been selected in the query and that should fill the class properties</param>
         /// <param name="type">The class</param>
-        /// <param name="alias">An optional alias for the table whose column are selected (null for the root mapped class)</param>
+        /// <param name="internalIdentifier">An optional alias for the table whose column are selected (null for the root mapped class)</param>
         /// <returns></returns>
-        public static MappedClass MapClass(IList<BaseQueryBuilder.SelectedField> fieldAliases, TypeMapping type, string alias = null)
+        public static MappedClass MapClass(IList<BaseQueryBuilder.SelectedField> fieldAliases, TypeMapping type, string internalIdentifier = null)
         {
             if (fieldAliases == null)
                 return null;
@@ -121,7 +121,7 @@ namespace Folke.Elm
             mappedClass.constructor = type.Type.GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
-                var selectedField = fieldAliases.SingleOrDefault(f => f.Table.Alias == alias && f.PropertyMapping == idProperty);
+                var selectedField = fieldAliases.SingleOrDefault(f => f.Table.InternalIdentifier == internalIdentifier && f.PropertyMapping == idProperty);
                 mappedClass.primaryKeyField = new MappedField { selectedField = selectedField, propertyInfo = idProperty.PropertyInfo };
             }
 
@@ -131,7 +131,7 @@ namespace Folke.Elm
                 if (idProperty != null && propertyMapping == idProperty)
                     continue;
 
-                var fieldInfo = fieldAliases.SingleOrDefault(f => f.Table.Alias == alias && f.PropertyMapping == propertyMapping);
+                var fieldInfo = fieldAliases.SingleOrDefault(f => f.Table.InternalIdentifier == internalIdentifier && f.PropertyMapping == propertyMapping);
                 bool isForeign = propertyMapping.Reference != null;
                 if (fieldInfo != null || (isForeign && (mappedClass.primaryKeyField == null || mappedClass.primaryKeyField.selectedField != null)))
                 {
@@ -139,7 +139,7 @@ namespace Folke.Elm
 
                     if (isForeign)
                     {
-                        mappedField.mappedClass = MapClass(fieldAliases, propertyMapping.Reference, alias == null ? columnPair.Key : alias + "." + columnPair.Key);
+                        mappedField.mappedClass = MapClass(fieldAliases, propertyMapping.Reference, internalIdentifier == null ? columnPair.Key : internalIdentifier + "." + columnPair.Key);
                     }
                     mappedClass.fields.Add(mappedField);
                 }

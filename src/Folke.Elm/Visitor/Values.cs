@@ -13,7 +13,7 @@ namespace Folke.Elm.Visitor
 
         public void Accept(IVisitor visitor)
         {
-            visitor.Before(this);
+            visitor.BeforeValues();
             bool first = true;
             foreach (var value in values)
             {
@@ -23,11 +23,11 @@ namespace Folke.Elm.Visitor
                 }
                 else
                 {
-                    visitor.During(this);
+                    visitor.DuringValues();
                 }
                 value.Accept(visitor);
             }
-            visitor.After(this);
+            visitor.AfterValues();
         }
     }
 }

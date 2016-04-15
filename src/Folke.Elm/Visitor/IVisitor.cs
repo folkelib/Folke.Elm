@@ -2,32 +2,32 @@
 {
     public interface IVisitor
     {
-        void Before(UnaryOperator unaryOperator);
-        void During(ConstantNumber binaryOperator);
-        void During(BinaryOperator binaryOperator);
-        void Before(BinaryOperator unaryOperator);
-        void After(BinaryOperator binaryOperator);
-        void After(UnaryOperator binaryOperator);
-        void During(Parameter binaryOperator);
-        void During(NamedParameter binaryOperator);
-        void During(Column binaryOperator);
-        void During(Where binaryOperator);
-        void During(Skip binaryOperator);
-        void During(Take binaryOperator);
-        void During(OrderBy binaryOperator);
-        void During(Values binaryOperator);
-        void Before(Values unaryOperator);
-        void After(Values binaryOperator);
-        void Before(Between unaryOperator);
-        void During(Between binaryOperator);
-        void Before(MathFunction unaryOperator);
-        void After(MathFunction binaryOperator);
-        void During(LastInsertedId binaryOperator);
-        void During(Fields fields);
-        void During(AliasDefinition aliasDefinition);
-        void Before(Select selectNode);
-        void During(Select selectNode);
-        void During(Table table);
-        void After(Take binaryOperator);
+        void BeforeUnaryOperator(UnaryOperatorType unaryOperatorType);
+        void DuringConstantNumber(int value);
+        void DuringBinaryOperator(BinaryOperatorType binaryOperatorType);
+        void BeforeBinaryOperator();
+        void AfterBinaryOperator();
+        void AfterUnaryOperator(UnaryOperatorType unaryOperatorType);
+        void DuringParameter(int index);
+        void DuringNamedParameter(string name);
+        void DuringColumn(string tableName, string columnName);
+        void BeforeWhere();
+        void DuringSkip();
+        void DuringTake();
+        void BeforeOrderBy();
+        void DuringValues();
+        void BeforeValues();
+        void AfterValues();
+        void BeforeBetween();
+        void DuringBetween();
+        void BeforeMathFunction(MathFunctionType mathFunctionType);
+        void AfterMathFunction();
+        void DuringLastInsertedId();
+        void DuringFields();
+        void DuringAliasDefinition(string aliasName);
+        void BeforeSelect();
+        void DuringSelect();
+        void DuringTable(string schema, string tableName);
+        void AfterTake();
     }
 }

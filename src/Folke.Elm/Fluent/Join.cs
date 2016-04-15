@@ -9,20 +9,22 @@ namespace Folke.Elm.Fluent
 
     public static class JoinTargetExtensions
     {
-        public static IJoinResult<T,TMe> Join<T,TMe>(this IJoinTarget<T,TMe> joinTarget, Expression<Func<T, object>> tableExpression, JoinType type)
+        public static IJoinResult<T,TMe> Join<T,TMe, TKey>(this IJoinTarget<T,TMe> joinTarget, Expression<Func<T, TKey>> tableExpression, JoinType type)
         {
             joinTarget.QueryBuilder.AppendJoin(type);
-            joinTarget.QueryBuilder.AppendTable(tableExpression.Body);
+            BaseQueryBuilder queryBuilder = joinTarget.QueryBuilder;
+            var selectedTable = queryBuilder.RegisterTable(tableExpression.Body);
+            queryBuilder.StringBuilder.AppendTable(selectedTable);
             return (IJoinResult<T, TMe>)joinTarget;
         }
 
-        public static IJoinResult<T, TMe> Join<T, TMe>(this IJoinTarget<T, TMe> joinTarget, Action<ISelectResult<T, TMe>> subQuery, Expression<Func<object>> tableAlias, JoinType type)
+        public static IJoinResult<T, TMe> Join<T, TMe>(this IJoinTarget<T, TMe> joinTarget, Action<ISelectResult<T, TMe>> subQuery, Expression<Func<object>> tableAliasExpression, JoinType type)
         {
             joinTarget.QueryBuilder.AppendJoin(type);
             joinTarget.SubQuery(subQuery);
-            joinTarget.QueryBuilder.Append("AS");
-            var table = joinTarget.QueryBuilder.RegisterTable(tableAlias.Body.Type, joinTarget.QueryBuilder.GetTableAlias(tableAlias.Body as MemberExpression));
-            joinTarget.QueryBuilder.Append(table.Name);
+            joinTarget.QueryBuilder.StringBuilder.Append("AS");
+            var table = joinTarget.QueryBuilder.RegisterTable(tableAliasExpression.Body);
+            joinTarget.QueryBuilder.StringBuilder.Append(table.Alias);
             return (IJoinResult<T, TMe>)joinTarget;
         }
 
@@ -47,7 +49,7 @@ namespace Folke.Elm.Fluent
             return joinTarget.Join(tableExpression, JoinType.RightOuter);
         }
 
-        public static IOnResult<T, TMe> LeftJoinOnId<T, TMe>(this IJoinTarget<T, TMe> joinTarget, Expression<Func<T, object>> tableExpression)
+        public static IOnResult<T, TMe> LeftJoinOnId<T, TMe, TKey>(this IJoinTarget<T, TMe> joinTarget, Expression<Func<T, TKey>> tableExpression)
         {
             return joinTarget.Join(tableExpression, JoinType.LeftOuter).OnId(tableExpression);
         }
@@ -62,13 +64,13 @@ namespace Folke.Elm.Fluent
             switch (type)
             {
                 case JoinType.LeftOuter:
-                    queryBuilder.Append("LEFT JOIN");
+                    queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN");
                     break;
                 case JoinType.RightOuter:
-                    queryBuilder.Append("RIGHT JOIN");
+                    queryBuilder.StringBuilder.AppendAfterSpace("RIGHT JOIN");
                     break;
                 case JoinType.Inner:
-                    queryBuilder.Append("INNER JOIN");
+                    queryBuilder.StringBuilder.AppendAfterSpace("INNER JOIN");
                     break;
             }
         }

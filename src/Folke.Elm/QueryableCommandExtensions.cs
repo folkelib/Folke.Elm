@@ -110,18 +110,6 @@ namespace Folke.Elm
             }
         }
 
-        [Obsolete("Use ToList")]
-        public static IList<T> List<T>(this IQueryableCommand<T> baseQueryBuilder)
-        {
-            return baseQueryBuilder.ToList();
-        }
-
-        public static Task<IList<T>> ListAsync<T>(this IQueryableCommand<T> baseQueryBuilder,
-            IFolkeConnection folkeConnection, params object[] commandParameters)
-        {
-            return baseQueryBuilder.Build(folkeConnection, commandParameters).ToListAsync();
-        }
-
         public static async Task<IList<T>> ToListAsync<T>(this IQueryableCommand<T> baseQueryBuilder)
         { 
             using (var command = baseQueryBuilder.Connection.CreateCommand(baseQueryBuilder.Sql, baseQueryBuilder.Parameters))
@@ -138,17 +126,12 @@ namespace Folke.Elm
                 }
             }
         }
-
-        [Obsolete("Use ToListAsync")]
-        public static async Task<IList<T>> ListAsync<T>(this IQueryableCommand<T> baseQueryBuilder)
-        {
-            return await baseQueryBuilder.ToListAsync();
-        }
-
+        
         /// <summary>
-        /// The first result
+        /// Getes the first result.
+        /// Throws an exception if no result is found.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The first result in the query.</returns>
         public static T First<T>(this IQueryableCommand<T> baseQueryBuilder)
         {
             using (var command = baseQueryBuilder.Connection.CreateCommand(baseQueryBuilder.Sql, baseQueryBuilder.Parameters))
@@ -178,7 +161,8 @@ namespace Folke.Elm
         }
 
         /// <summary>
-        /// The first result
+        /// Gets the first result asynchronously.
+        /// Throws an exception if there is no result.
         /// </summary>
         /// <returns></returns>
         public static async Task<T> FirstAsync<T>(this IQueryableCommand<T> baseQueryBuilder)

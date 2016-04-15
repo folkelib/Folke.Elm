@@ -10,11 +10,21 @@ namespace Folke.Elm.Fluent
 
     public static class GroupByTargetExtensions
     {
-        public static IGroupByResult<T, TMe> GroupBy<T, TMe, TU>(this IGroupByTarget<T, TMe> queryBuilder, Expression<Func<T, TU>> column)
+        public static IGroupByResult<T, TMe> GroupBy<T, TMe, TU>(this IGroupByTarget<T, TMe> builder, Expression<Func<T, TU>> column)
         {
-            queryBuilder.QueryBuilder.AppendGroupBy();
-            queryBuilder.QueryBuilder.AppendColumn(column.Body);
-            return (IGroupByResult<T, TMe>) queryBuilder;
+            BaseQueryBuilder queryBuilder = builder.QueryBuilder;
+            if (builder.CurrentContext != QueryContext.GroupBy)
+            {
+                queryBuilder.StringBuilder.BeforeGroupBy();
+                builder.CurrentContext = QueryContext.GroupBy;
+            }
+            else
+            {
+                queryBuilder.StringBuilder.DuringGroupBy();
+            }
+            var column1 = queryBuilder.ExpressionToColumn(column.Body, false);
+            queryBuilder.StringBuilder.DuringColumn(column1.Table.Alias, column1.Column.ColumnName);
+            return (IGroupByResult<T, TMe>) builder;
         }
     }
 

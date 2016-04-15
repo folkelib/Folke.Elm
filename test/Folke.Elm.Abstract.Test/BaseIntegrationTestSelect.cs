@@ -196,7 +196,7 @@ namespace Folke.Elm.Abstract.Test
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
         }
         
-        public void Select_Tuple_FromAndFrom_List()
+        public void Select_Tuple_FromLeftJoinOnId_List()
         {
             var newPoco = new TestPoco { Name = "Name" };
             connection.Save(newPoco);
@@ -207,7 +207,7 @@ namespace Folke.Elm.Abstract.Test
                     .All(x => x.Item0)
                     .All(x => x.Item1)
                     .From(x => x.Item0)
-                    .From(x => x.Item1).ToList();
+                    .LeftJoinOnId(x => x.Item1).ToList();
             Assert.Equal(1, pocos.Count);
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
             Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);

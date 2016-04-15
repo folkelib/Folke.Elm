@@ -14,9 +14,9 @@
         public void Accept(IVisitor visitor)
         {
             collection.Accept(visitor);
-            visitor.During(this);
+            visitor.DuringTake();
             count.Accept(visitor);
-            visitor.After(this);
+            visitor.AfterTake();
         }
     }
 }

@@ -11,24 +11,26 @@ namespace Folke.Elm.Fluent
     {
         public static IOnResult<T, TMe> On<T,TMe>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, bool>> expression)
         {
-            onTarget.QueryBuilder.Append("ON ");
+            onTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ON ");
             onTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IOnResult<T, TMe>) onTarget;
         }
 
         public static IOnResult<T, TMe> On<T, TMe>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, TMe, bool>> expression)
         {
-            onTarget.QueryBuilder.Append("ON ");
+            onTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ON ");
             onTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IOnResult<T, TMe>)onTarget;
         }
 
-        public static IOnResult<T, TMe> OnId<T, TMe>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, object>> expression)
+        public static IOnResult<T, TMe> OnId<T, TMe, TKey>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, TKey>> expression)
         {
-            onTarget.QueryBuilder.Append("ON ");
-            onTarget.QueryBuilder.AppendColumn(onTarget.QueryBuilder.ExpressionToColumn(expression.Body));
-            onTarget.QueryBuilder.Append("=");
-            onTarget.QueryBuilder.AppendColumn(onTarget.QueryBuilder.GetTableKey(expression.Body));
+            onTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ON ");
+            BaseQueryBuilder.TableColumn tableColumn = onTarget.QueryBuilder.ExpressionToColumn(expression.Body);
+            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+            onTarget.QueryBuilder.StringBuilder.Append("=");
+            BaseQueryBuilder.TableColumn tableColumn1 = onTarget.QueryBuilder.GetTableKey(expression.Body);
+            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Column.ColumnName);
             return (IOnResult<T, TMe>)onTarget;
         }
     }

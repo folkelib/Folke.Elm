@@ -21,9 +21,9 @@ namespace Folke.Elm.Visitor
         public void Accept(IVisitor visitor)
         {
             value.Accept(visitor);
-            visitor.Before(this);
+            visitor.BeforeBetween();
             min.Accept(visitor);
-            visitor.During(this);
+            visitor.DuringBetween();
             max.Accept(visitor);
         }
     }

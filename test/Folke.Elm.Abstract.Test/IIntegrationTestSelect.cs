@@ -17,7 +17,7 @@ namespace Folke.Elm.Abstract.Test
         void Select_TypeThatIsNotATable_AllFieldsFromProperties_JoinOnStringOrderByString_List();
         void SelectFrom_TableType_OrderByStringDescLimit_List();
         void Select_Tuple_WhereExistsSubQuery_List();
-        void Select_Tuple_FromAndFrom_List();
+        void Select_Tuple_FromLeftJoinOnId_List();
         void Select_Tuple_FromRightJoin_List();
         void Select_TableType_InnerJoinOnId_List();
         void SelectAllFrom_TableType_WhereLike_List();

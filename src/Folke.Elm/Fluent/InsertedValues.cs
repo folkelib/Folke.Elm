@@ -1,4 +1,6 @@
-﻿namespace Folke.Elm.Fluent
+﻿using Folke.Elm.Mapping;
+
+namespace Folke.Elm.Fluent
 {
     public interface IInsertedValuesTarget<T, TMe> : IFluentBuilder
     {
@@ -8,10 +10,11 @@
     {
         public static IInsertedValuesResult<T, TMe> Values<T, TMe>(this IInsertedValuesTarget<T, TMe> insertedValuesTarget, T value)
         {
-            insertedValuesTarget.QueryBuilder.Append(" (");
+            var baseQueryBuilder = insertedValuesTarget.QueryBuilder;
+            baseQueryBuilder.StringBuilder.Append(" (");
             bool first = true;
             var type = value.GetType();
-            var typeMapping = insertedValuesTarget.QueryBuilder.Mapper.GetTypeMapping(type);
+            var typeMapping = baseQueryBuilder.Mapper.GetTypeMapping(type);
             foreach (var property in typeMapping.Columns.Values)
             {
                 if (/*TableHelpers.IsIgnored(property.PropertyType) || */ property.Readonly)
@@ -19,11 +22,11 @@
                 if (first)
                     first = false;
                 else
-                    insertedValuesTarget.QueryBuilder.Append(",");
-                insertedValuesTarget.QueryBuilder.AppendColumn(null, property);
+                    baseQueryBuilder.StringBuilder.Append(",");
+                baseQueryBuilder.StringBuilder.DuringColumn(null, property.ColumnName);
             }
 
-            insertedValuesTarget.QueryBuilder.Append(") VALUES (");
+            baseQueryBuilder.StringBuilder.Append(") VALUES (");
             first = true;
             foreach (var property in typeMapping.Columns.Values)
             {
@@ -32,11 +35,12 @@
                 if (first)
                     first = false;
                 else
-                    insertedValuesTarget.QueryBuilder.Append(",");
-                insertedValuesTarget.QueryBuilder.AppendParameter(property.PropertyInfo.GetValue(value));
+                    baseQueryBuilder.StringBuilder.Append(",");
+                var parameterIndex = baseQueryBuilder.AddParameter(property.PropertyInfo.GetValue(value));
+                baseQueryBuilder.StringBuilder.DuringParameter(parameterIndex);
             }
 
-            insertedValuesTarget.QueryBuilder.Append(")");
+            baseQueryBuilder.StringBuilder.Append(")");
             return (IInsertedValuesResult<T, TMe>) insertedValuesTarget;
         }
     }

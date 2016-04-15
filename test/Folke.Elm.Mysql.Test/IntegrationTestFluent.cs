@@ -85,7 +85,7 @@ namespace Folke.Elm.Mysql.Test
         [Fact]
         public void SelectAllAll()
         {
-            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().From(x => x.Poco).ToList();
+            connection.Select<TestManyPoco>().All().All(x => x.Poco).From().LeftJoinOnId(x => x.Poco).ToList();
         }
 
         [Fact]

@@ -11,7 +11,7 @@
 
         public void Accept(IVisitor visitor)
         {
-            visitor.During(this);
+            visitor.DuringNamedParameter(this.Name);
         }
     }
 }

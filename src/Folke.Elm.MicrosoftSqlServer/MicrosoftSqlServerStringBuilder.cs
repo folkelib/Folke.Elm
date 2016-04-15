@@ -7,27 +7,27 @@ namespace Folke.Elm.MicrosoftSqlServer
 {
     public class MicrosoftSqlServerStringBuilder : SqlStringBuilder
     {
-        public override void AppendAutoIncrement()
+        public override void DuringAutoIncrement()
         {
             stringBuilder.Append(" IDENTITY(1,1)");
         }
 
-        public override void AppendLastInsertedId()
+        public override void DuringLastInsertedId()
         {
             stringBuilder.Append(" @@IDENTITY");
         }
 
-        public override void BeforeLimit()
+        public override void DuringSkip()
         {
             AppendAfterSpace("OFFSET ");
         }
 
-        public override void DuringLimit()
+        public override void DuringTake()
         {
             AppendAfterSpace("ROWS FETCH NEXT ");
         }
 
-        public override void AfterLimit()
+        public override void AfterTake()
         {
             AppendAfterSpace("ROWS ONLY");
         }

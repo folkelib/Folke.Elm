@@ -18,14 +18,14 @@ namespace Folke.Elm.Fluent
     {
         public static IAndOnResult<T, TMe> AndOn<T, TMe>(this IAndOnTarget<T, TMe> andOnTarget, Expression<Func<T, bool>> expression)
         {
-            andOnTarget.QueryBuilder.Append(" AND ");
+            andOnTarget.QueryBuilder.StringBuilder.Append(" AND ");
             andOnTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IAndOnResult<T, TMe>) andOnTarget;
         }
 
         public static IAndOnResult<T, TMe> AndOn<T, TMe>(this IAndOnTarget<T, TMe> andOnTarget, Expression<Func<T, TMe, bool>> expression)
         {
-            andOnTarget.QueryBuilder.Append(" AND ");
+            andOnTarget.QueryBuilder.StringBuilder.Append(" AND ");
             andOnTarget.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IAndOnResult<T, TMe>)andOnTarget;
         }

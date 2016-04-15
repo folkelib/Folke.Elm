@@ -6,7 +6,8 @@
   "projectUrl": "https://github.com/folkelib/Folke.Elm",
   "licenseUrl": "http://opensource.org/licenses/MIT",
   "dependencies": {
-    "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final"
+    "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final",
+    "JetBrains.Annotations": "10.1.2-eap"
   },
   "frameworks": {
     "dotnet5.4": {

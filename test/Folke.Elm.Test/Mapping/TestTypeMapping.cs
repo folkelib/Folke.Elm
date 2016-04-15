@@ -17,14 +17,19 @@ namespace Folke.Elm.Test.Mapping
         }
 
         [Fact]
-        public void TypeMapping_Constructor_TypeWithGenericProperties()
+        public void TypeMapping_AutoMap_TypeWithGenericProperties()
         {
-            var referencedTypeMapping = new TypeMapping(typeof(GenericClass<string>), mapperMock.Object);
+            // Arrange
+            var referencedTypeMapping = new TypeMapping(typeof(GenericClass<string>));
             mapperMock.Setup(x => x.GetTypeMapping(typeof(GenericClass<string>))).Returns(referencedTypeMapping);
             mapperMock.Setup(x => x.IsMapped(typeof(GenericClass<string>))).Returns(true);
 
-            var typeMapping = new TypeMapping(typeof(TypeWithGenericProperties<string>), mapperMock.Object);
+            var typeMapping = new TypeMapping(typeof(TypeWithGenericProperties<string>));
+
+            // Act
+            typeMapping.AutoMap(mapperMock.Object);
             
+            // Assert
             Assert.True(typeMapping.Columns.Any(x => x.Key == "Id"));
             Assert.True(typeMapping.Columns.Any(x => x.Key == "GenericProperty"));
             Assert.True(typeMapping.Columns.Any(x => x.Value.ColumnName == "GenericProperty_id"));

@@ -2,17 +2,17 @@
 {
     public class SqliteStringBuilder : SqlStringBuilder
     {
-        public override void AppendAutoIncrement()
+        public override void DuringAutoIncrement()
         {
             AppendAfterSpace("AUTOINCREMENT");
         }
 
-        public override void AppendSymbol(string symbol)
+        public override void DuringSymbol(string symbol)
         {
             AppendAfterSpace(symbol);
         }
 
-        public override void AppendLastInsertedId()
+        public override void DuringLastInsertedId()
         {
             AppendAfterSpace("last_insert_rowid()");
         }

@@ -20,13 +20,13 @@ namespace Folke.Elm
 
         private void AppendColumnName(PropertyMapping property)
         {
-            query.AppendSymbol(property.ColumnName);
+            query.DuringSymbol(property.ColumnName);
         }
 
         private void AppendColumn(PropertyMapping property)
         {
             AppendColumnName(property);
-            query.Append(" ");
+            query.BeforeColumnTypeDefinition();
 
             if (property.Reference != null)
             {
@@ -54,7 +54,7 @@ namespace Folke.Elm
                 query.Append(" PRIMARY KEY");
                 if (property.IsAutomatic)
                 {
-                    query.AppendAutoIncrement();
+                    query.DuringAutoIncrement();
                 }
             }
         }
@@ -88,7 +88,7 @@ namespace Folke.Elm
         private void AppendReferences(PropertyMapping column)
         { 
             query.Append(" REFERENCES ");
-            query.AppendTableName(column.Reference);
+            query.DuringTable(column.Reference.TableSchema, column.Reference.TableName);
             query.Append("(");
             query.Append(column.Reference.Key.ColumnName);
             query.Append(")");
@@ -107,7 +107,7 @@ namespace Folke.Elm
         private void AppendIndex(PropertyMapping column, string name)
         {
             query.Append(" INDEX ");
-            query.AppendSymbol(name);
+            query.DuringSymbol(name);
             query.Append(" (");
             AppendColumnName(column);
             query.Append(")");            
@@ -116,9 +116,9 @@ namespace Folke.Elm
         private void AppendCreateIndex(TypeMapping table, PropertyMapping column, string name)
         {
             query.Append("CREATE INDEX ");
-            query.AppendSymbol(name);
+            query.DuringSymbol(name);
             query.Append(" ON ");
-            query.AppendSymbol(table.TableName);
+            query.DuringSymbol(table.TableName);
             query.Append("(");
             AppendColumnName(column);
             query.Append(")");
@@ -143,7 +143,7 @@ namespace Folke.Elm
         {
             var mapping = connection.Mapper.GetTypeMapping(type);
             query.Append("CREATE TABLE ");
-            query.AppendSymbol(mapping.TableName);
+            query.DuringSymbol(mapping.TableName);
             query.Append(" (");
             bool canCreateIndex = connection.Driver.CanAddIndexInCreateTable();
 
@@ -217,7 +217,8 @@ namespace Folke.Elm
 
         public SchemaQueryBuilder<T> DropTable(Type type)
         {
-            query.AppendDropTable(connection.Mapper.GetTypeMapping(type).TableName);
+            query.BeforeDropTable();
+            query.DuringSymbol(connection.Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 
@@ -229,7 +230,7 @@ namespace Folke.Elm
         internal SchemaQueryBuilder<T> AlterTable(Type type)
         {
             query.AppendAfterSpace("ALTER TABLE ");
-            query.AppendSymbol(connection.Mapper.GetTypeMapping(type).TableName);
+            query.DuringSymbol(connection.Mapper.GetTypeMapping(type).TableName);
             return this;
         }
 

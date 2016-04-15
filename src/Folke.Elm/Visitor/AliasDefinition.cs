@@ -14,7 +14,7 @@
         public void Accept(IVisitor visitor)
         {
             value.Accept(visitor);
-            visitor.During(this);
+            visitor.DuringAliasDefinition(this.Alias);
         }
     }
 }

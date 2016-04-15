@@ -39,7 +39,7 @@ namespace Folke.Elm.Mysql.Test
         {
             var propertyInfo = typeof (FakeClass).GetProperty("Id");
             fluentSelectBuilder.Values(x => x.Property(propertyInfo).Equals(3));
-            Assert.Equal("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
+            Assert.Equal("SELECT( `t0`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTable()
         {
             fluentSelectBuilder.Values(x => x.Id, x => x.Text);
-            Assert.Equal("SELECT `t`.`Id` , `t`.`Text`", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`", queryBuilder.Sql);
             Assert.Equal(2, queryBuilder.SelectedFields.Count);
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
@@ -77,7 +77,7 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTableAndJoin()
         {
             fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
-            Assert.Equal("SELECT `t`.`Id` , `t`.`Text` , `t1`.`Value`", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t1`.`Value`", queryBuilder.Sql);
             Assert.Equal(3, queryBuilder.SelectedFields.Count);
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
@@ -95,7 +95,7 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_Max2()
         {
             fluentSelectBuilder.Max(x => x.Id);
-            Assert.Equal("SELECT MAX( `t`.`Id` )", queryBuilder.Sql);
+            Assert.Equal("SELECT MAX( `t`.`Id`)", queryBuilder.Sql);
         }
 
         [Fact]
@@ -109,15 +109,16 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_Sum2()
         {
             fluentSelectBuilder.Sum(x => x.Id);
-            Assert.Equal("SELECT SUM( `t`.`Id` )", queryBuilder.Sql);
+            Assert.Equal("SELECT SUM( `t`.`Id`)", queryBuilder.Sql);
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_Select_Count()
         {
             fluentSelectBuilder.Count(x => x.Id);
-            Assert.Equal("SELECT COUNT( `t`.`Id` )", queryBuilder.Sql);
+            Assert.Equal("SELECT COUNT( `t`.`Id`)", queryBuilder.Sql);
         }
+
         [Fact]
         public void FluentGenericQueryBuilder_WhereSubAfterWhere()
         {
@@ -125,7 +126,7 @@ namespace Folke.Elm.Mysql.Test
                 .From()
                 .Where(x => x.Text == "fake")
                 .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t WHERE( `t`.`Text`= @Item0) AND (( `t`.`Text`= @Item1) OR ( `t`.`Text`= @Item2) )", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` AS t WHERE( `t`.`Text`= @Item0) AND (( `t`.`Text`= @Item1) OR ( `t`.`Text`= @Item2))", queryBuilder.Sql);
         }
 
         [Fact]
@@ -134,7 +135,7 @@ namespace Folke.Elm.Mysql.Test
             fluentSelectBuilder.All()
                 .From()
                 .WhereSub(select => select.Or(x => x.Text == "test").Or(x => x.Text == "other"));
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t WHERE (( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1) )", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` AS t WHERE(( `t`.`Text`= @Item0) OR ( `t`.`Text`= @Item1))", queryBuilder.Sql);
         }
 
         [Fact]
@@ -142,7 +143,7 @@ namespace Folke.Elm.Mysql.Test
         {
             fluentSelectBuilder.All().From()
                 .OrderBy(x => x.Text + x.Text);
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` as t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` AS t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
         }
 
         [Fact]
@@ -150,7 +151,7 @@ namespace Folke.Elm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
         }
 
 
@@ -159,7 +160,7 @@ namespace Folke.Elm.Mysql.Test
         {
             FakeChildClass child = null;
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child).Where(x => child == null);
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE `t1`.`Id` IS NULL", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE `t1`.`Id` IS NULL", queryBuilder.Sql);
         }
 
         [Fact]
@@ -167,7 +168,7 @@ namespace Folke.Elm.Mysql.Test
         {
             FakeChildClass child = new FakeChildClass { Id = 25 };
             fluentSelectBuilder.CountAll().From().Where(x => x.Child == child);
-            Assert.Equal("SELECT  COUNT(*) FROM `FakeClass` as t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
+            Assert.Equal("SELECT COUNT(*) FROM `FakeClass` AS t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
@@ -175,14 +176,14 @@ namespace Folke.Elm.Mysql.Test
         {
             FakeChildClass child = new FakeChildClass { Id = 18 };
             fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child.Id == child.Id);
-            Assert.Equal("SELECT  `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` ,  `t1`.`Id`, `t1`.`Value` FROM `FakeClass` as t LEFT JOIN `FakeChildClass` as t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_Between()
         {
             fluentSelectBuilder.CountAll().From().Where(x => x.Value.Between(3, 4));
-            Assert.Equal("SELECT  COUNT(*) FROM `FakeClass` as t WHERE `t`.`Value` BETWEEN  @Item0 AND  @Item1", fluentSelectBuilder.QueryBuilder.Sql);
+            Assert.Equal("SELECT COUNT(*) FROM `FakeClass` AS t WHERE `t`.`Value` BETWEEN @Item0 AND @Item1", fluentSelectBuilder.QueryBuilder.Sql);
         }
 
         public class FakeClass : IFolkeTable

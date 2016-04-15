@@ -16,28 +16,28 @@ namespace Folke.Elm.Fluent
     {
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, bool>> expression)
         {
-            fluentBuilder.QueryBuilder.AppendWhere();
+            fluentBuilder.AppendWhere();
             fluentBuilder.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
 
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Expression<Func<T, TMe, bool>> expression)
         {
-            fluentBuilder.QueryBuilder.AppendWhere();
+            fluentBuilder.AppendWhere();
             fluentBuilder.QueryBuilder.AddBooleanExpression(expression.Body);
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
 
         public static IWhereResult<T, TMe> Where<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Action<ISelectResult<T, TMe>> subQuery, SubQueryType type)
         {
-            fluentBuilder.QueryBuilder.AppendWhere();
+            fluentBuilder.AppendWhere();
             switch (type)
             {
                 case SubQueryType.Exists:
-                    fluentBuilder.QueryBuilder.Append("EXISTS");
+                    fluentBuilder.QueryBuilder.StringBuilder.AppendAfterSpace("EXISTS");
                     break;
                 case SubQueryType.NotExists:
-                    fluentBuilder.QueryBuilder.Append("NOT EXISTS");
+                    fluentBuilder.QueryBuilder.StringBuilder.AppendAfterSpace("NOT EXISTS");
                     break;
             }
 
@@ -57,10 +57,11 @@ namespace Folke.Elm.Fluent
 
         public static IWhereResult<T, TMe> WhereSub<T, TMe>(this IWhereTarget<T, TMe> fluentBuilder, Action<IAndWhereTarget<T, TMe>> expression)
         {
-            fluentBuilder.QueryBuilder.AppendWhere();
-            fluentBuilder.QueryBuilder.Append("(");
+            fluentBuilder.AppendWhere();
+            fluentBuilder.QueryBuilder.StringBuilder.Append("(");
             expression((IAndWhereTarget<T, TMe>)fluentBuilder);
-            fluentBuilder.QueryBuilder.AppendSubWhereEnd();
+            fluentBuilder.QueryBuilder.StringBuilder.AfterSubExpression();
+            fluentBuilder.CurrentContext = QueryContext.Where;
             return (IWhereResult<T, TMe>)fluentBuilder;
         }
 

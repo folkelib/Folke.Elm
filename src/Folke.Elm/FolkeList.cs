@@ -37,24 +37,28 @@ namespace Folke.Elm
                     foreach (var join in joins)
                     {
                         var property = type.GetProperty(join);
-                        queryBuilder.AppendSelect();
-                        //joinTables.Add(queryBuilder.AppendSelectedColumns(property.PropertyType, join, property.PropertyType.GetProperties()));
-                        joinTables.Add(queryBuilder.AppendAllSelects(property.PropertyType, join));
+                        query.AppendSelect();
+                        var joinTypeMapping = queryBuilder.Mapper.GetTypeMapping(property.PropertyType);
+                        var table = queryBuilder.RegisterTable(joinTypeMapping, join);
+                        joinTables.Add(table);
+                        queryBuilder.AppendAllSelects(table);
                     }
 
-                    queryBuilder.AppendFrom();
-                    queryBuilder.AppendTable(typeof(T), (string)null);
+                    query.AppendFrom();
+                    queryBuilder.StringBuilder.AppendTable(queryBuilder.RegisterRootTable());
 
                     foreach (var joinTable in joinTables)
                     {
-                        var property = typeof(T).GetProperty(joinTable.Alias);
+                        var property = typeof(T).GetProperty(joinTable.InternalIdentifier);
                         var joinKeyProperty = joinTable.Mapping.Key;
-                        queryBuilder.Append(" LEFT JOIN ");
-                        queryBuilder.AppendTable(joinTable.Mapping.Type, joinTable.Alias);
-                        queryBuilder.Append(" ON ");
-                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable });
-                        queryBuilder.Append(" = ");
-                        queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = queryBuilder.DefaultTable.Mapping.Columns[property.Name], Table = queryBuilder.DefaultTable });
+                        queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
+                        queryBuilder.StringBuilder.AppendTable(joinTable);
+                        queryBuilder.StringBuilder.Append(" ON ");
+                        BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable };
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                        queryBuilder.StringBuilder.Append(" = ");
+                        BaseQueryBuilder.TableColumn tableColumn1 = new BaseQueryBuilder.TableColumn { Column = queryBuilder.DefaultTable.Mapping.Columns[property.Name], Table = queryBuilder.DefaultTable };
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Column.ColumnName);
                     }
 
                     bool first = true;
@@ -62,11 +66,13 @@ namespace Folke.Elm
                     {
                         if (property.PropertyInfo.PropertyType == parent)
                         {
-                            queryBuilder.Append(first ? " WHERE " : " OR ");
+                            queryBuilder.StringBuilder.Append(first ? " WHERE " : " OR ");
                             first = false;
-                            queryBuilder.AppendColumn(new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable });
-                            queryBuilder.Append(" = ");
-                            queryBuilder.AppendParameter(parentId);
+                            BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable };
+                            queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                            queryBuilder.StringBuilder.Append(" = ");
+                            var index = queryBuilder.AddParameter(parentId);
+                            queryBuilder.StringBuilder.DuringParameter(index);
                         }
                     }
                     results = query.ToList();

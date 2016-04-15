@@ -15,7 +15,7 @@ namespace Folke.Elm.Visitor
         {
             foreach (var field in fields)
             {
-                if (field != fields[0]) visitor.During(this);
+                if (field != fields[0]) visitor.DuringFields();
 
                 field.Accept(visitor);
             }

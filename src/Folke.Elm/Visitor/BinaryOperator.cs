@@ -20,11 +20,11 @@ namespace Folke.Elm.Visitor
 
         public void Accept(IVisitor visitor)
         {
-            visitor.Before(this);
+            visitor.BeforeBinaryOperator();
             left.Accept(visitor);
-            visitor.During(this);
+            visitor.DuringBinaryOperator(this.Type);
             right.Accept(visitor);
-            visitor.After(this);
+            visitor.AfterBinaryOperator();
         }
     }
 }

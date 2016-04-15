@@ -97,9 +97,9 @@ namespace Folke.Elm.Sqlite.Test
         }
 
         [Fact]
-        public void Select_Tuple_FromAndFrom_List()
+        public void Select_Tuple_FromLeftJoinOnId_List()
         {
-            integrationTestSelect.Select_Tuple_FromAndFrom_List();
+            integrationTestSelect.Select_Tuple_FromLeftJoinOnId_List();
         }
 
         [Fact(Skip = "Right Join not supported")]

@@ -15,6 +15,7 @@ namespace Folke.Elm.Fluent
         protected BaseQueryBuilder baseQueryBuilder;
 
         public BaseQueryBuilder QueryBuilder => baseQueryBuilder;
+        public QueryContext CurrentContext { get; set; } = QueryContext.Unknown;
 
         protected FluentBaseBuilder(BaseQueryBuilder queryBuilder)
         {
@@ -42,14 +43,16 @@ namespace Folke.Elm.Fluent
         public static IDeleteResult<T, TMe> Delete(BaseQueryBuilder queryBuilder)
         {
             var result = new FluentBaseBuilder<T, TMe>(queryBuilder);
-            queryBuilder.AppendDelete();
+            queryBuilder.StringBuilder.BeforeDelete();
+            result.CurrentContext = QueryContext.Delete;
             return result;
         }
 
         public static IInsertIntoResult<T, TMe> InsertInto(BaseQueryBuilder baseQueryBuilder) 
         {
-            baseQueryBuilder.Append("INSERT INTO");
-            baseQueryBuilder.StringBuilder.AppendTableName(baseQueryBuilder.Mapper.GetTypeMapping(typeof(T)));
+            baseQueryBuilder.StringBuilder.Append("INSERT INTO");
+            var typeMapping = baseQueryBuilder.Mapper.GetTypeMapping(typeof(T));
+            baseQueryBuilder.StringBuilder.DuringTable(typeMapping.TableSchema, typeMapping.TableName);
             return new FluentBaseBuilder<T, TMe>(baseQueryBuilder);
         }
 
@@ -65,8 +68,8 @@ namespace Folke.Elm.Fluent
 
         public static IUpdateResult<T, TMe> Update(BaseQueryBuilder queryBuilder)
         {
-            queryBuilder.AppendUpdate();
-            queryBuilder.AppendTable(typeof(T), (string)null);
+            queryBuilder.StringBuilder.BeforeUpdate();
+            queryBuilder.StringBuilder.AppendTable(queryBuilder.RegisterRootTable());
             return new FluentBaseBuilder<T, TMe>(queryBuilder);
         }
     }

@@ -14,7 +14,7 @@
         public void Accept(IVisitor visitor)
         {
             list.Accept(visitor);
-            visitor.During(this);
+            visitor.BeforeWhere();
             expression.Accept(visitor);
         }
     }

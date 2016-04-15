@@ -13,9 +13,9 @@
 
         public void Accept(IVisitor visitor)
         {
-            visitor.Before(this);
+            visitor.BeforeSelect();
             selection.Accept(visitor);
-            visitor.During(this);
+            visitor.DuringSelect();
             @from.Accept(visitor);
         }
     }

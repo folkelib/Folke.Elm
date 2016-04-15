@@ -13,7 +13,7 @@
 
         public void Accept(IVisitor visitor)
         {
-            visitor.During(this);
+            visitor.DuringTable(Schema, Name);
         }
     }
 }

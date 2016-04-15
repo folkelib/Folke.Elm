@@ -13,9 +13,9 @@
 
         public void Accept(IVisitor visitor)
         {
-            visitor.Before(this);
+            visitor.BeforeMathFunction(this.Type);
             parameter.Accept(visitor);
-            visitor.After(this);
+            visitor.AfterMathFunction();
         }
     }
 }

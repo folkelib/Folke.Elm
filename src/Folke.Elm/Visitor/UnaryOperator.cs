@@ -15,9 +15,9 @@ namespace Folke.Elm.Visitor
 
         public void Accept(IVisitor visitor)
         {
-            visitor.Before(this);
+            visitor.BeforeUnaryOperator(this.OperatorType);
             Child.Accept(visitor);
-            visitor.After(this);
+            visitor.AfterUnaryOperator(this.OperatorType);
         }
     }
 }
