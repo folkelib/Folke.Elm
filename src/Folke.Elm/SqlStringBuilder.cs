@@ -83,6 +83,40 @@ namespace Folke.Elm
         {
         }
 
+        public void DuringMathFunction()
+        {
+            Append(",");
+        }
+
+        public void BeforeCase()
+        {
+            AppendAfterSpace("CASE");
+        }
+
+        public void AfterCase()
+        {
+            AppendAfterSpace("END");
+        }
+
+        public void BeforeWhen()
+        {
+            AppendAfterSpace("WHEN");
+        }
+
+        public void DuringWhen()
+        {
+            AppendAfterSpace("THEN");
+        }
+
+        public void AfterWhen()
+        {
+        }
+
+        public void BeforeElse()
+        {
+            AppendAfterSpace("ELSE");
+        }
+
         public virtual void BeforeAddColumn()
         {
             AppendAfterSpace("ADD COLUMN ");
@@ -270,6 +304,9 @@ namespace Folke.Elm
                     break;
                 case MathFunctionType.Sum:
                     AppendAfterSpace("SUM(");
+                    break;
+                case MathFunctionType.IsNull:
+                    AppendAfterSpace("ISNULL(");
                     break;
             }
         }

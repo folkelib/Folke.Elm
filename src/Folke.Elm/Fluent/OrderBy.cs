@@ -11,15 +11,15 @@ namespace Folke.Elm.Fluent
     {
         public static IOrderByResult<T, TMe> OrderBy<T, TMe, TV>(this IOrderByTarget<T, TMe> fluentBuilder, Expression<Func<T, TV>> expression)
         {
-            BaseQueryBuilder tempQualifier = fluentBuilder.QueryBuilder;
+            BaseQueryBuilder queryBuilder = fluentBuilder.QueryBuilder;
             if (fluentBuilder.CurrentContext != QueryContext.OrderBy)
             {
-                tempQualifier.StringBuilder.BeforeOrderBy();
+                queryBuilder.StringBuilder.BeforeOrderBy();
                 fluentBuilder.CurrentContext = QueryContext.OrderBy;
             }
             else
             {
-                tempQualifier.StringBuilder.DuringOrderBy();
+                queryBuilder.StringBuilder.DuringOrderBy();
             }
             fluentBuilder.QueryBuilder.AddExpression(expression.Body);
             return (IOrderByResult<T, TMe>)fluentBuilder;

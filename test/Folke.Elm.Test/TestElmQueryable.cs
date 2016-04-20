@@ -13,6 +13,7 @@ namespace Folke.Elm.Test
     {
         private readonly ElmQueryable<TestPoco> queryable;
         private readonly Mock<IFolkeCommand> commandMock;
+        private ElmQueryProvider provider;
 
         public class TestPoco
         {
@@ -20,6 +21,14 @@ namespace Folke.Elm.Test
             public int Id { get; set; }
             public string Name { get; set; }
             public decimal Decimal { get; set; }
+        }
+
+        public class TestOther
+        {
+            [Key]
+            public int Id { get; set; }
+            public TestPoco TestPoco { get; set; }
+            public string Value { get; set; }
         }
 
         public TestElmQueryable()
@@ -39,7 +48,7 @@ namespace Folke.Elm.Test
                     commandMock.Object.CommandText = text;
                     return commandMock.Object;
                 });
-            var provider = new ElmQueryProvider(connection.Object);
+            provider = new ElmQueryProvider(connection.Object);
             queryable = new ElmQueryable<TestPoco>(null, provider);
         }
 
@@ -80,6 +89,22 @@ namespace Folke.Elm.Test
             // Assert
             Assert.Empty(result);
             Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" AS t ORDER BY  \"t\".\"Name\" LIMIT @Item0, @Item1", commandMock.Object.CommandText);
+        }
+
+        [Fact]
+        public void Join()
+        {
+            //// Arrange
+            //var otherQueryable = new ElmQueryable<TestOther>(provider);
+
+            //// Act
+            //List<TestPoco> result = (from testPoco in queryable
+            //              join other in otherQueryable on testPoco.Id equals other.TestPoco.Id
+            //        select testPoco).ToList();
+
+            //// Assert
+            //Assert.Empty(result);
+            //Assert.Equal("", commandMock.Object.CommandText);
         }
     }
 }

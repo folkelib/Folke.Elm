@@ -412,7 +412,10 @@ namespace Folke.Elm
 
                         case nameof(Queryable.OrderBy):
                             return new OrderBy(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
-                            
+
+                        case nameof(Queryable.Join):
+                            return new Join(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable), ParseExpression(call.Arguments[2]), ParseExpression(call.Arguments[3]), ParseExpression(call.Arguments[4]));
+
                         default:
                             throw new Exception("Unsupported Queryable method");
                     }
@@ -469,6 +472,16 @@ namespace Folke.Elm
                             return new MathFunction(MathFunctionType.Max, ParseExpression(call.Arguments[0], registerTable));
                         case nameof(SqlFunctions.Sum):
                             return new MathFunction(MathFunctionType.Sum, ParseExpression(call.Arguments[0], registerTable));
+                        case nameof(SqlFunctions.IsNull):
+                            return new MathFunction(MathFunctionType.IsNull, ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+                        case nameof(SqlFunctions.Case):
+                            var cases = ((NewArrayExpression) call.Arguments[0]).Expressions;
+                            return new Case(cases.Select(x => ParseExpression(x)));
+                        case nameof(SqlFunctions.When):
+                            return new When(ParseExpression(call.Arguments[0], registerTable),
+                                ParseExpression(call.Arguments[1], registerTable));
+                        case nameof(SqlFunctions.Else):
+                            return new Else(ParseExpression(call.Arguments[0], registerTable));
                         default:
                             throw new Exception("Unsupported sql function");
                     }
@@ -544,6 +557,9 @@ namespace Folke.Elm
             return defaultTable;
         }
 
+        /// <summary>Register a table in the list of selected tables</summary>
+        /// <param name="aliasExpression">An expression that points to the table</param>
+        /// <returns>The selected table</returns>
         protected internal SelectedTable RegisterTable(Expression aliasExpression)
         {
             Type type;
@@ -551,11 +567,16 @@ namespace Folke.Elm
             return RegisterTable(Mapper.GetTypeMapping(type), alias);
         }
 
+        /// <summary>Adds a column to the list of selected values</summary>
+        /// <param name="column"></param>
         internal void SelectField(TableColumn column)
         {
             SelectField(column.Column, column.Table);
         }
 
+        /// <summary>Adds a column from a given table to the list of selected values</summary>
+        /// <param name="property">The property mapping</param>
+        /// <param name="table">The selected table</param>
         internal void SelectField(PropertyMapping property, SelectedTable table)
         {
             if (selectedFields == null)
@@ -563,11 +584,17 @@ namespace Folke.Elm
             selectedFields.Add(new SelectedField { PropertyMapping = property, Table = table, Index = selectedFields.Count });
         }
 
+        /// <summary>Select a column by an expression that maps to a column</summary>
+        /// <param name="column">The expression</param>
         internal void SelectField(Expression column)
         {
             SelectField(ExpressionToColumn(column, registerTable: true));
         }
 
+        /// <summary>Converts an expression to a column</summary>
+        /// <param name="columnExpression">The expression that should point to a table</param>
+        /// <param name="registerTable"><c>true</c> if the table must be added to the list of selected tables if it was not</param>
+        /// <returns>The column or <c>null</c> if the expression did not point to a column</returns>
         internal TableColumn ExpressionToColumn(Expression columnExpression, bool registerTable = false)
         {
             if (columnExpression.NodeType == ExpressionType.Convert)

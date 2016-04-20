@@ -6,6 +6,7 @@
         Cos,
         Sin,
         Max,
-        Sum
+        Sum,
+        IsNull
     }
 }

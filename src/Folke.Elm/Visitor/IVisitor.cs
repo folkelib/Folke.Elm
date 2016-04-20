@@ -29,5 +29,12 @@
         void DuringSelect();
         void DuringTable(string schema, string tableName);
         void AfterTake();
+        void DuringMathFunction();
+        void BeforeCase();
+        void AfterCase();
+        void BeforeWhen();
+        void DuringWhen();
+        void AfterWhen();
+        void BeforeElse();
     }
 }
