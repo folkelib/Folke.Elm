@@ -34,6 +34,7 @@ namespace Folke.Elm
                     var type = typeof (T);
                     var typeMapping = queryBuilder.Mapper.GetTypeMapping(type);
 
+                    // Select from the tables in the joins list
                     foreach (var join in joins)
                     {
                         var property = type.GetProperty(join);
@@ -47,9 +48,10 @@ namespace Folke.Elm
                     query.AppendFrom();
                     queryBuilder.StringBuilder.AppendTable(queryBuilder.RegisterRootTable());
 
+                    // Join on all the tables in the joins list
                     foreach (var joinTable in joinTables)
                     {
-                        var property = typeof(T).GetProperty(joinTable.InternalIdentifier);
+                        var property = type.GetProperty(joinTable.InternalIdentifier);
                         var joinKeyProperty = joinTable.Mapping.Key;
                         queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
                         queryBuilder.StringBuilder.AppendTable(joinTable);
@@ -62,6 +64,7 @@ namespace Folke.Elm
                     }
 
                     bool first = true;
+                    // Add a WHERE in order to get only the values that reference the parent row
                     foreach (var property in typeMapping.Columns.Values)
                     {
                         if (property.PropertyInfo.PropertyType == parent)

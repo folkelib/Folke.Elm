@@ -197,6 +197,12 @@ namespace Folke.Elm
                 case BinaryOperatorType.Subtract:
                     Append('-');
                     break;
+                case BinaryOperatorType.Or:
+                    Append("|");
+                    break;
+                case BinaryOperatorType.And:
+                    Append("&");
+                    break;
                 default:
                     throw new Exception("Expression type not supported");
             }

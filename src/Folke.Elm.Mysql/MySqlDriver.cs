@@ -22,50 +22,57 @@ namespace Folke.Elm.Mysql
         public string GetSqlType(PropertyInfo property, int maxLength = 0)
         {
             var type = property.PropertyType;
+            return GetSqlType(type, maxLength);
+        }
+
+        private static string GetSqlType(Type type, int maxLength)
+        {
             if (type.IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
-            if (type == typeof(bool))
+            if (type == typeof (bool))
             {
                 return "TINYINT";
             }
-            else if (type == typeof(short))
+            else if (type == typeof (short))
             {
                 return "SMALLINT";
             }
-            else if (type == typeof(int))
+            else if (type == typeof (int))
             {
                 return "INT";
             }
-            else if (type == typeof(long))
+            else if (type == typeof (long))
             {
                 return "BIGINT";
             }
-            else if (type == typeof(float))
+            else if (type == typeof (float))
             {
                 return "FLOAT";
             }
-            else if (type == typeof(double))
+            else if (type == typeof (double))
             {
                 return "DOUBLE";
             }
-            else if (type == typeof(DateTime))
+            else if (type == typeof (DateTime))
             {
                 return "DATETIME";
             }
-            else if (type == typeof(TimeSpan))
+            else if (type == typeof (TimeSpan))
             {
                 return "INT";
             }
             else if (type.IsEnum)
             {
+                if (type.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
+                    return GetSqlType(Enum.GetUnderlyingType(type), maxLength);
                 return "VARCHAR(255)";
             }
-            else if (type == typeof(decimal))
+            else if (type == typeof (decimal))
             {
                 return "DECIMAL(15,5)";
             }
-            else if (type == typeof(string))
+            else if (type == typeof (string))
             {
                 if (maxLength != 0)
                 {
@@ -77,7 +84,7 @@ namespace Folke.Elm.Mysql
                 else
                     return "VARCHAR(255)";
             }
-            else if (type == typeof(Guid))
+            else if (type == typeof (Guid))
             {
                 return "CHAR(36)";
             }
@@ -128,6 +135,10 @@ namespace Folke.Elm.Mysql
             var parameterType = value.GetType();
             if (parameterType.GetTypeInfo().IsEnum)
             {
+                if (parameterType.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
+                {
+                    return Convert.ChangeType(value, Enum.GetUnderlyingType(parameterType));
+                }
                 return Enum.GetName(parameterType, value);
             }
 

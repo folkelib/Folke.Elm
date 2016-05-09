@@ -172,11 +172,10 @@ namespace Folke.Elm
                 {
                     parameter = ((TimeSpan) parameter).TotalSeconds;
                 }
-               /* else if (parameterType.GetTypeInfo().IsEnum)
+                else if (parameterType.GetTypeInfo().IsEnum && parameterType.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
                 {
-                    var enumIndex = (int)parameter;
-                    parameter = Enum.GetNames(parameterType).GetValue(enumIndex);
-                }*/
+                    parameter = Convert.ChangeType(parameter, Enum.GetUnderlyingType(parameterType));
+                }
                 else if (Mapper.IsMapped(parameterType))
                 {
                     var key = Mapper.GetTypeMapping(parameterType).Key;
@@ -294,6 +293,9 @@ namespace Folke.Elm
                     case ExpressionType.Add:
                         type = BinaryOperatorType.Add;
                         break;
+                    case ExpressionType.And:
+                        type = BinaryOperatorType.And;
+                        break;
                     case ExpressionType.AndAlso:
                         type = BinaryOperatorType.AndAlso;
                         break;
@@ -323,6 +325,9 @@ namespace Folke.Elm
                         break;
                     case ExpressionType.NotEqual:
                         type = BinaryOperatorType.NotEqual;
+                        break;
+                    case ExpressionType.Or:
+                        type = BinaryOperatorType.Or;
                         break;
                     case ExpressionType.OrElse:
                         type = BinaryOperatorType.OrElse;

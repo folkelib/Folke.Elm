@@ -16,6 +16,8 @@
         Multiply,
         NotEqual,
         OrElse,
-        Subtract
+        Subtract,
+        And,
+        Or
     }
 }
