@@ -69,7 +69,7 @@ namespace Folke.Elm.MicrosoftSqlServer
                 if (type.GetTypeInfo().GetCustomAttribute(typeof (FlagsAttribute)) != null)
                 {
                     var numberValue = reader.GetValue(index);
-                    value = Convert.ChangeType(numberValue, type);
+                    value = Enum.ToObject(type, numberValue);
                 }
                 else
                 {

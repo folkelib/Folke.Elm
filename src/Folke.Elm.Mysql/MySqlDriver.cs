@@ -196,18 +196,26 @@ namespace Folke.Elm.Mysql
                 value = reader.GetBoolean(index);
             else if (type.GetTypeInfo().IsEnum)
             {
-                var text = reader.GetString(index);
-                var names = Enum.GetNames(type);
-                var enumIndex = 0;
-                for (var i = 0; i < names.Length; i++)
+                if (type.GetTypeInfo().GetCustomAttribute(typeof (FlagsAttribute)) != null)
                 {
-                    if (names[i] == text)
-                    {
-                        enumIndex = i;
-                        break;
-                    }
+                    var numberValue = reader.GetValue(index);
+                    value = Enum.ToObject(type, numberValue);
                 }
-                value = Enum.GetValues(type).GetValue(enumIndex);
+                else
+                {
+                    var text = reader.GetString(index);
+                    var names = Enum.GetNames(type);
+                    var enumIndex = 0;
+                    for (var i = 0; i < names.Length; i++)
+                    {
+                        if (names[i] == text)
+                        {
+                            enumIndex = i;
+                            break;
+                        }
+                    }
+                    value = Enum.GetValues(type).GetValue(enumIndex);
+                }
             }
             else
                 value = null;
