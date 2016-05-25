@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Folke.Elm.Abstract.Test;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
 using Xunit;

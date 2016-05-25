@@ -1,17 +1,18 @@
 ﻿{
-  "version": "1.1.0-*",
+  "version": "1.2.0-*",
   "description": "An adapter for MySQL for Folke.Elm",
   "authors": [ "Sidoine De Wispelaere" ],
-  "tags": [ "mysql orm" ],
-  "projectUrl": "https://github.com/folkelib/orm",
-  "licenseUrl": "http://opensource.org/licenses/MIT",
-
-  "dependencies": {
-    "Folke.Elm": "",
-    "MySql.Data": "6.9.8"
+  "packOptions": {
+    "tags": [ "mysql orm" ],
+    "projectUrl": "https://github.com/folkelib/orm",
+    "licenseUrl": "http://opensource.org/licenses/MIT"
   },
+    "dependencies": {
+      "Folke.Elm": "1.2.0-*",
+      "MySql.Data": "6.9.8"
+    },
 
-  "frameworks": {
-    "net451": { }
+    "frameworks": {
+      "net451": { }
+    }
   }
-}

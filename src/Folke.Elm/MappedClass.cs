@@ -118,7 +118,7 @@ namespace Folke.Elm
             var mappedClass = new MappedClass();
 
             var idProperty = type.Key;
-            mappedClass.constructor = type.Type.GetConstructor(Type.EmptyTypes);
+            mappedClass.constructor = type.Type.GetTypeInfo().GetConstructor(Type.EmptyTypes);
             if (idProperty != null)
             {
                 var selectedField = fieldAliases.SingleOrDefault(f => f.Table.InternalIdentifier == internalIdentifier && f.PropertyMapping == idProperty);

@@ -32,12 +32,13 @@ namespace Folke.Elm
                     var joinTables = new List<BaseQueryBuilder.SelectedTable>();
                     var queryBuilder = query.QueryBuilder;
                     var type = typeof (T);
+                    var typeInfo = type.GetTypeInfo();
                     var typeMapping = queryBuilder.Mapper.GetTypeMapping(type);
 
                     // Select from the tables in the joins list
                     foreach (var join in joins)
                     {
-                        var property = type.GetProperty(join);
+                        var property = typeInfo.GetProperty(join);
                         query.AppendSelect();
                         var joinTypeMapping = queryBuilder.Mapper.GetTypeMapping(property.PropertyType);
                         var table = queryBuilder.RegisterTable(joinTypeMapping, join);
@@ -51,7 +52,7 @@ namespace Folke.Elm
                     // Join on all the tables in the joins list
                     foreach (var joinTable in joinTables)
                     {
-                        var property = type.GetProperty(joinTable.InternalIdentifier);
+                        var property = typeInfo.GetProperty(joinTable.InternalIdentifier);
                         var joinKeyProperty = joinTable.Mapping.Key;
                         queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
                         queryBuilder.StringBuilder.AppendTable(joinTable);

@@ -1,5 +1,4 @@
-﻿using Folke.Elm.Abstract.Test;
-using Xunit;
+﻿using Xunit;
 
 namespace Folke.Elm.Sqlite.Test
 {

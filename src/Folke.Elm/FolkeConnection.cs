@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Folke.Elm.Fluent;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
-using Microsoft.Extensions.OptionsModel;
+using Microsoft.Extensions.Options;
 
 namespace Folke.Elm
 {

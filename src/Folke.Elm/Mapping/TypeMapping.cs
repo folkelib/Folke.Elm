@@ -28,7 +28,8 @@ namespace Folke.Elm.Mapping
         /// <param name="mapper"></param>
         public void AutoMap(IMapper mapper)
         {
-            var tableAttribute = Type.GetTypeInfo().GetCustomAttribute<TableAttribute>();
+            var typeInfo = Type.GetTypeInfo();
+            var tableAttribute = typeInfo.GetCustomAttribute<TableAttribute>();
             if (tableAttribute != null)
             {
                 TableName = tableAttribute.Name;
@@ -39,7 +40,7 @@ namespace Folke.Elm.Mapping
                 TableName = Regex.Replace(Type.Name, @"`\d+", "");
             }
             
-            foreach (var propertyInfo in Type.GetProperties())
+            foreach (var propertyInfo in typeInfo.GetProperties())
             {
                 if (propertyInfo.GetCustomAttribute<NotMappedAttribute>() != null)
                     continue;
@@ -52,20 +53,21 @@ namespace Folke.Elm.Mapping
                     nullable = true;
                 }
 
-                if (propertyType.GetTypeInfo().IsGenericType)
+                var propertyTypeInfo = propertyType.GetTypeInfo();
+                if (propertyTypeInfo.IsGenericType)
                 {
-                    if (propertyType.GetInterfaces().FirstOrDefault(x => x.Name == "IEnumerable") != null)
+                    if (propertyTypeInfo.GetInterfaces().FirstOrDefault(x => x.Name == "IEnumerable") != null)
                     {
                         var foreignType = propertyType.GenericTypeArguments[0];
                         if (mapper.IsMapped(foreignType))
                         {
                             var folkeList = typeof(FolkeList<>).MakeGenericType(foreignType);
-                            if (propertyType.IsAssignableFrom(folkeList))
+                            if (propertyTypeInfo.IsAssignableFrom(folkeList))
                             {
                                 var joins =
                                     propertyInfo.GetCustomAttributes<SelectAttribute>().Select(x => x.IncludeReference).ToArray();
                                 var constructor =
-                                    folkeList.GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
+                                    folkeList.GetTypeInfo().GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
                                 var mappedCollection = new MappedCollection
                                 {
                                     propertyInfo = propertyInfo,
@@ -126,7 +128,7 @@ namespace Folke.Elm.Mapping
                     propertyMapping.Index = indexAttribute.Name ?? TableName + "_" + propertyMapping.ColumnName;
                 }
 
-                if ((propertyInfo.Name == "Id" && Type.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
+                if ((propertyInfo.Name == "Id" && typeInfo.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
                     propertyInfo.GetCustomAttribute<KeyAttribute>() != null)
                 {
                     Key = propertyMapping;

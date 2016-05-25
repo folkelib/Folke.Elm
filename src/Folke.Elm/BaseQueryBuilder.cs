@@ -7,7 +7,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Folke.Elm.Mapping;
 using Folke.Elm.Visitor;
-using JetBrains.Annotations;
 
 namespace Folke.Elm
 {
@@ -541,7 +540,7 @@ namespace Folke.Elm
             return new Values(list);
         }
         
-        internal SelectedTable RegisterTable(TypeMapping typeMapping, [NotNull] string internalIdentifier)
+        internal SelectedTable RegisterTable(TypeMapping typeMapping, string internalIdentifier)
         {
             var table = tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);
             if (table == null)

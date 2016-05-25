@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Folke.Elm.Abstract.Test;
 using Xunit;
 
 namespace Folke.Elm.Sqlite.Test

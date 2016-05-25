@@ -1,13 +1,14 @@
 ﻿{
-  "version": "1.0.0-*",
+  "version": "1.2.0-*",
   "description": "Folke.Elm.Abstract.Test Class Library",
   "authors": [ "Sidoine" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
-
+  "packOptions": {
+    "tags": [ "" ],
+    "projectUrl": "",
+    "licenseUrl": ""
+  },
   "dependencies": {
-    "Folke.Elm": "",
+    "Folke.Elm": "1.2.0-*",
     "xunit": "2.1.0-*"
   },
 
@@ -19,6 +20,13 @@
         "System.Configuration": "4.0.0.0",
         "System.Linq": "4.0.0.0"
       }
+    },
+    "netstandard1.5": {
+      "imports": [
+        "dotnet5.6",
+        "dnxcore50",
+        "portable-net45+win8"
+      ]
     }
   }
 }
