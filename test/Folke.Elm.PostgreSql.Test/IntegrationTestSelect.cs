@@ -1,7 +1,7 @@
 ﻿using Folke.Elm.Abstract.Test;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.PostgreSql.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestSelect : IIntegrationTestSelect
@@ -10,7 +10,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestSelect()
         {
-            integrationTestSelect =  new BaseIntegrationTestSelect(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            integrationTestSelect =  new BaseIntegrationTestSelect(new PostgreSqlDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()
@@ -102,7 +102,7 @@ namespace Folke.Elm.Sqlite.Test
             integrationTestSelect.Select_Tuple_FromLeftJoinOnId_List();
         }
 
-        [Fact(Skip = "Right Join not supported")]
+        [Fact]
         public void Select_Tuple_FromRightJoin_List()
         {
             integrationTestSelect.Select_Tuple_FromRightJoin_List();

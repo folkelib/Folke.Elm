@@ -54,9 +54,11 @@ namespace Folke.Elm
             stringBuilder.Append('"');
         }
         
-        public virtual void DuringAutoIncrement()
+        public virtual void DuringPrimaryKey(bool isAutomatic)
         {
-            stringBuilder.Append(" AUTO_INCREMENT");
+            stringBuilder.Append(" PRIMARY KEY");
+            if (isAutomatic)
+                stringBuilder.Append(" AUTO_INCREMENT");
         }
 
         public virtual void DuringLastInsertedId()
@@ -122,11 +124,12 @@ namespace Folke.Elm
             AppendAfterSpace("ADD COLUMN ");
         }
 
-        public virtual void BeforeAlterColumn(string previousColumnName)
+        public virtual void BeforeAlterColumnType(string previousColumnName)
         {
             Append(" CHANGE COLUMN ");
             DuringSymbol(previousColumnName);
             Append(" ");
+            DuringSymbol(previousColumnName);
         }
 
         public void BeforeUnaryOperator(UnaryOperatorType unaryOperatorType)

@@ -33,6 +33,10 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServe
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServer.Test", "test\Folke.Elm.MicrosoftSqlServer.Test\Folke.Elm.MicrosoftSqlServer.Test.xproj", "{B99D6362-394C-47E0-B81A-91C86CB501E6}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.PostgreSql", "src\Folke.Elm.PostgreSql\Folke.Elm.PostgreSql.xproj", "{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.PostgreSql.Test", "test\Folke.Elm.PostgreSql.Test\Folke.Elm.PostgreSql.Test.xproj", "{E1147222-002C-4DB0-83DF-2D645C8108C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +79,14 @@ Global
 		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B99D6362-394C-47E0-B81A-91C86CB501E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,5 +101,7 @@ Global
 		{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 		{2B9F7CA9-BFE5-4134-A38E-6C6536274E49} = {3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}
 		{B99D6362-394C-47E0-B81A-91C86CB501E6} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
+		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9} = {3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}
+		{E1147222-002C-4DB0-83DF-2D645C8108C3} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 	EndGlobalSection
 EndGlobal

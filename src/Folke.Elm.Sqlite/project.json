@@ -8,12 +8,12 @@
     "licenseUrl": "http://opensource.org/licenses/MIT"
   },
   "dependencies": {
-    "Folke.Elm": "1.2.0-*",
+    "Folke.Elm": "1.2.0-beta-*",
     "Microsoft.Data.Sqlite": "1.0.0-rc2-final"
   },
   "frameworks": {
-    "net451": {
-    },
+    "net451": { },
+    "net461": { },
     "netstandard1.5": { }
   }
   }

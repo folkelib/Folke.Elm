@@ -12,7 +12,8 @@
       "MySql.Data": "6.9.8"
     },
 
-    "frameworks": {
-      "net451": { }
-    }
+  "frameworks": {
+    "net461": { },
+    "net451": { }
+  }
   }

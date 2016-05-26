@@ -23,39 +23,25 @@ namespace Folke.Elm
             query.DuringSymbol(property.ColumnName);
         }
 
-        private void AppendColumn(PropertyMapping property)
+        private void AppendColumnType(PropertyMapping property)
         {
-            AppendColumnName(property);
-            query.BeforeColumnTypeDefinition();
-
-            if (property.Reference != null)
-            {
-                var foreignPrimaryKey = property.Reference.Key;
-                query.Append(connection.Driver.GetSqlType(foreignPrimaryKey.PropertyInfo, foreignPrimaryKey.MaxLength));
-                query.AppendAfterSpace("NULL");
-            }
-            else if (property.MaxLength != 0)
-            {
-                if (property.PropertyInfo.PropertyType == typeof(string))
-                {
-                    if (property.MaxLength > 255)
-                        query.Append("TEXT");
-                    else
-                        query.Append("VARCHAR(" + property.MaxLength + ")");
-                }
-                else
-                    throw new Exception("MaxLength attribute not supported for " + property.PropertyInfo.PropertyType);
-            }
-            else
-                query.Append(connection.Driver.GetSqlType(property.PropertyInfo, property.MaxLength));
-
             if (property.IsKey)
             {
-                query.Append(" PRIMARY KEY");
-                if (property.IsAutomatic)
+                query.AppendAfterSpace(connection.Driver.GetSqlType(property, false));
+                query.DuringPrimaryKey(property.IsAutomatic);
+            }
+            else
+            {
+                query.BeforeColumnTypeDefinition();
+
+                if (property.Reference != null)
                 {
-                    query.DuringAutoIncrement();
+                    var foreignPrimaryKey = property.Reference.Key;
+                    query.Append(connection.Driver.GetSqlType(foreignPrimaryKey, true));
+                    query.AppendAfterSpace("NULL");
                 }
+                else
+                    query.Append(connection.Driver.GetSqlType(property, false));
             }
         }
 
@@ -90,7 +76,7 @@ namespace Folke.Elm
             query.Append(" REFERENCES ");
             query.DuringTable(column.Reference.TableSchema, column.Reference.TableName);
             query.Append("(");
-            query.Append(column.Reference.Key.ColumnName);
+            query.DuringSymbol(column.Reference.Key.ColumnName);
             query.Append(")");
             if (column.OnDelete!= ConstraintEventEnum.Restrict)
             {
@@ -153,7 +139,8 @@ namespace Folke.Elm
                     continue;
 
                 AddComma();
-                AppendColumn(column);
+                AppendColumnName(column);
+                AppendColumnType(column);
             }
 
             if (canCreateIndex)
@@ -237,7 +224,8 @@ namespace Folke.Elm
         internal void AddColumn(PropertyMapping property)
         {
             query.BeforeAddColumn();
-            AppendColumn(property);
+            AppendColumnName(property);
+            AppendColumnType(property);
         }
     
         private bool commaAdded;
@@ -322,12 +310,12 @@ namespace Folke.Elm
                 else
                 {
                     var columnProperty = foreign ? property.Reference.Key : property;
-                    var newType = connection.Driver.GetSqlType(columnProperty.PropertyInfo, columnProperty.MaxLength);
+                    var newType = connection.Driver.GetSqlType(columnProperty, foreign);
                     if (!connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
                         DuringAlterTable(type);
-                        query.BeforeAlterColumn(property.ColumnName);
-                        AppendColumn(property);
+                        query.BeforeAlterColumnType(property.ColumnName);
+                        AppendColumnType(property);
                         changes = true;
                     }
                 }

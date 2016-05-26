@@ -1,7 +1,7 @@
 ﻿using Folke.Elm.Abstract.Test;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.PostgreSql.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestPreparedQueryBuilder : IIntegrationTestPreparedQueryBuilder
@@ -10,7 +10,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestPreparedQueryBuilder()
         {
-            test = new BaseIntegrationTestPreparedQueryBuilder(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestPreparedQueryBuilder(new PostgreSqlDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()

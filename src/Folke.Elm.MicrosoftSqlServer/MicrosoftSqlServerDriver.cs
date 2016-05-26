@@ -39,7 +39,7 @@ namespace Folke.Elm.MicrosoftSqlServer
 
             if (type == typeof (Guid))
                 value = reader.GetGuid(index);
-            if (type == typeof(string))
+            else if (type == typeof(string))
                 value = reader.GetString(index);
             else if (type == typeof (byte))
                 value = reader.GetByte(index);
@@ -152,10 +152,10 @@ namespace Folke.Elm.MicrosoftSqlServer
             return connection.Select<ColumnDefinition>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == tableSchema).ToList().Cast<IColumnDefinition>().ToList();
         }
 
-        public string GetSqlType(PropertyInfo property, int maxLength)
+        public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
-            var type = property.PropertyType;
-            return GetSqlType(type, maxLength);
+            var type = property.PropertyInfo.PropertyType;
+            return GetSqlType(type, property.MaxLength);
         }
 
         private string GetSqlType(Type type, int maxLength)

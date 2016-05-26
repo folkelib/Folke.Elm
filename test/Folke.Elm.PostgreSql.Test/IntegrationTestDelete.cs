@@ -1,8 +1,9 @@
-﻿using Folke.Elm.Abstract.Test;
+﻿using System;
 using System.Threading.Tasks;
+using Folke.Elm.Abstract.Test;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.PostgreSql.Test
 {
     public class IntegrationTestDelete : IIntegrationTestDelete
     {
@@ -10,12 +11,13 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestDelete()
         {
-            test = new BaseIntegrationTestDelete(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestDelete(new PostgreSqlDriver(), TestHelpers.ConnectionString, false);
         }
 
-        public void Dispose()
+        [Fact]
+        public Task DeleteAsync_ObjectWithGuid()
         {
-            test.Dispose();
+            return test.DeleteAsync_ObjectWithGuid();
         }
 
         [Fact]
@@ -24,10 +26,9 @@ namespace Folke.Elm.Sqlite.Test
             test.Delete_ObjectWithGuid();
         }
 
-        [Fact]
-        public async Task DeleteAsync_ObjectWithGuid()
+        public void Dispose()
         {
-            await test.DeleteAsync_ObjectWithGuid();
+            test.Dispose();
         }
     }
 }

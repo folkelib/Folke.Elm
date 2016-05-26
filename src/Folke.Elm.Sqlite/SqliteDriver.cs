@@ -12,10 +12,6 @@ namespace Folke.Elm.Sqlite
     {
         public IDatabaseSettings Settings { get; private set; }
 
-        public SqliteDriver()
-        {
-        }
-
         public bool HasBooleanType { get; } = true;
 
         public DbConnection CreateConnection(string connectionString)
@@ -23,9 +19,10 @@ namespace Folke.Elm.Sqlite
             return new SqliteConnection(connectionString);
         }
 
-        public string GetSqlType(PropertyInfo property, int maxLength)
+        public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
-            var type = property.PropertyType;
+            var type = property.PropertyInfo.PropertyType;
+            var maxLength = property.MaxLength;
             if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 

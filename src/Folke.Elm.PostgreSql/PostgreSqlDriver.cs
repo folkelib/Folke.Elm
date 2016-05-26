@@ -3,76 +3,81 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using Folke.Elm.Fluent;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
-using MySql.Data.MySqlClient;
-using Folke.Elm.Fluent;
+using Npgsql;
 
-namespace Folke.Elm.Mysql
+namespace Folke.Elm.PostgreSql
 {
-    public class MySqlDriver : IDatabaseDriver
+    // This project can output the Class library as a NuGet Package.
+    // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
+    public class PostgreSqlDriver : IDatabaseDriver
     {
-        public bool HasBooleanType { get; } = true;
-        
-        public virtual DbConnection CreateConnection(string connectionString)
+        public bool HasBooleanType => true;
+
+        public DbConnection CreateConnection(string connectionString)
         {
-            return new MySqlConnection(connectionString);
+            return new NpgsqlConnection(connectionString);
         }
 
         public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
             var type = property.PropertyInfo.PropertyType;
-            return GetSqlType(type, property.MaxLength);
+            return GetSqlType(type, property.MaxLength, property.IsAutomatic && !foreignKey);
         }
 
-        private static string GetSqlType(Type type, int maxLength)
-        {
-            if (type.IsGenericType)
+        private string GetSqlType(Type type, int maxLength, bool isAutomatic)
+        { 
+            if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
-            if (type == typeof (bool))
+            if (type == typeof(bool))
             {
-                return "TINYINT";
+                return "BOOLEAN";
             }
-            else if (type == typeof (short))
+            else if (type == typeof(short))
             {
+                if (isAutomatic) return "SMALLSERIAL";
                 return "SMALLINT";
             }
-            else if (type == typeof (int))
+            else if (type == typeof(int))
             {
-                return "INT";
+                if (isAutomatic) return "SERIAL";
+                return "INTEGER";
             }
-            else if (type == typeof (long))
+            else if (type == typeof(long))
             {
+                if (isAutomatic) return "BIGSERIAL";
                 return "BIGINT";
             }
-            else if (type == typeof (float))
+            else if (type == typeof(float))
             {
-                return "FLOAT";
+                return "REAL";
             }
-            else if (type == typeof (double))
+            else if (type == typeof(double))
             {
-                return "DOUBLE";
+                return "DOUBLE PRECISION";
             }
-            else if (type == typeof (DateTime))
+            else if (type == typeof(DateTime))
             {
-                return "DATETIME";
+                return "TIMESTAMP";
             }
-            else if (type == typeof (TimeSpan))
+            else if (type == typeof(TimeSpan))
             {
-                return "INT";
+                return "INTEGER";
             }
-            else if (type.IsEnum)
+            else if (type.GetTypeInfo().IsEnum)
             {
                 if (type.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
-                    return GetSqlType(Enum.GetUnderlyingType(type), maxLength);
+                    return GetSqlType(Enum.GetUnderlyingType(type), maxLength, isAutomatic);
                 return "VARCHAR(255)";
             }
-            else if (type == typeof (decimal))
+            else if (type == typeof(decimal))
             {
                 return "DECIMAL(15,5)";
             }
-            else if (type == typeof (string))
+            else if (type == typeof(string))
             {
                 if (maxLength != 0)
                 {
@@ -84,14 +89,23 @@ namespace Folke.Elm.Mysql
                 else
                     return "VARCHAR(255)";
             }
-            else if (type == typeof (Guid))
+            else if (type == typeof(Guid))
             {
-                return "CHAR(36)";
+                return "UUID";
             }
             else
                 throw new Exception("Unsupported type " + type.Name);
         }
 
+        private static readonly List<HashSet<string>> equivalences = new List<HashSet<string>>
+        {
+            new HashSet<string> {"varchar", "character varying"},
+            new HashSet<string> {"character", "char"},
+            new HashSet<string> {"serial", "integer", "int"},
+            new HashSet<string> {"bigserial", "bigint"},
+            new HashSet<string> {"smallserial", "smallint"},
+            new HashSet<string> {"timestamp", "timestamp without time zone" }
+        };
 
         public bool EquivalentTypes(string firstType, string secondType)
         {
@@ -109,29 +123,33 @@ namespace Folke.Elm.Mysql
                 secondType = secondType.Substring(0, parent);
             if (firstType == secondType)
                 return true;
-            if (firstType.IndexOf("text", StringComparison.Ordinal) >= 0 && secondType.IndexOf("text", StringComparison.Ordinal) >= 0)
-                return true;
+            foreach (var equivalence in equivalences)
+            {
+                if (equivalence.Contains(firstType) && equivalence.Contains(secondType))
+                    return true;
+            }
             return false;
         }
 
         public IList<IColumnDefinition> GetColumnDefinitions(FolkeConnection connection, TypeMapping typeMap)
         {
-            return connection.Select<MySqlColumnDefinition>().All().From().Where(x => x.TABLE_NAME == typeMap.TableName && x.TABLE_SCHEMA == connection.Database).ToList().Cast<IColumnDefinition>().ToList();
+            var tableSchema = typeMap.TableSchema ?? "public";
+            return connection.Select<PostgreSqlColumnDefinition>().All().From().Where(x => x.TableName == typeMap.TableName && x.TableSchema == tableSchema).ToList().Cast<IColumnDefinition>().ToList();
         }
 
         public IList<TableDefinition> GetTableDefinitions(FolkeConnection connection)
         {
-            return connection.Select<Tables>().All().From().Where(t => t.Schema == connection.Database).ToList().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
+            return connection.Select<PostgreSqlTableDefinition>().All().From().ToList().Select(x => new TableDefinition { Name = x.Name, Schema = x.Schema }).ToList();
         }
 
         public SqlStringBuilder CreateSqlStringBuilder()
         {
-            return new MysqlStringBuilder();
+            return new PostgreSqlStringBuilder();
         }
 
         public object ConvertValueToParameter(IMapper mapper, object value)
         {
-            if (value == null) return null;
+            if (value == null) return DBNull.Value;
             var parameterType = value.GetType();
             if (parameterType.GetTypeInfo().IsEnum)
             {
@@ -155,24 +173,18 @@ namespace Folke.Elm.Mysql
             return readerValue;
         }
 
-        public bool CanAddIndexInCreateTable()
-        {
-            return true;
-        }
-
-        public bool CanDoMultipleActionsInAlterTable()
-        {
-            return true;
-        }
-
         public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)
         {
             object value;
             if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
-            if (type == typeof(string))
+            if (type == typeof(Guid))
+                value = reader.GetGuid(index);
+            else if (type == typeof(string))
                 value = reader.GetString(index);
+            else if (type == typeof(byte))
+                value = reader.GetByte(index);
             else if (type == typeof(int))
                 value = reader.GetInt32(index);
             else if (type == typeof(long))
@@ -196,7 +208,7 @@ namespace Folke.Elm.Mysql
                 value = reader.GetBoolean(index);
             else if (type.GetTypeInfo().IsEnum)
             {
-                if (type.GetTypeInfo().GetCustomAttribute(typeof (FlagsAttribute)) != null)
+                if (type.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
                 {
                     var numberValue = reader.GetValue(index);
                     value = Enum.ToObject(type, numberValue);
@@ -220,6 +232,16 @@ namespace Folke.Elm.Mysql
             else
                 value = null;
             return value;
+        }
+
+        public bool CanAddIndexInCreateTable()
+        {
+            return false;
+        }
+
+        public bool CanDoMultipleActionsInAlterTable()
+        {
+            return true;
         }
     }
 }

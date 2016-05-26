@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Folke.Elm.Mapping;
 using Xunit;
+using System.Linq;
 
 namespace Folke.Elm.Abstract.Test
 {
@@ -47,7 +48,7 @@ namespace Folke.Elm.Abstract.Test
             Assert.Equal(collection.Name, coll.Name);
             Assert.Equal(10, coll.Members.Count);
             var j = 0;
-            foreach (var member in coll.Members)
+            foreach (var member in coll.Members.OrderBy(x => x.Name))
             {
                 Assert.Equal(coll, member.Collection);
                 Assert.Equal("Member" + j++, member.Name);

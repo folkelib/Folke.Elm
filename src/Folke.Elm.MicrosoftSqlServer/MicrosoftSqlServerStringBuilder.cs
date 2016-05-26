@@ -7,9 +7,11 @@ namespace Folke.Elm.MicrosoftSqlServer
 {
     public class MicrosoftSqlServerStringBuilder : SqlStringBuilder
     {
-        public override void DuringAutoIncrement()
+        public override void DuringPrimaryKey(bool autoIncrement)
         {
-            stringBuilder.Append(" IDENTITY(1,1)");
+            stringBuilder.Append(" PRIMARY KEY");
+            if (autoIncrement)
+                stringBuilder.Append(" IDENTITY(1,1)");
         }
 
         public override void DuringLastInsertedId()
@@ -37,9 +39,10 @@ namespace Folke.Elm.MicrosoftSqlServer
             AppendAfterSpace("ADD ");
         }
 
-        public override void BeforeAlterColumn(string previousColumnName)
+        public override void BeforeAlterColumnType(string previousColumnName)
         {
             AppendAfterSpace("ALTER COLUMN ");
+            DuringSymbol(previousColumnName);
         }
     }
 }

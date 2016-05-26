@@ -30,6 +30,13 @@
         "System.Text.RegularExpressions": "4.0.12-rc2-24027"
       }
     },
+    "net461": {
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.ComponentModel.Annotations": "4.0.10.0",
+        "System.ComponentModel.DataAnnotations": "4.0.0.0"
+      }
+    },
     "net451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",

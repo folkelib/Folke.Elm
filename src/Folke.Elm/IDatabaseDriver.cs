@@ -21,9 +21,9 @@ namespace Folke.Elm
 
         /// <summary>Gets the SQL Type for property</summary>
         /// <param name="property">The property</param>
-        /// <param name="maxLength">The maximum length of the column</param>
+        /// <param name="foreignKey"></param>
         /// <returns>The full column type, including length</returns>
-        string GetSqlType(PropertyInfo property, int maxLength);
+        string GetSqlType(PropertyMapping property, bool foreignKey);
 
         /// <summary>Are the two types equivalent (used by the schema updater)</summary>
         /// <param name="firstType">The first type</param>

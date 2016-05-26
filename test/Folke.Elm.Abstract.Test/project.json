@@ -13,10 +13,10 @@
   },
 
   "frameworks": {
-    "net451": {
+    "net461": {
       "frameworkAssemblies": {
         "System.ComponentModel.DataAnnotations": "4.0.0.0",
-        "System.Runtime": "4.0.10.0",
+        "System.Runtime": "4.0.20.0",
         "System.Configuration": "4.0.0.0",
         "System.Linq": "4.0.0.0"
       }

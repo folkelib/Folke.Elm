@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Folke.Elm.Sqlite.Test
+namespace Folke.Elm.PostgreSql.Test
 {
     [Collection("Sqlite")]
     public class IntegrationTestSave : IIntegrationTestSave
@@ -11,7 +11,7 @@ namespace Folke.Elm.Sqlite.Test
 
         public IntegrationTestSave()
         {
-            test = new BaseIntegrationTestSave(new SqliteDriver(), TestHelpers.ConnectionString, false);
+            test = new BaseIntegrationTestSave(new PostgreSqlDriver(), TestHelpers.ConnectionString, false);
         }
 
         public void Dispose()

@@ -2,9 +2,11 @@
 {
     public class SqliteStringBuilder : SqlStringBuilder
     {
-        public override void DuringAutoIncrement()
+        public override void DuringPrimaryKey(bool autoIncrement)
         {
-            AppendAfterSpace("AUTOINCREMENT");
+            AppendAfterSpace("PRIMARY KEY");
+            if (autoIncrement)
+                AppendAfterSpace("AUTOINCREMENT");
         }
 
         public override void DuringSymbol(string symbol)
