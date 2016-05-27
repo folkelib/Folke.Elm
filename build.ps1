@@ -26,3 +26,9 @@ cd .\src\Folke.Elm.MicrosoftSqlServer
 $file = Get-Item "bin\Debug\*-$version.nupkg"
 nuget push $file.FullName $key
 cd ..\..
+
+cd .\src\Folke.Elm.PostgreSql
+& dotnet pack --version-suffix $version
+$file = Get-Item "bin\Debug\*-$version.nupkg"
+nuget push $file.FullName $key
+cd ..\..
