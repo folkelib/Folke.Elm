@@ -54,6 +54,6 @@ public class Program
 
 ##Features
 
-* MySQL, Microsoft SQL Server, and Sqlite
+* MySQL, PostgreSQL, Microsoft SQL Server and Sqlite
 * .NET Core 5.0 and .NET 4.51
 
