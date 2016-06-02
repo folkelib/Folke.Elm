@@ -8,42 +8,40 @@ We'll use .NET Core for this Console Application and Visual Studio 2015. Feel fr
 Package References
 ^^^^^^^^^^^^^^^^^^
 
-Once this is done, the very first thing to do is to add the Folke.Elm packages into the ``project.json`` file. Elm supports both .NET 4.5 and .NET Core so we can put the references under the top-level ``dependencies`` section. The JSON file should look like this: ::
+Once this is done, the very first thing to do is to add the Folke.Elm packages into the ``project.json`` file. Elm supports both .NET 4.5 and .NET Core but in that sample we'll use only .NET Core. Add the references to Elm into the appropriate section. In this sample we'll use SQLite but feel free to use a different database driver. 
+
+We will also need a few more packages for later in the quickstart:
+
+* `System.ComponentModel.Annotations`
+* `System.Reflection`
+
+The JSON file should look like this (for the package versions, just use whatever the latest version is:
+
+::
 
  {
-   "version": "1.0.0-*",
-   "description": "Folke.Elm.Demo Console Application",
-   "authors": [ "acastaner" ],
-   "tags": [ "Folke.Elm" ],
-   "projectUrl": "https://github.com/folkelib/Folke.Elm.Demo",
-   "licenseUrl": "",
- 
-  "compilationOptions": {
+  "version": "1.0.0-*",
+  "buildOptions": {
     "emitEntryPoint": true
-   },
- 
-   "dependencies": {
-     "Folke.Elm": "1.1.0-beta-22361166",
-     "Folke.Elm.Sqlite": "1.1.0-beta-20850518"
-   },
+  },
 
-   "commands": {
-     "Folke.Elm.Demo": "Folke.Elm.Demo"
-   },
+  "dependencies": {
+    "Microsoft.NETCore.App": {
+      "type": "platform",
+      "version": "1.0.0-rc2-3002702"
+    }
+  },
 
-   "frameworks": {
-     "dnx451": { },
-     "dnxcore50": {
-       "dependencies": {
-         "Microsoft.CSharp": "4.0.1-beta-23516",
-         "System.Collections": "4.0.11-beta-23516",
-         "System.Console": "4.0.0-beta-23516",
-         "System.Linq": "4.0.1-beta-23516",
-         "System.Threading": "4.0.11-beta-23516"
-       }
-     }
-   }
- }
+  "frameworks": {
+    "netcoreapp1.0": {
+      "imports": "dnxcore50",
+      "dependencies": {
+        "Folke.Elm": "1.2.0-beta-23380600",
+        "Folke.Elm.Sqlite": "1.2.0-beta-23380600"
+      }
+    }
+  }
+}
 
 Obviously the various packages version might change as we publish newer versions. In our example we used the SQLite driver for two reasons: 
  
