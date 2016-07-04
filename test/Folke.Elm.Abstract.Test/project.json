@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.2.0-*",
   "description": "Folke.Elm.Abstract.Test Class Library",
   "authors": [ "Sidoine" ],
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "Folke.Elm": "1.2.0-*",
-    "xunit": "2.1.0-*"
+    "xunit": "2.1.0"
   },
 
   "frameworks": {

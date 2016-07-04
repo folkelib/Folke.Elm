@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.2.0-*",
   "description": "Folke.Elm.PostgreSql.Test Class Library",
   "authors": [ "Sidoine" ],
@@ -10,17 +10,16 @@
   "dependencies": {
     "Folke.Elm.PostgreSql": "1.2.0-*",
     "Folke.Elm.Abstract.Test": "1.2.0-*",
-    "xunit": "2.1.0-*",
-    "dotnet-test-xunit": "1.0.0-rc2-build10015"
+    "dotnet-test-xunit": "1.0.0-rc2-build10025",
+    "Microsoft.NETCore.App": {
+      "version": "1.0.0",
+      "type": "platform"
+    } 
   },
   "testRunner": "xunit",
   "frameworks": {
     "netcoreapp1.0": {
       "dependencies": {
-        "Microsoft.NETCore.App": {
-          "type": "platform",
-          "version": "1.0.0-rc2-3002702"
-        }
       },
       "imports": [
         "dotnet5.6",

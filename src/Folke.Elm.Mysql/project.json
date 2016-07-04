@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.2.0-*",
   "description": "An adapter for MySQL for Folke.Elm",
   "authors": [ "Sidoine De Wispelaere" ],
@@ -9,7 +9,7 @@
   },
     "dependencies": {
       "Folke.Elm": "1.2.0-*",
-      "MySql.Data": "6.9.8"
+      "MySql.Data": "7.0.3-DMR"
     },
 
   "frameworks": {

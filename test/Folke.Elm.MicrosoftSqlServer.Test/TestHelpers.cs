@@ -2,6 +2,6 @@
 {
     public static class TestHelpers
     {
-        public static string ConnectionString => "Data Source=SIDOTRON\\SQLEXPRESS;Initial Catalog=Elm;Integrated Security=True";
+        public static string ConnectionString => "Data Source=SIDOTRON2\\SQLEXPRESS;Initial Catalog=Elm;Integrated Security=True";
     }
 }
