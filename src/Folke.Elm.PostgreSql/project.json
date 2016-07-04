@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "NETStandard.Library": "1.6.0",
-    "Folke.Elm": "1.2.0-beta-*",
+    "Folke.Elm": "1.2.0-*",
     "npgsql": "3.1.5"
   },
 
