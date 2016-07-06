@@ -6,29 +6,29 @@ $version = "beta-" + $span.Days.ToString() + ($span.Hours * 60 + $span.Minutes).
 cd .\src\Folke.Elm
 & dotnet pack --version-suffix $version
 $file = Get-Item "bin\Debug\*-$version.nupkg"
-nuget push $file.FullName $key 
+nuget push $file.FullName $key -Source https://api.nuget.org/v3/index.json
 cd ..\..
 
 cd .\src\Folke.Elm.Mysql
 & dotnet pack --version-suffix $version
 $file = Get-Item "bin\Debug\*-$version.nupkg"
-nuget push $file.FullName $key 
+nuget push $file.FullName $key -Source https://api.nuget.org/v3/index.json
 cd ..\..
 
 cd .\src\Folke.Elm.Sqlite
 & dotnet pack --version-suffix $version
 $file = Get-Item "bin\Debug\*-$version.nupkg"
-nuget push $file.FullName $key
+nuget push $file.FullName $key -Source https://api.nuget.org/v3/index.json
 cd ..\..
 
 cd .\src\Folke.Elm.MicrosoftSqlServer
 & dotnet pack --version-suffix $version
 $file = Get-Item "bin\Debug\*-$version.nupkg"
-nuget push $file.FullName $key
+nuget push $file.FullName $key -Source https://api.nuget.org/v3/index.json
 cd ..\..
 
 cd .\src\Folke.Elm.PostgreSql
 & dotnet pack --version-suffix $version
 $file = Get-Item "bin\Debug\*-$version.nupkg"
-nuget push $file.FullName $key
+nuget push $file.FullName $key -Source https://api.nuget.org/v3/index.json
 cd ..\..

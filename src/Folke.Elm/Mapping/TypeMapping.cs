@@ -67,7 +67,7 @@ namespace Folke.Elm.Mapping
                                 var joins =
                                     propertyInfo.GetCustomAttributes<SelectAttribute>().Select(x => x.IncludeReference).ToArray();
                                 var constructor =
-                                    folkeList.GetTypeInfo().GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(int), typeof(string[]) });
+                                    folkeList.GetTypeInfo().GetConstructor(new[] { typeof(IFolkeConnection), typeof(Type), typeof(object), typeof(string[]) });
                                 var mappedCollection = new MappedCollection
                                 {
                                     propertyInfo = propertyInfo,
