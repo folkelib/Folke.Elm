@@ -9,12 +9,12 @@ namespace Folke.Elm
         where T : class, new()
     {
         private readonly Type parent;
-        private readonly int parentId;
+        private readonly object parentId;
         private readonly IFolkeConnection connection;
         private IList<T> results;
         private readonly string[] joins;
         
-        public FolkeList(IFolkeConnection connection, Type parent, int parentId, string[] joins)
+        public FolkeList(IFolkeConnection connection, Type parent, object parentId, string[] joins)
         {
             this.connection = connection;
             this.parent = parent;
