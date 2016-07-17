@@ -151,11 +151,37 @@ namespace Folke.Elm
         /// </summary>
         /// <param name="alias">The expression that is used as an alias to a table</param>
         /// <returns>The table</returns>
-        protected internal SelectedTable GetTable(Expression alias)
+        protected internal SelectedTable GetTable(Expression alias, bool register)
         {
-            Type type;
+                    /*    Type type;
             var internalIdentifier = CreateTableInternalIdentifier(alias, out type);
-            return tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);
+            return tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);*/
+            SelectedTable table;
+            switch (alias.NodeType)
+            {
+                case ExpressionType.MemberAccess:
+                    var mapping = Mapper.GetTypeMapping(alias.Type);
+                    var memberExpression = (MemberExpression)alias;
+                    var parentTable = GetTable(memberExpression.Expression, false);
+                    table = tables.FirstOrDefault(x => x.Parent == parentTable && x.Mapping == mapping);
+                    if (table == null)
+                    {
+                        if (!register)
+                            throw new Exception($"Table for expression {alias} not registered");
+                        table = new SelectedTable {
+                            Parent = parentTable,
+                            Mapping = mapping,
+                            Alias = "t" + tables.Count
+                        };
+                    }
+                    break;
+                case ExpressionType.Convert:
+                    return GetTable(((UnaryExpression) alias).Operand, register);
+                default:
+                    throw new Exception("Unexcepted node type");
+            }
+
+            return table;
         }
         
         public int AddParameter(object parameter)
@@ -615,7 +641,7 @@ namespace Folke.Elm
             {
                 var callExpression = (MethodCallExpression)columnExpression;
                 if (callExpression.Method.DeclaringType == typeof (ExpressionHelpers) &&
-                    callExpression.Method.Name == "Property")
+                    callExpression.Method.Name == nameof(ExpressionHelpers.Property))
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
                     var table = registerTable ? RegisterTable(callExpression.Arguments[0]) : GetTable(callExpression.Arguments[0]);
@@ -623,14 +649,13 @@ namespace Folke.Elm
                 }
 
                 if (callExpression.Method.DeclaringType == typeof(ExpressionHelpers) &&
-                    callExpression.Method.Name == "Key")
+                    callExpression.Method.Name == nameof(ExpressionHelpers.Key))
                 {
                     var table = registerTable ? RegisterTable(callExpression.Arguments[0]) : GetTable(callExpression.Arguments[0]);
                     return new TableColumn { Column = table.Mapping.Key, Table = table };
                 }
                 return null;
             }
-
             
             if (columnExpression.NodeType != ExpressionType.MemberAccess)
             {
@@ -638,16 +663,21 @@ namespace Folke.Elm
             }
 
             var columnMember = (MemberExpression)columnExpression;
+            // var parentType = columnMember.Expression.Type;
+            // var parentTypeMapping = Mapper.GetTypeMapping(parentType);
+            var parentTable = GetTable(columnMember.Expression);
 
+            /*
             var columnMemberExpression = columnMember.Expression;
             if (columnMemberExpression != null)
             {
-
                 if (columnMemberExpression.NodeType == ExpressionType.Convert)
                     columnMemberExpression = ((UnaryExpression)columnMemberExpression).Operand;
+
                 var memberExpression = columnMemberExpression as MemberExpression;
                 if (memberExpression != null)
                 {
+                    // The case x => x.Foo.Bar
                     var table = registerTable ? RegisterTable(memberExpression) : GetTable(memberExpression);
                     if (table == null)
                     {
@@ -667,6 +697,7 @@ namespace Folke.Elm
                 var parameterExpression = columnMemberExpression as ParameterExpression;
                 if (parameterExpression != null && parameterExpression.Type == defaultType.Type)
                 {
+                    // The case x => x.Foo 
                     if (defaultTable == null)
                     {
                         if (registerTable)
@@ -675,9 +706,11 @@ namespace Folke.Elm
                         }
                         else
                         {
+                            // TODO Should be an error
                             var table = GetTable(columnExpression);
                             if (table != null)
                             {
+                                // TODO Should not be reachable
                                 return new TableColumn { Column = table.Mapping.Key, Table = table };
                             }
                             return null;
@@ -686,12 +719,13 @@ namespace Folke.Elm
                     return new TableColumn { Column = defaultTable.Mapping.Columns[columnMember.Member.Name], Table = defaultTable };
                 }
             }
-
+            
+            // If x => x.Foo where Foo is a table, selects its primary key
             var columnAsTable = GetTable(columnExpression);
             if (columnAsTable != null)
             {
                 return new TableColumn {Column = columnAsTable.Mapping.Key, Table = columnAsTable};
-            }
+            }*/
             return null;
         }
 
@@ -717,12 +751,22 @@ namespace Folke.Elm
         {
             var columns = table.Mapping.Columns;
             var fields = new List<IVisitable>();
+            AddAllColumns(table, columns, fields, null);
+            return new Fields(fields);
+        }
+
+        private void AddAllColumns(SelectedTable table, Dictionary<string, PropertyMapping> columns, List<IVisitable> fields, string baseName)
+        {
             foreach (var column in columns.Values)
             {
+                if (column.ComplexType != null)
+                {
+                    AddAllColumns(table, column.ComplexType.Columns, fields, column.ComposeName(baseName));
+                    continue;
+                }
                 SelectField(column, table);
                 fields.Add(new Column(table.Alias, column.ColumnName));
             }
-            return new Fields(fields);
         }
 
         /// <summary>A table that is referenced somewhere in the expression</summary>
@@ -736,7 +780,7 @@ namespace Folke.Elm
 
             /// <summary>Gets or sets an identifier that is generally created by <see cref="CreateTableInternalIdentifier"/> 
             /// and allows to uniquely identify this selected table</summary>
-            public string InternalIdentifier { get; set; }
+            public SelectedTable Parent { get; set; }
         }
 
         public class SelectedField
@@ -746,6 +790,8 @@ namespace Folke.Elm
             public SelectedTable Table { get; set; }
 
             public int Index { get; set; }
+
+            public string BaseName { get; set; }
         }
 
         public class TableColumn

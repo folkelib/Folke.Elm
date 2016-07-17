@@ -281,7 +281,7 @@ namespace Folke.Elm
 
         public void UpdateSchema(Assembly assembly)
         {
-            var mappings = Mapper.GetTypeMappings(assembly).ToList();
+            var mappings = Mapper.GetTypeMappings(assembly).Where(x => !x.IsComplexType).ToList();
             var schemaUpdater = new SchemaUpdater(this);
             schemaUpdater.CreateOrUpdate(mappings);
         }
@@ -289,7 +289,7 @@ namespace Folke.Elm
         public void UpdateSchema()
         {
             var schemaUpdater = new SchemaUpdater(this);
-            schemaUpdater.CreateOrUpdate(Mapper.GetTypeMappings().ToList());
+            schemaUpdater.CreateOrUpdate(Mapper.GetTypeMappings().Where(x => !x.IsComplexType).ToList());
         }
 
         /// <summary>
@@ -363,12 +363,13 @@ namespace Folke.Elm
         
         internal void CreateTable(Type t, bool drop = false, IList<string> existingTables = null)
         {
+            var mapping = Mapper.GetTypeMapping(t);
             if (drop)
             {
-                new SchemaQueryBuilder<FolkeTuple>(this).DropTable(t).TryExecute();
+                new SchemaQueryBuilder<FolkeTuple>(this).DropTable(mapping).TryExecute();
             }
 
-            new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(t, existingTables).Execute();
+            new SchemaQueryBuilder<FolkeTuple>(this).CreateTable(mapping, existingTables).Execute();
         }
 
         private IFromResult<T, FolkeTuple> CreateLoadOrGetQuery<T>(Expression<Func<T, object>>[] fetches) where T : class, new()

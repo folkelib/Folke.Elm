@@ -37,8 +37,8 @@ namespace Folke.Elm
                 return;
             }
 
-            var alterTable = new SchemaQueryBuilder<FolkeTuple>(connection).AlterTable(typeMapping.Type);
-            var changes = alterTable.AlterColumns(typeMapping.Type, columns);
+            var alterTable = new SchemaQueryBuilder<FolkeTuple>(connection).AlterTable(typeMapping);
+            var changes = alterTable.AlterColumns(typeMapping, columns, null);
             if (changes)
                 alterTable.Execute();
         }

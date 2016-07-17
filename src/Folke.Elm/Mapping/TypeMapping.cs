@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,6 +12,8 @@ namespace Folke.Elm.Mapping
     /// <summary>The mapping from a class to a table</summary>
     public class TypeMapping
     {
+        public bool IsComplexType { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeMapping"/> class.
         /// </summary>
@@ -39,7 +42,9 @@ namespace Folke.Elm.Mapping
             {
                 TableName = Regex.Replace(Type.Name, @"`\d+", "");
             }
-            
+
+            IsComplexType = typeInfo.GetCustomAttribute<ComplexTypeAttribute>() != null;
+
             foreach (var propertyInfo in typeInfo.GetProperties())
             {
                 if (propertyInfo.GetCustomAttribute<NotMappedAttribute>() != null)
@@ -56,7 +61,7 @@ namespace Folke.Elm.Mapping
                 var propertyTypeInfo = propertyType.GetTypeInfo();
                 if (propertyTypeInfo.IsGenericType)
                 {
-                    if (propertyTypeInfo.GetInterfaces().FirstOrDefault(x => x.Name == "IEnumerable") != null)
+                    if (propertyTypeInfo.GetInterfaces().FirstOrDefault(x => x.Name == nameof(IEnumerable)) != null)
                     {
                         var foreignType = propertyType.GenericTypeArguments[0];
                         if (mapper.IsMapped(foreignType))
@@ -87,7 +92,11 @@ namespace Folke.Elm.Mapping
 
                 if (mapper.IsMapped(propertyInfo.PropertyType))
                 {
-                    propertyMapping.Reference = mapper.GetTypeMapping(propertyInfo.PropertyType);
+                    var typeMapping = mapper.GetTypeMapping(propertyInfo.PropertyType);
+                    if (typeMapping.IsComplexType)
+                        propertyMapping.ComplexType = typeMapping;
+                    else
+                        propertyMapping.Reference = typeMapping;
                 }
 
                 var columnConstraintAttribute = propertyInfo.GetCustomAttribute<ColumnConstraintAttribute>();
@@ -128,7 +137,7 @@ namespace Folke.Elm.Mapping
                     propertyMapping.Index = indexAttribute.Name ?? TableName + "_" + propertyMapping.ColumnName;
                 }
 
-                if ((propertyInfo.Name == "Id" && typeInfo.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null) ||
+                if ((propertyInfo.Name == nameof(IFolkeTable.Id) && typeInfo.GetInterfaces().FirstOrDefault(x => x.Name == nameof(IFolkeTable)) != null) ||
                     propertyInfo.GetCustomAttribute<KeyAttribute>() != null)
                 {
                     Key = propertyMapping;

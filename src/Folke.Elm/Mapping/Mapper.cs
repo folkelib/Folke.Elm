@@ -47,7 +47,7 @@ namespace Folke.Elm.Mapping
         public bool IsMapped(Type type)
         {
             var typeInfo = type.GetTypeInfo();
-            return typeMappings.ContainsKey(type) || typeInfo.GetInterfaces().FirstOrDefault(x => x.Name == "IFolkeTable") != null 
+            return typeMappings.ContainsKey(type) || typeInfo.GetInterfaces().FirstOrDefault(x => x == typeof(IFolkeTable)) != null 
                 || typeInfo.GetCustomAttribute<TableAttribute>() != null;
         }
     }

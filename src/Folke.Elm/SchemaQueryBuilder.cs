@@ -6,7 +6,40 @@ using Folke.Elm.Mapping;
 
 namespace Folke.Elm
 {
-    public class SchemaQueryBuilder<T> : IBaseCommand
+    public class SchemaQueryBuilder<T> : SchemaQueryBuilder
+    {
+        private readonly TypeMapping mapping;
+
+        public SchemaQueryBuilder(FolkeConnection connection) : base(connection)
+        {
+            mapping = connection.Mapper.GetTypeMapping(typeof(T));
+        }
+
+        public SchemaQueryBuilder<T> CreateTable()
+        {
+            CreateTable(mapping);
+            return this;
+        }
+        
+        public SchemaQueryBuilder<T> DropTable()
+        {
+            DropTable(mapping);
+            return this;
+        }
+
+        internal SchemaQueryBuilder<T> AlterTable()
+        {
+            AlterTable(mapping);
+            return this;
+        }
+
+        internal bool AlterColumns(IList<IColumnDefinition> columns)
+        {
+            return AlterColumns(mapping, columns);
+        }
+    }
+
+    public class SchemaQueryBuilder : IBaseCommand
     {
         private readonly FolkeConnection connection;
 
@@ -18,11 +51,11 @@ namespace Folke.Elm
             query = connection.Driver.CreateSqlStringBuilder();
         }
 
-        private void AppendColumnName(PropertyMapping property)
+        private void AppendColumnName(PropertyMapping property, string baseName)
         {
-            query.DuringSymbol(property.ColumnName);
+            query.DuringSymbol(property.ComposeName(baseName));
         }
-
+        
         private void AppendColumnType(PropertyMapping property)
         {
             if (property.IsKey)
@@ -62,11 +95,11 @@ namespace Folke.Elm
             }
         }
 
-        private void AppendForeignKey(PropertyMapping column)
+        private void AppendForeignKey(PropertyMapping column, string baseName)
         {
             query.Append(" ");
             query.Append("FOREIGN KEY (");
-            AppendColumnName(column);
+            AppendColumnName(column, baseName);
             query.Append(")");
             AppendReferences(column);
         }
@@ -90,29 +123,24 @@ namespace Folke.Elm
             }
         }
 
-        private void AppendIndex(PropertyMapping column, string name)
+        private void AppendIndex(PropertyMapping column, string name, string baseName)
         {
             query.Append(" INDEX ");
             query.DuringSymbol(name);
             query.Append(" (");
-            AppendColumnName(column);
+            AppendColumnName(column, baseName);
             query.Append(")");            
         }
 
-        private void AppendCreateIndex(TypeMapping table, PropertyMapping column, string name)
+        private void AppendCreateIndex(TypeMapping table, PropertyMapping column, string name, string baseName)
         {
             query.Append("CREATE INDEX ");
             query.DuringSymbol(name);
             query.Append(" ON ");
             query.DuringSymbol(table.TableName);
             query.Append("(");
-            AppendColumnName(column);
+            AppendColumnName(column, baseName);
             query.Append(")");
-        }
-
-        public SchemaQueryBuilder<T> CreateTable()
-        {
-            return CreateTable(typeof(T));
         }
 
         private static bool DoesForeignTableExist(PropertyMapping property, IEnumerable<string> existingTables)
@@ -125,106 +153,134 @@ namespace Folke.Elm
             return $"{table.TableName}_{column.ColumnName}";
         }
 
-        public SchemaQueryBuilder<T> CreateTable(Type type, IList<string> existingTables = null)
+        public SchemaQueryBuilder CreateTable(TypeMapping mapping, IList<string> existingTables = null)
         {
-            var mapping = connection.Mapper.GetTypeMapping(type);
             query.Append("CREATE TABLE ");
             query.DuringSymbol(mapping.TableName);
             query.Append(" (");
             bool canCreateIndex = connection.Driver.CanAddIndexInCreateTable();
 
+            AppendColumns(existingTables, mapping, null);
+
+            if (canCreateIndex)
+            {
+                AppendColumnIndexes(existingTables, mapping, null);
+            }
+
+            AppendColumnForeignKeys(existingTables, mapping, null);
+
+            query.Append(")");
+
+            if (!canCreateIndex)
+            {
+                AppendCreateIndexes(existingTables, mapping, null);
+            }
+            return this;
+        }
+
+        private void AppendCreateIndexes(IList<string> existingTables, TypeMapping mapping, string baseName)
+        {
+            foreach (var property in mapping.Columns.Values)
+            {
+                if (!DoesForeignTableExist(property, existingTables))
+                    continue;
+
+                if (property.Index != null)
+                {
+                    query.Append(";");
+                    AppendCreateIndex(mapping, property, property.Index, baseName);
+                }
+                else if (property.Reference != null)
+                {
+                    query.Append(";");
+                    AppendCreateIndex(mapping, property, GetAutoIndexName(mapping, property), baseName);
+                }
+                else if (property.ComplexType != null)
+                {
+                    AppendCreateIndexes(existingTables, property.ComplexType, property.ComposeName(baseName));
+                }
+            }
+        }
+
+        private void AppendColumnForeignKeys(IList<string> existingTables, TypeMapping mapping, string baseName)
+        {
+            foreach (var property in mapping.Columns.Values)
+            {
+                if (property.Reference != null && DoesForeignTableExist(property, existingTables))
+                {
+                    AddComma();
+                    AppendForeignKey(property, baseName);
+                }
+
+                if (property.ComplexType != null)
+                {
+                    AppendColumnForeignKeys(existingTables, property.ComplexType, property.ComposeName(baseName));
+                }
+            }
+        }
+
+        private void AppendColumnIndexes(IList<string> existingTables, TypeMapping mapping, string baseName)
+        {
+            foreach (var property in mapping.Columns.Values)
+            {
+                if (!DoesForeignTableExist(property, existingTables))
+                    continue;
+
+                if (property.Index != null)
+                {
+                    AddComma();
+                    AppendIndex(property, property.Index, baseName);
+                }
+                else if (property.Reference != null)
+                {
+                    AddComma();
+                    AppendIndex(property, GetAutoIndexName(mapping, property), baseName);
+                }
+                else if (property.ComplexType != null)
+                {
+                    AppendColumnIndexes(existingTables, property.ComplexType, property.ComposeName(baseName));
+                }
+            }
+        }
+
+        private void AppendColumns(IList<string> existingTables, TypeMapping mapping, string baseName)
+        {
             foreach (var column in mapping.Columns.Values)
             {
                 if (!DoesForeignTableExist(column, existingTables))
                     continue;
 
                 AddComma();
-                AppendColumnName(column);
-                AppendColumnType(column);
-            }
-
-            if (canCreateIndex)
-            {
-                foreach (var property in mapping.Columns.Values)
+                if (column.ComplexType != null)
                 {
-                    if (!DoesForeignTableExist(property, existingTables))
-                        continue;
-
-                    if (property.Index != null)
-                    {
-                        AddComma();
-                        AppendIndex(property, property.Index);
-                    }
-                    else if (property.Reference != null)
-                    {
-                        AddComma();
-                        AppendIndex(property, GetAutoIndexName(mapping, property));
-                    }
+                    AppendColumns(existingTables, column.ComplexType, column.ComposeName(baseName));
                 }
-
-            }
-
-            foreach (var property in mapping.Columns.Values)
-            {
-                if (property.Reference != null && DoesForeignTableExist(property, existingTables))
+                else
                 {
-                    AddComma();
-                    AppendForeignKey(property);
+                    AppendColumnName(column, baseName);
+                    AppendColumnType(column);
                 }
             }
-
-            query.Append(")");
-
-            if (!canCreateIndex)
-            {
-                foreach (var property in mapping.Columns.Values)
-                {
-                    if (!DoesForeignTableExist(property, existingTables))
-                        continue;
-
-                    if (property.Index != null)
-                    {
-                        query.Append(";");
-                        AppendCreateIndex(mapping, property, property.Index);
-                    }
-                    else if (property.Reference != null)
-                    {
-                        query.Append(";");
-                        AppendCreateIndex(mapping, property, GetAutoIndexName(mapping, property));
-                    }
-                }
-            }
-            return this;
         }
 
-        public SchemaQueryBuilder<T> DropTable()
-        {
-            return DropTable(typeof(T));
-        }
-
-        public SchemaQueryBuilder<T> DropTable(Type type)
+        public SchemaQueryBuilder DropTable(TypeMapping type)
         {
             query.BeforeDropTable();
-            query.DuringSymbol(connection.Mapper.GetTypeMapping(type).TableName);
+            query.DuringSymbol(type.TableName);
             return this;
         }
 
-        internal SchemaQueryBuilder<T> AlterTable()
-        {
-            return AlterTable(typeof(T));
-        }
-
-        internal SchemaQueryBuilder<T> AlterTable(Type type)
+        internal SchemaQueryBuilder AlterTable(TypeMapping type)
         {
             query.AppendAfterSpace("ALTER TABLE ");
-            query.DuringSymbol(connection.Mapper.GetTypeMapping(type).TableName);
+            query.DuringSymbol(type.TableName);
             return this;
         }
 
-        internal void AddColumn(PropertyMapping property)
+        internal void AddColumn(PropertyMapping property, string baseName)
         {
             query.BeforeAddColumn();
-            AppendColumnName(property);
+            AppendColumnName(property, baseName);
             AppendColumnType(property);
         }
     
@@ -242,29 +298,33 @@ namespace Folke.Elm
                 commaAdded = true;
             }
         }
-
-        internal bool AlterColumns(IList<IColumnDefinition> columns)
+        
+        internal bool AlterColumns(TypeMapping typeMapping, IList<IColumnDefinition> columns)
         {
-            return AlterColumns(typeof(T), columns);
+            return AlterColumns(typeMapping, columns, null);
         }
 
-        internal bool AlterColumns(Type type, IList<IColumnDefinition> columns)
+        internal bool AlterColumns(TypeMapping mapping, IList<IColumnDefinition> columns, string baseName)
         {
             bool changes = false;
-            var mapping = connection.Mapper.GetTypeMapping(type);
-            
- 	        foreach (var property in mapping.Columns.Values)
+            foreach (var property in mapping.Columns.Values)
             {
-                string columnName = property.ColumnName;
+                if (property.ComplexType != null)
+                {
+                    changes |= AlterColumns(property.ComplexType, columns, property.ComposeName(baseName));
+                    continue;
+                }
+
+                string columnName = property.ComposeName(baseName);
                 bool foreign = property.Reference != null;
                 
                 var existingColumn = columns.SingleOrDefault(c => c.ColumnName.Equals(columnName,StringComparison.OrdinalIgnoreCase));
                 if (existingColumn == null)
                 {
                     // TODO ugly
-                    DuringAlterTable(type);
+                    DuringAlterTable(mapping);
 
-                    AddColumn(property);
+                    AddColumn(property, baseName);
                     changes = true;
                     if (foreign)
                     {
@@ -284,11 +344,11 @@ namespace Folke.Elm
                                 query.Append("ADD ");
                                 if (property.Index != null)
                                 {
-                                    AppendIndex(property, property.Index);
+                                    AppendIndex(property, property.Index, baseName);
                                 }
                                 else if (foreign)
                                 {
-                                    AppendIndex(property, property.ColumnName);
+                                    AppendIndex(property, property.ColumnName, baseName);
                                 }
                             }
                             else
@@ -296,11 +356,11 @@ namespace Folke.Elm
                                 query.Append(";");
                                 if (property.Index != null)
                                 {
-                                    AppendCreateIndex(mapping, property, property.Index);
+                                    AppendCreateIndex(mapping, property, property.Index, baseName);
                                 }
                                 else if (foreign)
                                 {
-                                    AppendCreateIndex(mapping, property, property.ColumnName);
+                                    AppendCreateIndex(mapping, property, property.ColumnName, baseName);
                                 }
                             }
                         }
@@ -313,8 +373,8 @@ namespace Folke.Elm
                     var newType = connection.Driver.GetSqlType(columnProperty, foreign);
                     if (!connection.Driver.EquivalentTypes(newType, existingColumn.ColumnType))
                     {
-                        DuringAlterTable(type);
-                        query.BeforeAlterColumnType(property.ColumnName);
+                        DuringAlterTable(mapping);
+                        query.BeforeAlterColumnType(property.ComposeName(baseName));
                         AppendColumnType(property);
                         changes = true;
                     }
@@ -323,7 +383,7 @@ namespace Folke.Elm
             return changes;
         }
 
-        private void DuringAlterTable(Type type)
+        private void DuringAlterTable(TypeMapping type)
         {
             if (connection.Driver.CanDoMultipleActionsInAlterTable())
             {
