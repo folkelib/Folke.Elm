@@ -9,7 +9,7 @@
   },
 
   "dependencies": {
-    "Folke.Elm.Sqlite": "1.2.0-*",
+    "Folke.Elm.Sqlite": "*",
     "Folke.Elm.Abstract.Test": "1.2.0-*",
     "dotnet-test-xunit": "1.0.0-rc2-build10025",
     "Microsoft.NETCore.App": {
