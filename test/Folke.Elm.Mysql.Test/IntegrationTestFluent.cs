@@ -57,8 +57,8 @@ namespace Folke.Elm.Mysql.Test
             connection.CreateTable<TestPoco>(drop: true);
             connection.CreateTable<TestManyPoco>(drop: true);
             connection.CreateTable<TestMultiPoco>(drop: true);
-            connection.CreateTable<TestCollectionMember>(drop: true);
             connection.CreateTable<TestCollection>(drop: true);
+            connection.CreateTable<TestCollectionMember>(drop: true);
 
             var poco = new TestPoco { Boolean = true, Name = "FakePoco" };
             connection.Save(poco);

@@ -9,11 +9,11 @@
   },
     "dependencies": {
       "Folke.Elm": "1.2.0-*",
-      "MySql.Data": "7.0.3-DMR"
+      "MySqlConnector": "0.1.0-*"
     },
 
   "frameworks": {
-    "net461": { },
-    "net451": { }
+    "net451": {},
+    "netstandard1.5": {}
   }
   }

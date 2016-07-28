@@ -58,7 +58,7 @@ namespace Folke.Elm
         {
             for (var i = 0; i < commandParameters.Length; i++)
             {
-                var parameterName = "@Item" + i.ToString(CultureInfo.InvariantCulture);
+                var parameterName = "Item" + i.ToString(CultureInfo.InvariantCulture);
                 var parameter = commandParameters[i];
                 var commandParameter = command.CreateParameter();
                 commandParameter.ParameterName = parameterName;

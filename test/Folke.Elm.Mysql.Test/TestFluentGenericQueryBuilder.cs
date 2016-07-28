@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Reflection;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
 using Xunit;
@@ -68,8 +69,8 @@ namespace Folke.Elm.Mysql.Test
             fluentSelectBuilder.Values(x => x.Id, x => x.Text);
             Assert.Equal("SELECT `t`.`Id`, `t`.`Text`", queryBuilder.Sql);
             Assert.Equal(2, queryBuilder.SelectedFields.Count);
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
         }
 
         [Fact]
@@ -78,9 +79,9 @@ namespace Folke.Elm.Mysql.Test
             fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
             Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t1`.`Value`", queryBuilder.Sql);
             Assert.Equal(3, queryBuilder.SelectedFields.Count);
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Id")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetProperty("Text")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeChildClass).GetProperty("Value")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeChildClass).GetTypeInfo().GetProperty("Value")));
         }
 
         [Fact]
