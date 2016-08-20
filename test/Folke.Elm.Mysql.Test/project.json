@@ -9,17 +9,24 @@
   },
 
   "dependencies": {
-    "Folke.Elm.Mysql": "1.2.0-*",
+    "Folke.Elm.Mysql": "*",
     "Folke.Elm.Abstract.Test": "1.2.0-*",
     "dotnet-test-xunit": "1.0.0-rc2-build10025"
   },
    "testRunner": "xunit",
   "frameworks": {
-    "net461": {
-      "frameworkAssemblies": {
-        "System.Configuration": "4.0.0.0",
-        "System.ComponentModel.DataAnnotations": "4.0.0.0"
-      }
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0",
+          "type": "platform"
+        }
+      },
+      "imports": [
+        "dotnet5.6",
+        "dnxcore50",
+        "portable-net45+win8"
+      ]
     }
   }
   }

@@ -8,7 +8,7 @@
     "licenseUrl": ""
   },
   "dependencies": {
-    "Folke.Elm.MicrosoftSqlServer": "1.2.0-*",
+    "Folke.Elm.MicrosoftSqlServer": "*",
     "Folke.Elm.Abstract.Test": "1.2.0-*",
     "dotnet-test-xunit": "1.0.0-*",
     "Microsoft.NETCore.App": {

@@ -1,2 +1,2 @@
 job1:
-  script: "powershell ./build.ps1 %NUGET_KEY%"
+  script: "powershell ./build.ps1 %NUGET_KEY% %CI_BUILD_TAG%"

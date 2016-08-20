@@ -27,7 +27,8 @@ namespace Folke.Elm.Mysql
 
         private static string GetSqlType(Type type, int maxLength)
         {
-            if (type.IsGenericType)
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
             if (type == typeof (bool))
@@ -62,9 +63,9 @@ namespace Folke.Elm.Mysql
             {
                 return "INT";
             }
-            else if (type.IsEnum)
+            else if (typeInfo.IsEnum)
             {
-                if (type.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
+                if (typeInfo.GetCustomAttribute(typeof(FlagsAttribute)) != null)
                     return GetSqlType(Enum.GetUnderlyingType(type), maxLength);
                 return "VARCHAR(255)";
             }
@@ -131,7 +132,7 @@ namespace Folke.Elm.Mysql
 
         public object ConvertValueToParameter(IMapper mapper, object value)
         {
-            if (value == null) return null;
+            if (value == null) return DBNull.Value;
             var parameterType = value.GetType();
             if (parameterType.GetTypeInfo().IsEnum)
             {
@@ -193,7 +194,7 @@ namespace Folke.Elm.Mysql
                 value = date.ToLocalTime().ToUniversalTime(); // Allow to force UTC (from Unspecified)
             }
             else if (type == typeof(bool))
-                value = reader.GetBoolean(index);
+                value = (sbyte)reader.GetValue(index) == 1;
             else if (type.GetTypeInfo().IsEnum)
             {
                 if (type.GetTypeInfo().GetCustomAttribute(typeof (FlagsAttribute)) != null)

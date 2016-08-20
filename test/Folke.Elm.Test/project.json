@@ -10,7 +10,7 @@
 
   "dependencies": {
     "dotnet-test-xunit": "1.0.0-rc2-build10025",
-    "Folke.Elm": "1.2.0-*",
+    "Folke.Elm": "*",
     "Microsoft.NETCore.App": {
       "version": "1.0.0",
       "type": "platform"

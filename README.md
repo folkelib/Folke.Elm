@@ -4,7 +4,7 @@ Folke.Elm
 Object-Relational Mapping library written in C#.
 
 [![Documentation Status](https://readthedocs.org/projects/folkeelm/badge/?version=latest)](http://folkeelm.readthedocs.org/en/latest/?badge=latest)
-
+[![Build status](https://ci.appveyor.com/api/projects/status/i8rshg1fkdyhkr37?svg=true)](https://ci.appveyor.com/project/acastaner/folke-elm)
 ##Usage
 
 ```C#

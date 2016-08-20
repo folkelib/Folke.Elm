@@ -8,7 +8,7 @@
     "licenseUrl": ""
   },
   "dependencies": {
-    "Folke.Elm": "1.2.0-*",
+    "Folke.Elm": "*",
     "xunit": "2.1.0"
   },
 

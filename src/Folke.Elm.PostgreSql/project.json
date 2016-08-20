@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0-*",
+  "version": "1.3.0-*",
   "description": "An adapter for PostgreSQL for Folke.Elm",
   "authors": [ "Sidoine De Wispelaere" ],
   "packOptions": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "NETStandard.Library": "1.6.0",
-    "Folke.Elm": "1.2.0-*",
+    "Folke.Elm": "*",
     "npgsql": "3.1.5"
   },
 
