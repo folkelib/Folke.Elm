@@ -45,7 +45,7 @@ namespace Folke.Elm.Fluent
         public static ISelectedValuesResult<T, TMe> All<T, TMe, TU>(this ISelectedValuesTarget<T, TMe> target, Expression<Func<T, TU>> tableExpression)
         {
             target.AppendSelect();
-            var table = target.QueryBuilder.RegisterTable(tableExpression.Body);
+            var table = target.QueryBuilder.GetTable(tableExpression.Body, true);
             target.QueryBuilder.AppendAllSelects(table);
             return (ISelectedValuesResult<T, TMe>)target;
         }

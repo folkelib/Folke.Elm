@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Folke.Elm.Fluent;
 
@@ -29,7 +30,7 @@ namespace Folke.Elm
                 if (results == null)
                 {
                     var query = connection.Select<T>().All();
-                    var joinTables = new List<BaseQueryBuilder.SelectedTable>();
+                    var joinTables = new Dictionary<PropertyInfo, SelectedTable>();
                     var queryBuilder = query.QueryBuilder;
                     var type = typeof (T);
                     var typeInfo = type.GetTypeInfo();
@@ -41,8 +42,8 @@ namespace Folke.Elm
                         var property = typeInfo.GetProperty(join);
                         query.AppendSelect();
                         var joinTypeMapping = queryBuilder.Mapper.GetTypeMapping(property.PropertyType);
-                        var table = queryBuilder.RegisterTable(joinTypeMapping, join);
-                        joinTables.Add(table);
+                        var table = queryBuilder.RegisterTable(queryBuilder.SelectedFields.FirstOrDefault(x => x.PropertyMapping.PropertyInfo.Name == property.Name),  joinTypeMapping);
+                        joinTables.Add(property, table);
                         queryBuilder.AppendAllSelects(table);
                     }
 
@@ -52,12 +53,12 @@ namespace Folke.Elm
                     // Join on all the tables in the joins list
                     foreach (var joinTable in joinTables)
                     {
-                        var property = typeInfo.GetProperty(joinTable.InternalIdentifier);
-                        var joinKeyProperty = joinTable.Mapping.Key;
+                        var property = joinTable.Key;
+                        var joinKeyProperty = joinTable.Value.Mapping.Key;
                         queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
-                        queryBuilder.StringBuilder.AppendTable(joinTable);
+                        queryBuilder.StringBuilder.AppendTable(joinTable.Value);
                         queryBuilder.StringBuilder.Append(" ON ");
-                        BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable };
+                        BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable.Value };
                         queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
                         queryBuilder.StringBuilder.Append(" = ");
                         BaseQueryBuilder.TableColumn tableColumn1 = new BaseQueryBuilder.TableColumn { Column = queryBuilder.DefaultTable.Mapping.Columns[property.Name], Table = queryBuilder.DefaultTable };

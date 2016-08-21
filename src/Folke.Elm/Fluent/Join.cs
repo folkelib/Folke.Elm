@@ -13,7 +13,7 @@ namespace Folke.Elm.Fluent
         {
             joinTarget.QueryBuilder.AppendJoin(type);
             BaseQueryBuilder queryBuilder = joinTarget.QueryBuilder;
-            var selectedTable = queryBuilder.RegisterTable(tableExpression.Body);
+            var selectedTable = queryBuilder.GetTable(tableExpression.Body, true);
             queryBuilder.StringBuilder.AppendTable(selectedTable);
             return (IJoinResult<T, TMe>)joinTarget;
         }
@@ -23,7 +23,7 @@ namespace Folke.Elm.Fluent
             joinTarget.QueryBuilder.AppendJoin(type);
             joinTarget.SubQuery(subQuery);
             joinTarget.QueryBuilder.StringBuilder.Append("AS");
-            var table = joinTarget.QueryBuilder.RegisterTable(tableAliasExpression.Body);
+            var table = joinTarget.QueryBuilder.GetTable(tableAliasExpression.Body, true);
             joinTarget.QueryBuilder.StringBuilder.Append(table.Alias);
             return (IJoinResult<T, TMe>)joinTarget;
         }

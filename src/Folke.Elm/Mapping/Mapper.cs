@@ -13,7 +13,7 @@ namespace Folke.Elm.Mapping
         /// <inheritdoc/>
         public TypeMapping GetTypeMapping(Type type)
         {
-            if (type == typeof(object))
+            if (type == typeof(object) || type == typeof(string))
                 throw new InvalidOperationException("Unexpected type to map");
             TypeMapping typeMapping;
             if (typeMappings.TryGetValue(type, out typeMapping))

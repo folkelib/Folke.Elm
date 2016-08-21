@@ -5,7 +5,7 @@ namespace Folke.Elm.Fluent
 {
     public static class QueryBuilderExtensions
     {
-        public static BaseQueryBuilder.SelectedTable AppendSelectedColumns(this BaseQueryBuilder builder, BaseQueryBuilder.SelectedTable selectedTable, IEnumerable<PropertyMapping> columns)
+        public static SelectedTable AppendSelectedColumns(this BaseQueryBuilder builder, SelectedTable selectedTable, IEnumerable<PropertyMapping> columns)
         {
             bool first = true;
 
@@ -22,7 +22,7 @@ namespace Folke.Elm.Fluent
             return selectedTable;
         }
 
-        public static BaseQueryBuilder.SelectedTable AppendAllSelects(this BaseQueryBuilder builder, BaseQueryBuilder.SelectedTable selectedTable)
+        public static SelectedTable AppendAllSelects(this BaseQueryBuilder builder, SelectedTable selectedTable)
         {
             return builder.AppendSelectedColumns(selectedTable, selectedTable.Mapping.Columns.Values);
         }

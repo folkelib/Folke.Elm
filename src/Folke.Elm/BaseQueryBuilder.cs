@@ -35,7 +35,7 @@ namespace Folke.Elm
 
         private MappedClass baseMappedClass;
 
-        private IList<SelectedField> selectedFields;
+        private readonly IList<SelectedField> selectedFields = new List<SelectedField>();
         private readonly IList<SelectedTable> tables;
 
         private SelectedTable defaultTable;
@@ -90,66 +90,13 @@ namespace Folke.Elm
 
         public object[] Parameters => parameters?.ToArray();
 
-        public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType));
-        
-        /// <summary>
-        /// Serialize an expression that is used as an alias in a query. It allows to uniquely identify a table.
-        /// </summary>
-        /// <param name="tableExpression">The expression</param>
-        /// <param name="tableType">Returns the table type</param>
-        /// <returns>The internal identifier</returns>
-        internal string CreateTableInternalIdentifier(Expression tableExpression, out Type tableType)
-        {
-            string internalIdentifier = null;
-            tableType = tableExpression.Type;
-
-            while (tableExpression != null)
-            {
-                switch (tableExpression.NodeType)
-                {
-                    case ExpressionType.Parameter:
-                        if (tableExpression.Type != defaultType.Type)
-                            throw new Exception("Internal error");
-                        return internalIdentifier;
-                        
-                    case ExpressionType.MemberAccess:
-                        var memberExpression = (MemberExpression) tableExpression;
-                        if (internalIdentifier != null)
-                            internalIdentifier = memberExpression.Member.Name + "." + internalIdentifier;
-                        else
-                            internalIdentifier = memberExpression.Member.Name;
-                        tableExpression = memberExpression.Expression;
-                        break;
-                    case ExpressionType.Constant:
-                        if (internalIdentifier != null)
-                            internalIdentifier = tableExpression + "." + internalIdentifier;
-                        else
-                            internalIdentifier = tableExpression.ToString();
-                        return internalIdentifier;
-                    case ExpressionType.Call:
-                        var callExpression = (MethodCallExpression) tableExpression;
-                        if (internalIdentifier != null)
-                            internalIdentifier = callExpression.Method.Name + "()." + internalIdentifier;
-                        else
-                            internalIdentifier = callExpression.Method.Name + "()";
-                        tableExpression = callExpression.Object;
-                        break;
-                    case ExpressionType.Convert:
-                        var convertExpression = (UnaryExpression) tableExpression;
-                        tableExpression = convertExpression.Operand;
-                        tableType = tableExpression.Type;
-                        break;
-                    default:
-                        throw new Exception("Unexpected node type " + tableExpression.NodeType);
-                }
-            }
-            return internalIdentifier;
-        }
+        public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType, DefaultTable));
 
         /// <summary>
         /// Gets a table by its alias
         /// </summary>
         /// <param name="alias">The expression that is used as an alias to a table</param>
+        /// <param name="register">Register the table if it has never been</param>
         /// <returns>The table</returns>
         protected internal SelectedTable GetTable(Expression alias, bool register)
         {
@@ -160,30 +107,82 @@ namespace Folke.Elm
             switch (alias.NodeType)
             {
                 case ExpressionType.MemberAccess:
+                    if (!Mapper.IsMapped(alias.Type)) return null;
                     var mapping = Mapper.GetTypeMapping(alias.Type);
                     var memberExpression = (MemberExpression)alias;
                     var parentTable = GetTable(memberExpression.Expression, false);
-                    table = tables.FirstOrDefault(x => x.Parent == parentTable && x.Mapping == mapping);
+                    if (parentTable == null)
+                    {
+                        return GetRootTable(mapping, alias, register);
+                    }
+                    var propertyMapping = parentTable.Mapping.GetColumn(memberExpression.Member);
+                    var selectedField =
+                        selectedFields.FirstOrDefault(
+                            x =>
+                                x.Table == parentTable &&
+                                x.PropertyMapping == propertyMapping);
+
+                    if (selectedField == null)
+                    {
+                        selectedField = SelectField(propertyMapping, parentTable);
+                    }
+
+                    table = tables.FirstOrDefault(x => x.Parent == selectedField);
                     if (table == null)
                     {
                         if (!register)
                             throw new Exception($"Table for expression {alias} not registered");
-                        table = new SelectedTable {
-                            Parent = parentTable,
-                            Mapping = mapping,
-                            Alias = "t" + tables.Count
-                        };
+                        table = RegisterTable(selectedField, mapping);
                     }
                     break;
+                case ExpressionType.Parameter:
+                    if (defaultTable == null)
+                    {
+                        defaultTable = new SelectedTable
+                        {
+                            Alias = "t",
+                            Mapping = defaultType,
+                            Parent = null
+                        };
+                    }
+                    return defaultTable;
                 case ExpressionType.Convert:
                     return GetTable(((UnaryExpression) alias).Operand, register);
                 default:
-                    throw new Exception("Unexcepted node type");
+                    return GetRootTable(Mapper.GetTypeMapping(alias.Type), alias, register);
             }
 
             return table;
         }
-        
+
+        private SelectedTable GetRootTable(TypeMapping mapping, Expression expression, bool register)
+        {
+            var expressionString = expression.ToString();
+            var table = tables.FirstOrDefault(x => x.Expression == expressionString);
+            if (table != null || !register) return table;
+            table = new SelectedTable
+            {
+                Mapping = mapping,
+                Alias = "t" + tables.Count,
+                Expression = expressionString
+            };
+            tables.Add(table);
+            return table;
+        }
+
+        internal SelectedTable RegisterTable(SelectedField parentField, TypeMapping mapping)
+        {
+            var table = new SelectedTable
+            {
+                Parent = parentField,
+                Mapping = mapping,
+                Alias = "t" + tables.Count
+            };
+            tables.Add(table);
+            parentField.ChildTable = table;
+            return table;
+        }
+
         public int AddParameter(object parameter)
         {
             if (parameters == null)
@@ -566,22 +565,22 @@ namespace Folke.Elm
             return new Values(list);
         }
         
-        internal SelectedTable RegisterTable(TypeMapping typeMapping, string internalIdentifier)
-        {
-            var table = tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);
-            if (table == null)
-            {
-                table = new SelectedTable { Alias = "t" + tables.Count, InternalIdentifier = internalIdentifier, Mapping = typeMapping };
-                tables.Add(table);
-            }
-            return table;
-        }
+        //internal SelectedTable RegisterTable(TypeMapping typeMapping, string internalIdentifier)
+        //{
+        //    var table = tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);
+        //    if (table == null)
+        //    {
+        //        table = new SelectedTable { Alias = "t" + tables.Count, InternalIdentifier = internalIdentifier, Mapping = typeMapping };
+        //        tables.Add(table);
+        //    }
+        //    return table;
+        //}
 
         internal SelectedTable RegisterRootTable()
         {
             if (defaultTable == null)
             {
-                defaultTable = new SelectedTable { Alias = "t", InternalIdentifier = null, Mapping = defaultType };
+                defaultTable = new SelectedTable { Alias = "t", Parent = null, Mapping = defaultType };
                 tables.Add(defaultTable);
             }
             return defaultTable;
@@ -590,12 +589,12 @@ namespace Folke.Elm
         /// <summary>Register a table in the list of selected tables</summary>
         /// <param name="aliasExpression">An expression that points to the table</param>
         /// <returns>The selected table</returns>
-        protected internal SelectedTable RegisterTable(Expression aliasExpression)
-        {
-            Type type;
-            var alias = CreateTableInternalIdentifier(aliasExpression, out type);
-            return RegisterTable(Mapper.GetTypeMapping(type), alias);
-        }
+        //protected internal SelectedTable RegisterTable(Expression aliasExpression)
+        //{
+        //    Type type;
+        //    var alias = CreateTableInternalIdentifier(aliasExpression, out type);
+        //    return RegisterTable(Mapper.GetTypeMapping(type), alias);
+        //}
 
         /// <summary>Adds a column to the list of selected values</summary>
         /// <param name="column"></param>
@@ -607,11 +606,11 @@ namespace Folke.Elm
         /// <summary>Adds a column from a given table to the list of selected values</summary>
         /// <param name="property">The property mapping</param>
         /// <param name="table">The selected table</param>
-        internal void SelectField(PropertyMapping property, SelectedTable table)
+        internal SelectedField SelectField(PropertyMapping property, SelectedTable table)
         {
-            if (selectedFields == null)
-                selectedFields = new List<SelectedField>();
-            selectedFields.Add(new SelectedField { PropertyMapping = property, Table = table, Index = selectedFields.Count });
+            var selectedField = new SelectedField { PropertyMapping = property, Table = table, Index = selectedFields.Count };
+            selectedFields.Add(selectedField);
+            return selectedField;
         }
 
         /// <summary>Select a column by an expression that maps to a column</summary>
@@ -644,14 +643,14 @@ namespace Folke.Elm
                     callExpression.Method.Name == nameof(ExpressionHelpers.Property))
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
-                    var table = registerTable ? RegisterTable(callExpression.Arguments[0]) : GetTable(callExpression.Arguments[0]);
+                    var table = GetTable(callExpression.Arguments[0], registerTable);
                     return new TableColumn {Column = table.Mapping.Columns[propertyInfo.Name], Table = table };
                 }
 
                 if (callExpression.Method.DeclaringType == typeof(ExpressionHelpers) &&
                     callExpression.Method.Name == nameof(ExpressionHelpers.Key))
                 {
-                    var table = registerTable ? RegisterTable(callExpression.Arguments[0]) : GetTable(callExpression.Arguments[0]);
+                    var table = GetTable(callExpression.Arguments[0], registerTable);
                     return new TableColumn { Column = table.Mapping.Key, Table = table };
                 }
                 return null;
@@ -665,8 +664,25 @@ namespace Folke.Elm
             var columnMember = (MemberExpression)columnExpression;
             // var parentType = columnMember.Expression.Type;
             // var parentTypeMapping = Mapper.GetTypeMapping(parentType);
-            var parentTable = GetTable(columnMember.Expression);
+            var parentTable = GetTable(columnMember.Expression, registerTable);
+            if (parentTable == null)
+            {
+                // This is not an expression that points to the column of table (should be a constant or a variable)
+                // Maybe it's the table itself
+                var table = GetTable(columnExpression, registerTable);
+                if (table == null) return null;
+                return new TableColumn
+                {
+                    Table = table,
+                    Column = table.Mapping.Key
+                };
+            }
 
+            return new TableColumn
+            {
+                Table = parentTable,
+                Column = parentTable.Mapping.GetColumn(columnMember.Member)
+            };
             /*
             var columnMemberExpression = columnMember.Expression;
             if (columnMemberExpression != null)
@@ -725,8 +741,8 @@ namespace Folke.Elm
             if (columnAsTable != null)
             {
                 return new TableColumn {Column = columnAsTable.Mapping.Key, Table = columnAsTable};
-            }*/
-            return null;
+            }
+            return null;*/
         }
 
         private bool AreSameProperties(MemberInfo member, PropertyInfo propertyInfo)
@@ -743,7 +759,7 @@ namespace Folke.Elm
         /// <returns></returns>
         internal TableColumn GetTableKey(Expression tableExpression)
         {
-            var table = GetTable(tableExpression);
+            var table = GetTable(tableExpression, false);
             return new TableColumn {Column = table.Mapping.Key, Table = table};
         }
 
@@ -767,31 +783,6 @@ namespace Folke.Elm
                 SelectField(column, table);
                 fields.Add(new Column(table.Alias, column.ColumnName));
             }
-        }
-
-        /// <summary>A table that is referenced somewhere in the expression</summary>
-        public class SelectedTable
-        {
-            /// <summary>Gets or sets the mapping between the type and the table</summary>
-            public TypeMapping Mapping { get; set; }
-
-            /// <summary>Gets or sets the alias as used in the resulting SQL expression</summary>
-            public string Alias { get; set; }
-
-            /// <summary>Gets or sets an identifier that is generally created by <see cref="CreateTableInternalIdentifier"/> 
-            /// and allows to uniquely identify this selected table</summary>
-            public SelectedTable Parent { get; set; }
-        }
-
-        public class SelectedField
-        {
-            public PropertyMapping PropertyMapping { get; set; }
-
-            public SelectedTable Table { get; set; }
-
-            public int Index { get; set; }
-
-            public string BaseName { get; set; }
         }
 
         public class TableColumn

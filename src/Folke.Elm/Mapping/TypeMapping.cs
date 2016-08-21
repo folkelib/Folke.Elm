@@ -167,5 +167,10 @@ namespace Folke.Elm.Mapping
 
         /// <summary>Gets or sets the list of collections</summary>
         public Dictionary<string, MappedCollection> Collections { get; set; }
+
+        public PropertyMapping GetColumn(MemberInfo memberInfo)
+        {
+            return Columns[memberInfo.Name];
+        }
     }
 }

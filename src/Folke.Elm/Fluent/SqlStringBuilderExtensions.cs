@@ -5,7 +5,7 @@
     /// </summary>
     public static class SqlStringBuilderExtensions
     {
-        public static void AppendTable(this SqlStringBuilder query, BaseQueryBuilder.SelectedTable table)
+        public static void AppendTable(this SqlStringBuilder query, SelectedTable table)
         {
             query.DuringTable(table.Mapping.TableSchema, table.Mapping.TableName);
             query.DuringAliasDefinition(table.Alias);

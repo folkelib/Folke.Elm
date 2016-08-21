@@ -39,7 +39,7 @@ namespace Folke.Elm.Mysql.Test
         {
             var propertyInfo = typeof (FakeClass).GetProperty("Id");
             fluentSelectBuilder.Values(x => x.Property(propertyInfo).Equals(3));
-            Assert.Equal("SELECT( `t0`.`Id`= @Item0)", queryBuilder.Sql);
+            Assert.Equal("SELECT( `t`.`Id`= @Item0)", queryBuilder.Sql);
         }
 
         [Fact]
