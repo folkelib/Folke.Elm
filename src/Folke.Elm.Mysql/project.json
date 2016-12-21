@@ -9,7 +9,7 @@
   },
     "dependencies": {
       "Folke.Elm": "*",
-      "MySqlConnector": "0.1.0-*"
+      "MySqlConnector": "0.9.1"
     },
 
   "frameworks": {
