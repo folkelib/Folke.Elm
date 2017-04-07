@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Folke.Elm.Abstract.Test Class Library</Description>
+    <VersionPrefix>1.2.0</VersionPrefix>
+    <Authors>Sidoine</Authors>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <AssemblyName>Folke.Elm.Abstract.Test</AssemblyName>
+    <PackageId>Folke.Elm.Abstract.Test</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Folke.Elm\Folke.Elm.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.2.0" />
+  </ItemGroup>
+</Project>

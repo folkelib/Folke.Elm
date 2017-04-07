@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}"
 EndProject
@@ -9,35 +9,32 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitlab-ci.yml = .gitlab-ci.yml
 		build.ps1 = build.ps1
-		global.json = global.json
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm", "src\Folke.Elm\Folke.Elm.xproj", "{84AEEC39-B019-4DF3-AD7B-F31A733822D2}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Mysql", "src\Folke.Elm.Mysql\Folke.Elm.Mysql.xproj", "{5F747073-602A-4FCD-A3B2-89AEDB27A8F4}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Sqlite", "src\Folke.Elm.Sqlite\Folke.Elm.Sqlite.xproj", "{E9D45571-3392-406F-AB57-7A5891BF5D67}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{004A198B-DA0A-4632-BD5A-C49D88FE834E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Abstract.Test", "test\Folke.Elm.Abstract.Test\Folke.Elm.Abstract.Test.xproj", "{F5B34B99-503F-49F0-9FDB-50861A22A360}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm", "src\Folke.Elm\Folke.Elm.csproj", "{84AEEC39-B019-4DF3-AD7B-F31A733822D2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Mysql.Test", "test\Folke.Elm.Mysql.Test\Folke.Elm.Mysql.Test.xproj", "{385ACCA0-9440-4DD7-BB64-643638703632}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Mysql", "src\Folke.Elm.Mysql\Folke.Elm.Mysql.csproj", "{5F747073-602A-4FCD-A3B2-89AEDB27A8F4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Sqlite.Test", "test\Folke.Elm.Sqlite.Test\Folke.Elm.Sqlite.Test.xproj", "{E71E7F59-0329-4D72-9622-FBCA9C157EB6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Sqlite", "src\Folke.Elm.Sqlite\Folke.Elm.Sqlite.csproj", "{E9D45571-3392-406F-AB57-7A5891BF5D67}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.Test", "test\Folke.Elm.Test\Folke.Elm.Test.xproj", "{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Abstract.Test", "test\Folke.Elm.Abstract.Test\Folke.Elm.Abstract.Test.csproj", "{F5B34B99-503F-49F0-9FDB-50861A22A360}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServer", "src\Folke.Elm.MicrosoftSqlServer\Folke.Elm.MicrosoftSqlServer.xproj", "{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Mysql.Test", "test\Folke.Elm.Mysql.Test\Folke.Elm.Mysql.Test.csproj", "{385ACCA0-9440-4DD7-BB64-643638703632}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.MicrosoftSqlServer.Test", "test\Folke.Elm.MicrosoftSqlServer.Test\Folke.Elm.MicrosoftSqlServer.Test.xproj", "{B99D6362-394C-47E0-B81A-91C86CB501E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Sqlite.Test", "test\Folke.Elm.Sqlite.Test\Folke.Elm.Sqlite.Test.csproj", "{E71E7F59-0329-4D72-9622-FBCA9C157EB6}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.PostgreSql", "src\Folke.Elm.PostgreSql\Folke.Elm.PostgreSql.xproj", "{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.Test", "test\Folke.Elm.Test\Folke.Elm.Test.csproj", "{C3F3025B-7EB5-43EA-B0A5-6B2CF833096F}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Folke.Elm.PostgreSql.Test", "test\Folke.Elm.PostgreSql.Test\Folke.Elm.PostgreSql.Test.xproj", "{E1147222-002C-4DB0-83DF-2D645C8108C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.MicrosoftSqlServer", "src\Folke.Elm.MicrosoftSqlServer\Folke.Elm.MicrosoftSqlServer.csproj", "{2B9F7CA9-BFE5-4134-A38E-6C6536274E49}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MySqlConnector", "..\MysqlConnector\src\MySqlConnector\MySqlConnector.xproj", "{F82378AF-274E-4FBA-8E45-27126D607B85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.MicrosoftSqlServer.Test", "test\Folke.Elm.MicrosoftSqlServer.Test\Folke.Elm.MicrosoftSqlServer.Test.csproj", "{B99D6362-394C-47E0-B81A-91C86CB501E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.PostgreSql", "src\Folke.Elm.PostgreSql\Folke.Elm.PostgreSql.csproj", "{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.PostgreSql.Test", "test\Folke.Elm.PostgreSql.Test\Folke.Elm.PostgreSql.Test.csproj", "{E1147222-002C-4DB0-83DF-2D645C8108C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,10 +86,6 @@ Global
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F82378AF-274E-4FBA-8E45-27126D607B85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F82378AF-274E-4FBA-8E45-27126D607B85}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F82378AF-274E-4FBA-8E45-27126D607B85}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F82378AF-274E-4FBA-8E45-27126D607B85}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
