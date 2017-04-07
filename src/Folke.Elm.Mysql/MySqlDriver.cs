@@ -13,7 +13,7 @@ namespace Folke.Elm.Mysql
     public class MySqlDriver : IDatabaseDriver
     {
         public bool HasBooleanType { get; } = true;
-        
+
         public virtual DbConnection CreateConnection(string connectionString)
         {
             return new MySqlConnection(connectionString);
@@ -195,9 +195,11 @@ namespace Folke.Elm.Mysql
             }
             else if (type == typeof(bool))
                 value = (sbyte)reader.GetValue(index) == 1;
+            else if (type == typeof(Guid))
+                value = reader.GetGuid(index);
             else if (type.GetTypeInfo().IsEnum)
             {
-                if (type.GetTypeInfo().GetCustomAttribute(typeof (FlagsAttribute)) != null)
+                if (type.GetTypeInfo().GetCustomAttribute(typeof(FlagsAttribute)) != null)
                 {
                     var numberValue = reader.GetValue(index);
                     value = Enum.ToObject(type, numberValue);
