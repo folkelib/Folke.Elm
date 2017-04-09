@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Folke.Elm.Mapping;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm.Fluent
 {
@@ -7,17 +8,19 @@ namespace Folke.Elm.Fluent
     {
         public static SelectedTable AppendSelectedColumns(this BaseQueryBuilder builder, SelectedTable selectedTable, IEnumerable<PropertyMapping> columns)
         {
-            bool first = true;
-
             foreach (var column in columns)
             {
-                builder.SelectField(column, selectedTable);
-                if (first)
-                    first = false;
+                if (column.Reference != null && column.Reference.IsComplexType)
+                {
+                    var subTable = builder.RegisterTable(selectedTable, column);
+                    builder.AppendAllSelects(subTable);
+                }
                 else
-                    builder.StringBuilder.DuringFields();
-                string tableName = selectedTable.Alias;
-                builder.StringBuilder.DuringColumn(tableName, column.ColumnName);
+                {
+                    var visitable = new Field(selectedTable, column);
+                    var selectedField = builder.SelectField(visitable);
+                    selectedField.Accept(builder.StringBuilder);
+                }
             }
             return selectedTable;
         }

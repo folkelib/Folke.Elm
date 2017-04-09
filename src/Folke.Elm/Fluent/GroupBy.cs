@@ -22,8 +22,8 @@ namespace Folke.Elm.Fluent
             {
                 queryBuilder.StringBuilder.DuringGroupBy();
             }
-            var column1 = queryBuilder.ExpressionToColumn(column.Body, false);
-            queryBuilder.StringBuilder.DuringColumn(column1.Table.Alias, column1.Property.ColumnName);
+            var column1 = queryBuilder.ExpressionToColumn(column.Body);
+            column1.Accept(queryBuilder.StringBuilder);
             return (IGroupByResult<T, TMe>) builder;
         }
     }

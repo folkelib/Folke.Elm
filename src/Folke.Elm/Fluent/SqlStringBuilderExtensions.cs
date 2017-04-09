@@ -1,4 +1,6 @@
-﻿namespace Folke.Elm.Fluent
+﻿using Folke.Elm.Visitor;
+
+namespace Folke.Elm.Fluent
 {
     /// <summary>
     /// Some helpers used to create SQL directly 

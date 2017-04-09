@@ -41,9 +41,9 @@ namespace Folke.Elm
                     foreach (var join in joins)
                     {
                         var property = typeInfo.GetProperty(join);
+                        var propertyMapping = typeMapping.GetColumn(property);
                         query.AppendSelect();
-                        var joinTypeMapping = queryBuilder.Mapper.GetTypeMapping(property.PropertyType);
-                        var table = queryBuilder.RegisterTable(rootTable, property,  joinTypeMapping);
+                        var table = queryBuilder.RegisterTable(rootTable, propertyMapping);
                         joinTables.Add(property, table);
                         queryBuilder.AppendAllSelects(table);
                     }
@@ -59,11 +59,11 @@ namespace Folke.Elm
                         queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
                         queryBuilder.StringBuilder.AppendTable(joinTable.Value);
                         queryBuilder.StringBuilder.Append(" ON ");
-                        Column tableColumn = new Column(joinTable.Value, joinKeyProperty);
-                        queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
+                        Field tableColumn = new Field(joinTable.Value, joinKeyProperty);
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
                         queryBuilder.StringBuilder.Append(" = ");
-                        Column tableColumn1 = new Column(queryBuilder.DefaultTable, queryBuilder.DefaultTable.Mapping.Columns[property.Name]);
-                        queryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Property.ColumnName);
+                        Field tableColumn1 = new Field(queryBuilder.DefaultTable, queryBuilder.DefaultTable.Mapping.Columns[property.Name]);
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Column.ColumnName);
                     }
 
                     bool first = true;
@@ -74,8 +74,8 @@ namespace Folke.Elm
                         {
                             queryBuilder.StringBuilder.Append(first ? " WHERE " : " OR ");
                             first = false;
-                            Column tableColumn = new Column(queryBuilder.DefaultTable, property);
-                            queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
+                            Field tableColumn = new Field(queryBuilder.DefaultTable, property);
+                            queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
                             queryBuilder.StringBuilder.Append(" = ");
                             var index = queryBuilder.AddParameter(parentId);
                             queryBuilder.StringBuilder.DuringParameter(index);

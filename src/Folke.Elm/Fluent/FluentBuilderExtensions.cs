@@ -43,10 +43,6 @@ namespace Folke.Elm.Fluent
                 builder.CurrentContext = QueryContext.Select;
                 builder.QueryBuilder.StringBuilder.BeforeSelect();
             }
-            else
-            {
-                builder.QueryBuilder.StringBuilder.DuringFields();
-            }
         }
 
         public static void AppendSet(this IFluentBuilder builder)

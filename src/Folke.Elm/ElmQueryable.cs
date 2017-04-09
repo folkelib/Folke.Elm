@@ -27,7 +27,7 @@ namespace Folke.Elm
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             var queryBuilder = new BaseQueryBuilder<T>(queryProvider.Connection);
-            var from = queryBuilder.ParseExpression(Expression, registerTable: true);
+            var from = queryBuilder.ParseExpression(Expression, ParseOptions.RegisterTables);
             var select =  new Select(queryBuilder.ParseSelectedColumn(queryBuilder.DefaultTable), from);
             select.Accept(queryBuilder.StringBuilder);
             return queryBuilder.GetEnumerator();

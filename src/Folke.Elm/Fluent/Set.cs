@@ -15,8 +15,8 @@ namespace Folke.Elm.Fluent
             target.AppendSet();
 
             BaseQueryBuilder queryBuilder = target.QueryBuilder;
-            var column1 = queryBuilder.ExpressionToColumn(column.Body, true);
-            queryBuilder.StringBuilder.DuringColumn(column1.Table.Alias, column1.Property.ColumnName);
+            var column1 = queryBuilder.ExpressionToColumn(column.Body, ParseOptions.RegisterTables);
+            column1.Accept(queryBuilder.StringBuilder);
             queryBuilder.StringBuilder.Append("=");
             queryBuilder.AddExpression(value.Body);
             return (ISetResult<T, TMe>) target;

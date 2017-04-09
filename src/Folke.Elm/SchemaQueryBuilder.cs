@@ -15,6 +15,11 @@ namespace Folke.Elm
             mapping = connection.Mapper.GetTypeMapping(typeof(T));
         }
 
+        public SchemaQueryBuilder(IMapper mapper, IDatabaseDriver driver) : base(driver)
+        {
+            mapping = mapper.GetTypeMapping(typeof(T));
+        }
+
         public SchemaQueryBuilder<T> CreateTable()
         {
             CreateTable(mapping);
@@ -41,14 +46,20 @@ namespace Folke.Elm
 
     public class SchemaQueryBuilder : IBaseCommand
     {
+        private readonly IDatabaseDriver databaseDriver;
         private readonly FolkeConnection connection;
 
         private readonly SqlStringBuilder query;
 
-        public SchemaQueryBuilder(FolkeConnection connection)
+        public SchemaQueryBuilder(FolkeConnection connection) : this(connection.Driver)
         {
             this.connection = connection;
-            query = connection.Driver.CreateSqlStringBuilder();
+        }
+
+        public SchemaQueryBuilder(IDatabaseDriver databaseDriver)
+        {
+            this.databaseDriver = databaseDriver;
+            query = databaseDriver.CreateSqlStringBuilder();
         }
 
         private void AppendColumnName(PropertyMapping property, string baseName)
@@ -60,7 +71,7 @@ namespace Folke.Elm
         {
             if (property.IsKey)
             {
-                query.AppendAfterSpace(connection.Driver.GetSqlType(property, false));
+                query.AppendAfterSpace(databaseDriver.GetSqlType(property, false));
                 query.DuringPrimaryKey(property.IsAutomatic);
             }
             else
@@ -74,7 +85,7 @@ namespace Folke.Elm
                     query.AppendAfterSpace("NULL");
                 }
                 else
-                    query.Append(connection.Driver.GetSqlType(property, false));
+                    query.Append(databaseDriver.GetSqlType(property, false));
             }
         }
 
@@ -158,7 +169,7 @@ namespace Folke.Elm
             query.Append("CREATE TABLE ");
             query.DuringSymbol(mapping.TableName);
             query.Append(" (");
-            bool canCreateIndex = connection.Driver.CanAddIndexInCreateTable();
+            bool canCreateIndex = databaseDriver.CanAddIndexInCreateTable();
 
             AppendColumns(existingTables, mapping, null);
 
@@ -192,12 +203,15 @@ namespace Folke.Elm
                 }
                 else if (property.Reference != null)
                 {
-                    query.Append(";");
-                    AppendCreateIndex(mapping, property, GetAutoIndexName(mapping, property), baseName);
-                }
-                else if (property.ComplexType != null)
-                {
-                    AppendCreateIndexes(existingTables, property.ComplexType, property.ComposeName(baseName));
+                    if (property.Reference.IsComplexType)
+                    {
+                        AppendCreateIndexes(existingTables, property.Reference, property.ComposeName(baseName));
+                    }
+                    else
+                    {
+                        query.Append(";");
+                        AppendCreateIndex(mapping, property, GetAutoIndexName(mapping, property), baseName);
+                    }
                 }
             }
         }
@@ -206,15 +220,17 @@ namespace Folke.Elm
         {
             foreach (var property in mapping.Columns.Values)
             {
-                if (property.Reference != null && DoesForeignTableExist(property, existingTables))
+                if (property.Reference != null)
                 {
-                    AddComma();
-                    AppendForeignKey(property, baseName);
-                }
-
-                if (property.ComplexType != null)
-                {
-                    AppendColumnForeignKeys(existingTables, property.ComplexType, property.ComposeName(baseName));
+                    if (property.Reference.IsComplexType)
+                    {
+                        AppendColumnForeignKeys(existingTables, property.Reference, property.ComposeName(baseName));
+                    }
+                    else if(DoesForeignTableExist(property, existingTables))
+                    {
+                        AddComma();
+                        AppendForeignKey(property, baseName);
+                    }
                 }
             }
         }
@@ -233,13 +249,17 @@ namespace Folke.Elm
                 }
                 else if (property.Reference != null)
                 {
-                    AddComma();
-                    AppendIndex(property, GetAutoIndexName(mapping, property), baseName);
+                    if (property.Reference.IsComplexType)
+                    {
+                        AppendColumnIndexes(existingTables, property.Reference, property.ComposeName(baseName));
+                    }
+                    else
+                    {
+                        AddComma();
+                        AppendIndex(property, GetAutoIndexName(mapping, property), baseName);
+                    }
                 }
-                else if (property.ComplexType != null)
-                {
-                    AppendColumnIndexes(existingTables, property.ComplexType, property.ComposeName(baseName));
-                }
+                
             }
         }
 
@@ -250,13 +270,13 @@ namespace Folke.Elm
                 if (!DoesForeignTableExist(column, existingTables))
                     continue;
 
-                AddComma();
-                if (column.ComplexType != null)
+                if (column.Reference != null && column.Reference.IsComplexType)
                 {
-                    AppendColumns(existingTables, column.ComplexType, column.ComposeName(baseName));
+                    AppendColumns(existingTables, column.Reference, column.ComposeName(baseName));
                 }
                 else
                 {
+                    AddComma();
                     AppendColumnName(column, baseName);
                     AppendColumnType(column);
                 }
@@ -309,9 +329,9 @@ namespace Folke.Elm
             bool changes = false;
             foreach (var property in mapping.Columns.Values)
             {
-                if (property.ComplexType != null)
+                if (property.Reference != null && property.Reference.IsComplexType)
                 {
-                    changes |= AlterColumns(property.ComplexType, columns, property.ComposeName(baseName));
+                    changes |= AlterColumns(property.Reference, columns, property.ComposeName(baseName));
                     continue;
                 }
 
@@ -333,7 +353,7 @@ namespace Folke.Elm
                         AppendReferences(property);
                     }
 
-                    if (connection.Driver.CanAddIndexInCreateTable())
+                    if (databaseDriver.CanAddIndexInCreateTable())
                     {
                         // TODO add indexes to existing columns if not present
                         if (property.Index != null || foreign)
@@ -385,7 +405,7 @@ namespace Folke.Elm
 
         private void DuringAlterTable(TypeMapping type)
         {
-            if (connection.Driver.CanDoMultipleActionsInAlterTable())
+            if (databaseDriver.CanDoMultipleActionsInAlterTable())
             {
                 AddComma();
             }

@@ -93,10 +93,7 @@ namespace Folke.Elm.Mapping
                 if (mapper.IsMapped(propertyInfo.PropertyType))
                 {
                     var typeMapping = mapper.GetTypeMapping(propertyInfo.PropertyType);
-                    if (typeMapping.IsComplexType)
-                        propertyMapping.ComplexType = typeMapping;
-                    else
-                        propertyMapping.Reference = typeMapping;
+                    propertyMapping.Reference = typeMapping;
                 }
 
                 var columnConstraintAttribute = propertyInfo.GetCustomAttribute<ColumnConstraintAttribute>();

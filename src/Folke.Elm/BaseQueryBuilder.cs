@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Folke.Elm.Mapping;
+using Folke.Elm.Parsers;
 using Folke.Elm.Visitor;
 
 namespace Folke.Elm
@@ -41,9 +42,22 @@ namespace Folke.Elm
         private SelectedTable defaultTable;
         private readonly TypeMapping defaultType;
         private readonly Type parametersType;
+        private readonly ExpressionToVisitable expressionToVisitable;
 
         internal SelectedTable DefaultTable => defaultTable;
         internal IList<SelectedField> SelectedFields => selectedFields;
+        
+        public IMapper Mapper { get; set; }
+        
+        public string Sql => query.ToString();
+
+        public IFolkeConnection Connection { get; }
+
+        internal IDatabaseDriver Driver { get; }
+
+        public object[] Parameters => parameters?.ToArray();
+
+        public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType, DefaultTable));
 
         public BaseQueryBuilder(IFolkeConnection connection, Type type = null, Type parametersType = null)
             : this(connection.Driver, connection.Mapper, type, parametersType)
@@ -57,15 +71,7 @@ namespace Folke.Elm
             this.defaultType = defaultType != null ? Mapper.GetTypeMapping(defaultType) : null;
             this.parametersType = parametersType;
         }
-
-        public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper):this(databaseDriver.CreateSqlStringBuilder())
-        {
-            Mapper = mapper;
-            Driver = databaseDriver;
-        }
-
-        public IMapper Mapper { get; set; }
-
+        
         public BaseQueryBuilder(BaseQueryBuilder parentBuilder):this(parentBuilder.Driver, parentBuilder.Mapper)
         {
             if (parentBuilder.parameters == null)
@@ -76,33 +82,23 @@ namespace Folke.Elm
             defaultType = parentBuilder.defaultType;
         }
 
-        public BaseQueryBuilder(SqlStringBuilder stringBuilder = null)
+        public BaseQueryBuilder(IDatabaseDriver databaseDriver, IMapper mapper)
         {
-            query = stringBuilder ?? new SqlStringBuilder();
+            Mapper = mapper;
+            Driver = databaseDriver;
+            query = databaseDriver.CreateSqlStringBuilder() ?? new SqlStringBuilder();
             tables = new List<SelectedTable>();
+            expressionToVisitable = new ExpressionToVisitable(Mapper);
         }
-
-        public string Sql => query.ToString();
-
-        public IFolkeConnection Connection { get; }
-
-        internal IDatabaseDriver Driver { get; }
-
-        public object[] Parameters => parameters?.ToArray();
-
-        public MappedClass MappedClass => baseMappedClass ?? (baseMappedClass = MappedClass.MapClass(selectedFields, defaultType, DefaultTable));
 
         /// <summary>
         /// Gets a table by its alias
         /// </summary>
         /// <param name="alias">The expression that is used as an alias to a table</param>
         /// <param name="register">Register the table if it has never been</param>
-        /// <returns>The table</returns>
+        /// <returns>The table or null if it is not a table</returns>
         protected internal SelectedTable GetTable(Expression alias, bool register)
         {
-                    /*    Type type;
-            var internalIdentifier = CreateTableInternalIdentifier(alias, out type);
-            return tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);*/
             SelectedTable table;
             switch (alias.NodeType)
             {
@@ -113,75 +109,41 @@ namespace Folke.Elm
                     var parentTable = GetTable(memberExpression.Expression, false);
                     if (parentTable == null)
                     {
-                        return GetRootTable(mapping, alias, register);
-                    }
-                    var propertyMapping = parentTable.Mapping.GetColumn(memberExpression.Member);
-                    var selectedField =
-                        selectedFields.FirstOrDefault(
-                            x =>
-                                x.Table == parentTable &&
-                                x.PropertyMapping == propertyMapping);
-
-                    if (selectedField == null)
-                    {
-                        //selectedField = SelectField(propertyMapping, parentTable);
+                        return null;
                     }
 
-                    table = tables.FirstOrDefault(x => x.Parent == parentTable && x.ParentMember == memberExpression.Member);
+                    var parentProperty = parentTable.Mapping.GetColumn(memberExpression.Member);
+                    table = tables.FirstOrDefault(x => x.Parent == parentTable && x.ParentMember == parentProperty);
                     if (table == null)
                     {
                         if (!register)
-                            throw new Exception($"Table for expression {alias} not registered");
-                        table = RegisterTable(parentTable, memberExpression.Member, mapping);
+                            return null;
+                        table = RegisterTable(parentTable, parentProperty);
                     }
                     break;
                 case ExpressionType.Parameter:
-                    if (defaultTable == null && register)
-                    {
-                        defaultTable = new SelectedTable
-                        {
-                            Alias = "t",
-                            Mapping = defaultType,
-                            Parent = null
-                        };
-                    }
-                    return defaultTable;
+                    return RegisterRootTable(Mapper.GetTypeMapping(alias.Type));
                 case ExpressionType.Convert:
                     return GetTable(((UnaryExpression) alias).Operand, register);
                 default:
-                    return GetRootTable(Mapper.GetTypeMapping(alias.Type), alias, register);
+                    // This is not a table
+                    return null;
             }
 
             return table;
         }
 
-        private SelectedTable GetRootTable(TypeMapping mapping, Expression expression, bool register)
-        {
-            var expressionString = expression.ToString();
-            var table = tables.FirstOrDefault(x => x.Expression == expressionString);
-            if (table != null || !register) return table;
-            table = new SelectedTable
-            {
-                Mapping = mapping,
-                Alias = "t" + tables.Count,
-                Expression = expressionString
-            };
-            tables.Add(table);
-            return table;
-        }
-
-        internal SelectedTable RegisterTable(SelectedTable parentTable, MemberInfo parentField, TypeMapping mapping)
+        internal SelectedTable RegisterTable(SelectedTable parentTable, PropertyMapping parentField)
         {
             var table = new SelectedTable
             {
                 Parent = parentTable,
-                Mapping = mapping,
+                Mapping = parentField.Reference,
                 Alias = "t" + tables.Count,
                 ParentMember = parentField
             };
             tables.Add(table);
             parentTable.Children[parentField] = table;
-            //parentField.ChildTable = table;
             return table;
         }
 
@@ -215,39 +177,39 @@ namespace Folke.Elm
             return parameterIndex;
         }
 
-        internal void AddBooleanExpression(Expression expression, bool registerTable = false)
+        internal void AddBooleanExpression(Expression expression, ParseOptions options = 0)
         {
             var lambda = expression as LambdaExpression;
             if (lambda != null)
             {
-                AddExpression(lambda.Body, registerTable);
+                AddExpression(lambda.Body, options);
                 return;
             }
 
-            var visitable = ParseBooleanExpression(expression, registerTable);
+            var visitable = ParseBooleanExpression(expression, options);
             visitable.Accept(query);
         }
 
-        internal IVisitable ParseBooleanExpression(Expression expression, bool registerTable = false)
+        internal IVisitable ParseBooleanExpression(Expression expression, ParseOptions options = 0)
         {
             if ((expression is MemberExpression || expression is ParameterExpression) && !Driver.HasBooleanType)
             {
-                return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(expression, registerTable),
+                return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(expression, options | ParseOptions.Value),
                     new ConstantNumber(1));
             }
             else
             {
-                return ParseExpression(expression, registerTable);
+                return ParseExpression(expression, options);
             }
         }
 
-        internal void AddExpression(Expression expression, bool registerTable = false)
+        internal void AddExpression(Expression expression, ParseOptions options = 0)
         {
-            var visitable = ParseExpression(expression, registerTable);
+            var visitable = ParseExpression(expression, options);
             visitable.Accept(query);
         }
 
-        internal IVisitable ParseExpression(Expression expression, bool registerTable = false)
+        internal IVisitable ParseExpression(Expression expression, ParseOptions options = 0)
         {
             if (expression.NodeType == ExpressionType.Constant)
             {
@@ -265,7 +227,7 @@ namespace Folke.Elm
             var lambda = expression as LambdaExpression;
             if (lambda != null)
             {
-                return ParseExpression(lambda.Body, registerTable);
+                return ParseExpression(lambda.Body, options);
             }
 
             var unary = expression as UnaryExpression;
@@ -282,14 +244,14 @@ namespace Folke.Elm
                         break;
                     case ExpressionType.Convert:
                     case ExpressionType.Quote:
-                        return ParseExpression(unary.Operand, registerTable);
+                        return ParseExpression(unary.Operand, options);
                     default:
                         throw new Exception("ExpressionType in UnaryExpression not supported");
                 }
 
                 var subExpression = unary.NodeType == ExpressionType.Not ?
-                    ParseBooleanExpression(unary.Operand, registerTable)
-                    : ParseExpression(unary.Operand, registerTable);
+                    ParseBooleanExpression(unary.Operand, options)
+                    : ParseExpression(unary.Operand, options);
                 return new UnaryOperator(unaryOperatorType, subExpression);
             }
 
@@ -309,8 +271,8 @@ namespace Folke.Elm
                 }
 
                 var left = booleanOperator ? 
-                                      ParseBooleanExpression(binary.Left, registerTable) 
-                                      : ParseExpression(binary.Left, registerTable);
+                                      ParseBooleanExpression(binary.Left, options) 
+                                      : ParseExpression(binary.Left, options | ParseOptions.Value);
                 
                 BinaryOperatorType type;
 
@@ -366,8 +328,8 @@ namespace Folke.Elm
                 }
 
                 var right = booleanOperator ? 
-                                       ParseBooleanExpression(binary.Right, registerTable)
-                                       : ParseExpression(binary.Right, registerTable);
+                                       ParseBooleanExpression(binary.Right, options)
+                                       : ParseExpression(binary.Right, options | ParseOptions.Value);
 
                 if (binary.Left.NodeType == ExpressionType.Convert && binary.Left.NodeType == ExpressionType.Convert
                     && ((UnaryExpression)binary.Left).Operand.Type.GetTypeInfo().IsEnum)
@@ -419,10 +381,10 @@ namespace Folke.Elm
                 }
             }
 
-            var column = ExpressionToColumn(expression, registerTable);
+            var column = ExpressionToColumn(expression, options);
             if (column != null)
             {
-                return new Column(column.Table, column.Property);
+                return column;
             }
 
             if (expression.NodeType == ExpressionType.Call)
@@ -434,22 +396,22 @@ namespace Folke.Elm
                     switch (call.Method.Name)
                     {
                         case nameof(Queryable.Where):
-                            return new Where(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+                            return new Where(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options));
 
                         case nameof(Queryable.Skip):
-                            return new Skip(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1]));
+                            return new Skip(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1]));
 
                         case nameof(Queryable.Take):
-                            return new Take(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1]));
+                            return new Take(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1]));
 
                         case nameof(Queryable.OrderBy):
-                            return new OrderBy(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+                            return new OrderBy(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options));
 
                         case nameof(Queryable.Join):
-                            return new Join(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable), ParseExpression(call.Arguments[2]), ParseExpression(call.Arguments[3]), ParseExpression(call.Arguments[4]));
+                            return new Join(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options), ParseExpression(call.Arguments[2]), ParseExpression(call.Arguments[3]), ParseExpression(call.Arguments[4]));
 
                         case nameof(Queryable.Count):
-                            var from = ParseExpression(call.Arguments[0], registerTable);
+                            var from = ParseExpression(call.Arguments[0], options);
                             return new Select(new Count(), from);
 
                         default:
@@ -462,14 +424,14 @@ namespace Folke.Elm
                     switch (call.Method.Name)
                     {
                         case nameof(ExpressionHelpers.Like):
-                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options));
                         case nameof(ExpressionHelpers.In):
                             return new BinaryOperator(BinaryOperatorType.In,
-                                ParseExpression(call.Arguments[0], registerTable),
+                                ParseExpression(call.Arguments[0], options),
                                 ParseValues((IEnumerable) Expression.Lambda(call.Arguments[1]).Compile().DynamicInvoke()));
                         case nameof(ExpressionHelpers.Between):
-                            return new Between(ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable),
-                                            ParseExpression(call.Arguments[2], registerTable));
+                            return new Between(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options),
+                                            ParseExpression(call.Arguments[2], options));
                         default:
                             throw new Exception("Unsupported expression helper");
                     }
@@ -495,7 +457,7 @@ namespace Folke.Elm
                             throw new NotImplementedException("Not implemented math function");
                     }
 
-                    return new MathFunction(type, ParseExpression(call.Arguments[0], registerTable));
+                    return new MathFunction(type, ParseExpression(call.Arguments[0], options));
                 }
 
                 if (call.Method.DeclaringType == typeof(SqlFunctions))
@@ -505,19 +467,19 @@ namespace Folke.Elm
                         case nameof(SqlFunctions.LastInsertedId):
                             return new LastInsertedId();
                         case nameof(SqlFunctions.Max):
-                            return new MathFunction(MathFunctionType.Max, ParseExpression(call.Arguments[0], registerTable));
+                            return new MathFunction(MathFunctionType.Max, ParseExpression(call.Arguments[0], options));
                         case nameof(SqlFunctions.Sum):
-                            return new MathFunction(MathFunctionType.Sum, ParseExpression(call.Arguments[0], registerTable));
+                            return new MathFunction(MathFunctionType.Sum, ParseExpression(call.Arguments[0], options));
                         case nameof(SqlFunctions.IsNull):
-                            return new MathFunction(MathFunctionType.IsNull, ParseExpression(call.Arguments[0], registerTable), ParseExpression(call.Arguments[1], registerTable));
+                            return new MathFunction(MathFunctionType.IsNull, ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options));
                         case nameof(SqlFunctions.Case):
                             var cases = ((NewArrayExpression) call.Arguments[0]).Expressions;
                             return new Case(cases.Select(x => ParseExpression(x)));
                         case nameof(SqlFunctions.When):
-                            return new When(ParseExpression(call.Arguments[0], registerTable),
-                                ParseExpression(call.Arguments[1], registerTable));
+                            return new When(ParseExpression(call.Arguments[0], options),
+                                ParseExpression(call.Arguments[1], options));
                         case nameof(SqlFunctions.Else):
-                            return new Else(ParseExpression(call.Arguments[0], registerTable));
+                            return new Else(ParseExpression(call.Arguments[0], options));
                         default:
                             throw new Exception("Unsupported sql function");
                     }
@@ -531,13 +493,13 @@ namespace Folke.Elm
                         {
                             var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke();
                             text = text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
-                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, registerTable), ParseParameter(text));
+                            return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, options), ParseParameter(text));
                         }
                         case nameof(string.Contains):
                             {
                                 var text = (string)Expression.Lambda(call.Arguments[0]).Compile().DynamicInvoke() ?? string.Empty;
                                 text = "%" + text.Replace("\\", "\\\\").Replace("%", "\\%") + "%";
-                                return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, registerTable), ParseParameter(text));
+                                return new BinaryOperator(BinaryOperatorType.Like, ParseExpression(call.Object, options), ParseParameter(text));
                             }
                             
                         default:
@@ -547,7 +509,7 @@ namespace Folke.Elm
 
                 if (call.Method.Name == nameof(object.Equals))
                 {
-                    return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(call.Object, registerTable), ParseExpression(call.Arguments[0], registerTable));
+                    return new BinaryOperator(BinaryOperatorType.Equal, ParseExpression(call.Object, options), ParseExpression(call.Arguments[0], options));
                 }
             }
 
@@ -572,66 +534,44 @@ namespace Folke.Elm
             return new Values(list);
         }
         
-        //internal SelectedTable RegisterTable(TypeMapping typeMapping, string internalIdentifier)
-        //{
-        //    var table = tables.SingleOrDefault(t => t.InternalIdentifier == internalIdentifier);
-        //    if (table == null)
-        //    {
-        //        table = new SelectedTable { Alias = "t" + tables.Count, InternalIdentifier = internalIdentifier, Mapping = typeMapping };
-        //        tables.Add(table);
-        //    }
-        //    return table;
-        //}
-
-        internal SelectedTable RegisterRootTable(TypeMapping defaultType = null)
+        internal SelectedTable RegisterRootTable(TypeMapping typeMapping = null)
         {
             if (defaultTable == null)
             {
-                defaultTable = new SelectedTable { Alias = "t", Parent = null, Mapping = defaultType ?? this.defaultType };
+                defaultTable = new SelectedTable { Alias = "t", Parent = null, Mapping = typeMapping ?? defaultType };
                 tables.Add(defaultTable);
+            }
+            else
+            {
+                if (defaultTable.Mapping != (typeMapping ?? defaultType))
+                {
+                    throw new Exception($"Unexcepted root mapping {typeMapping?.Type} instead of {defaultTable.Mapping.Type}");
+                }
             }
             return defaultTable;
         }
-
-        /// <summary>Register a table in the list of selected tables</summary>
-        /// <param name="aliasExpression">An expression that points to the table</param>
-        /// <returns>The selected table</returns>
-        //protected internal SelectedTable RegisterTable(Expression aliasExpression)
-        //{
-        //    Type type;
-        //    var alias = CreateTableInternalIdentifier(aliasExpression, out type);
-        //    return RegisterTable(Mapper.GetTypeMapping(type), alias);
-        //}
-
+        
         /// <summary>Adds a column to the list of selected values</summary>
-        /// <param name="column"></param>
-        internal void SelectField(Column column)
+        /// <param name="field"></param>
+        internal SelectedField SelectField(Field field)
         {
-            SelectField(column.Property, column.Table);
-        }
-
-        /// <summary>Adds a column from a given table to the list of selected values</summary>
-        /// <param name="property">The property mapping</param>
-        /// <param name="table">The selected table</param>
-        internal SelectedField SelectField(PropertyMapping property, SelectedTable table)
-        {
-            var selectedField = new SelectedField { PropertyMapping = property, Table = table, Index = selectedFields.Count };
+            var selectedField = new SelectedField { Field = field, Index = selectedFields.Count };
             selectedFields.Add(selectedField);
             return selectedField;
         }
 
         /// <summary>Select a column by an expression that maps to a column</summary>
         /// <param name="column">The expression</param>
-        internal void SelectField(Expression column)
+        internal SelectedField SelectField(Expression column)
         {
-            SelectField(ExpressionToColumn(column, registerTable: true));
+            return SelectField((Field)ExpressionToColumn(column, ParseOptions.RegisterTables | ParseOptions.Value));
         }
 
-        /// <summary>Converts an expression to a column</summary>
+        /// <summary>Converts an expression to a column or a table</summary>
         /// <param name="columnExpression">The expression that should point to a table</param>
-        /// <param name="registerTable"><c>true</c> if the table must be added to the list of selected tables if it was not</param>
+        /// <param name="options"><c>true</c> if the table must be added to the list of selected tables if it was not</param>
         /// <returns>The column or <c>null</c> if the expression did not point to a column</returns>
-        internal Column ExpressionToColumn(Expression columnExpression, bool registerTable = false)
+        internal IVisitable ExpressionToColumn(Expression columnExpression, ParseOptions options = 0)
         {
             if (columnExpression.NodeType == ExpressionType.Convert)
             {
@@ -640,7 +580,7 @@ namespace Folke.Elm
 
             if (columnExpression.NodeType == ExpressionType.Parameter)
             {
-                return new Column(defaultTable, defaultType.Key);
+                return new Field(defaultTable, defaultType.Key);
             }
 
             if (columnExpression.NodeType == ExpressionType.Call)
@@ -650,15 +590,15 @@ namespace Folke.Elm
                     callExpression.Method.Name == nameof(ExpressionHelpers.Property))
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
-                    var table = GetTable(callExpression.Arguments[0], registerTable);
-                    return new Column(table, table.Mapping.Columns[propertyInfo.Name]);
+                    var table = GetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
+                    return new Field(table, table.Mapping.Columns[propertyInfo.Name]);
                 }
 
                 if (callExpression.Method.DeclaringType == typeof(ExpressionHelpers) &&
                     callExpression.Method.Name == nameof(ExpressionHelpers.Key))
                 {
-                    var table = GetTable(callExpression.Arguments[0], registerTable);
-                    return new Column(table, table.Mapping.Key);
+                    var table = GetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
+                    return new Field(table, table.Mapping.Key);
                 }
                 return null;
             }
@@ -669,17 +609,24 @@ namespace Folke.Elm
             }
 
             var columnMember = (MemberExpression)columnExpression;
-            var parentTable = GetTable(columnMember.Expression, registerTable);
-            if (parentTable == null)
+            var columnIsTable = GetTable(columnExpression, options.HasFlag(ParseOptions.RegisterTables));
+            if (columnIsTable != null)
             {
-                // This is not an expression that points to the column of table (should be a constant or a variable)
-                // Maybe it's the table itself
-                var table = GetTable(columnExpression, registerTable);
-                if (table == null) return null;
-                return new Column(table, table.Mapping.Key);
+                if (options.HasFlag(ParseOptions.Value))
+                {
+                    return new Field(columnIsTable, columnIsTable.Mapping.Key);
+                }
+
+                return columnIsTable;
             }
 
-            return new Column(parentTable, parentTable.Mapping.GetColumn(columnMember.Member));
+            var parentTable = GetTable(columnMember.Expression, options.HasFlag(ParseOptions.RegisterTables));
+            if (parentTable != null)
+            {
+                return new Field(parentTable, parentTable.Mapping.GetColumn(columnMember.Member));
+            }
+
+            return null;
         }
         
         /// <summary>
@@ -688,10 +635,10 @@ namespace Folke.Elm
         /// </summary>
         /// <param name="tableExpression">The expression</param>
         /// <returns></returns>
-        internal Column GetTableKey(Expression tableExpression)
+        internal Field GetTableKey(Expression tableExpression)
         {
             var table = GetTable(tableExpression, false);
-            return new Column(table, table.Mapping.Key);
+            return new Field(table, table.Mapping.Key);
         }
 
         internal IVisitable ParseSelectedColumn(SelectedTable table)
@@ -711,7 +658,7 @@ namespace Folke.Elm
                     AddAllColumns(table, column.ComplexType.Columns, fields, column.ComposeName(baseName));
                     continue;
                 }
-                var visitable = new Column(table, column);
+                var visitable = new Field(table, column);
                 this.SelectField(visitable);
                 fields.Add(visitable);
             }

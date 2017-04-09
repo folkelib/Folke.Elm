@@ -1,4 +1,5 @@
 using System.Reflection;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm
 {

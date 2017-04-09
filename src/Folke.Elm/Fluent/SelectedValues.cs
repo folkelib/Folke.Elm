@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm.Fluent
 {
@@ -15,21 +16,9 @@ namespace Folke.Elm.Fluent
         /// <returns> The <see cref="ISelectedValuesResult{T,TMe}"/>. </returns>
         public static ISelectedValuesResult<T, TMe> Values<T, TMe>(this ISelectedValuesTarget<T, TMe> target, params Expression<Func<T, object>>[] columns)
         {
-            var baseQueryBuilder = target.QueryBuilder;
-
             foreach (var column in columns)
             {
-                target.AppendSelect();
-                var tableColumn = baseQueryBuilder.ExpressionToColumn(column.Body, true);
-                if (tableColumn == null)
-                {
-                    baseQueryBuilder.AddExpression(column.Body, true);
-                }
-                else
-                {
-                    baseQueryBuilder.SelectField(tableColumn);
-                    baseQueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
-                }
+                AppendValue(target, column);
             }
 
             return (ISelectedValuesResult<T, TMe>)target;
@@ -70,7 +59,7 @@ namespace Folke.Elm.Fluent
         {
             target.AppendSelect();
             target.QueryBuilder.StringBuilder.AppendAfterSpace("COUNT(");
-            target.QueryBuilder.AddExpression(valueExpression.Body, true);
+            target.QueryBuilder.AddExpression(valueExpression.Body, ParseOptions.RegisterTables);
             target.QueryBuilder.StringBuilder.Append(")");
             return (ISelectedValuesResult<T, TMe>)target;
         }
@@ -79,7 +68,7 @@ namespace Folke.Elm.Fluent
         {
             target.AppendSelect();
             target.QueryBuilder.StringBuilder.AppendAfterSpace("SUM(");
-            target.QueryBuilder.AddExpression(valueExpression.Body, true);
+            target.QueryBuilder.AddExpression(valueExpression.Body, ParseOptions.RegisterTables);
             target.QueryBuilder.StringBuilder.Append(")");
             return (ISelectedValuesResult<T, TMe>)target;
         }
@@ -88,7 +77,7 @@ namespace Folke.Elm.Fluent
         {
             target.AppendSelect();
             target.QueryBuilder.StringBuilder.AppendAfterSpace("MAX(");
-            target.QueryBuilder.AddExpression(valueExpression.Body, true);
+            target.QueryBuilder.AddExpression(valueExpression.Body, ParseOptions.RegisterTables);
             target.QueryBuilder.StringBuilder.Append(")");
             return (ISelectedValuesResult<T, TMe>)target;
         }
@@ -104,19 +93,30 @@ namespace Folke.Elm.Fluent
 
         public static ISelectedValuesResult<T, TMe> Value<T, TMe, TU>(this ISelectedValuesTarget<T, TMe> target, Expression<Func<T, TU>> column)
         {
+            AppendValue(target, column);
+            return (ISelectedValuesResult<T, TMe>)target;
+        }
+
+        private static void AppendValue<T, TMe, TU>(ISelectedValuesTarget<T, TMe> target, Expression<Func<T, TU>> column)
+        {
             target.AppendSelect();
-            var tableColumn = target.QueryBuilder.ExpressionToColumn(column.Body, true);
+            var tableColumn = target.QueryBuilder.ExpressionToColumn(column.Body, ParseOptions.RegisterTables);
             if (tableColumn == null)
             {
-                target.QueryBuilder.AddExpression(column.Body, true);
+                target.QueryBuilder.AddExpression(column.Body, ParseOptions.RegisterTables);
             }
             else
             {
-                BaseQueryBuilder tempQualifier = target.QueryBuilder;
-                tempQualifier.SelectField(tableColumn);
-                tempQualifier.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
+                if (tableColumn is Field)
+                {
+                    var field = target.QueryBuilder.SelectField((Field) tableColumn);
+                    field.Accept(target.QueryBuilder.StringBuilder);
+                }
+                else
+                {
+                    target.QueryBuilder.AppendAllSelects((SelectedTable) tableColumn);
+                }
             }
-            return (ISelectedValuesResult<T, TMe>)target;
         }
     }
 

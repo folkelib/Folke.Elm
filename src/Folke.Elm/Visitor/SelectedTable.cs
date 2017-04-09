@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-using System.Reflection;
 using Folke.Elm.Mapping;
 
-namespace Folke.Elm
+namespace Folke.Elm.Visitor
 {
     /// <summary>A table that is referenced somewhere in the expression</summary>
-    public class SelectedTable
+    public class SelectedTable : IVisitable
     {
         /// <summary>Gets or sets the mapping between the type and the table</summary>
         public TypeMapping Mapping { get; set; }
@@ -16,11 +15,12 @@ namespace Folke.Elm
         /// <summary>Gets or sets the selected table whose this table is joined to</summary>
         public SelectedTable Parent { get; set; }
 
-        public MemberInfo ParentMember { get; set; }
-
-        /// <summary>In the case of a root table (<see cref="Parent"/> is null), the expression that points to the table</summary>
-        public string Expression { get; set; }
-
-        public Dictionary<MemberInfo, SelectedTable> Children { get; } = new Dictionary<MemberInfo, SelectedTable>();
+        public PropertyMapping ParentMember { get; set; }
+        
+        public Dictionary<PropertyMapping, SelectedTable> Children { get; } = new Dictionary<PropertyMapping, SelectedTable>();
+        public void Accept(IVisitor visitor)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -69,19 +69,19 @@ namespace Folke.Elm.Mysql.Test
             fluentSelectBuilder.Values(x => x.Id, x => x.Text);
             Assert.Equal("SELECT `t`.`Id`, `t`.`Text`", queryBuilder.Sql);
             Assert.Equal(2, queryBuilder.SelectedFields.Count);
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.Field.Column.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.Field.Column.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
         }
 
         [Fact]
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTableAndJoin()
         {
             fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
-            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t0`.`Value`", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t1`.`Value`", queryBuilder.Sql);
             Assert.Equal(3, queryBuilder.SelectedFields.Count);
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
-            Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeChildClass).GetTypeInfo().GetProperty("Value")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.Field.Column.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.Field.Column.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
+            Assert.True(queryBuilder.SelectedFields.Any(x => x.Field.Column.PropertyInfo == typeof(FakeChildClass).GetTypeInfo().GetProperty("Value")));
         }
 
         [Fact]
@@ -145,24 +145,7 @@ namespace Folke.Elm.Mysql.Test
                 .OrderBy(x => x.Text + x.Text);
             Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id` FROM `FakeClass` AS t ORDER BY ( `t`.`Text`+ `t`.`Text`)", queryBuilder.Sql);
         }
-
-        [Fact]
-        public void FluentGenericQueryBuilder_LocalVariableIsTable()
-        {
-            FakeChildClass child = null;
-            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
-            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
-        }
-
-
-        [Fact]
-        public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereNull()
-        {
-            FakeChildClass child = null;
-            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child).Where(x => child == null);
-            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`) WHERE `t1`.`Id` IS NULL", queryBuilder.Sql);
-        }
-
+        
         [Fact]
         public void FluentGenericQueryBuilder_LocalVariableIsParameter()
         {
@@ -170,15 +153,7 @@ namespace Folke.Elm.Mysql.Test
             fluentSelectBuilder.CountAll().From().Where(x => x.Child == child);
             Assert.Equal("SELECT COUNT(*) FROM `FakeClass` AS t WHERE( `t`.`Child_id`= @Item0)", queryBuilder.Sql);
         }
-
-        [Fact]
-        public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereProperty()
-        {
-            FakeChildClass child = new FakeChildClass { Id = 18 };
-            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
-            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
-        }
-
+        
         [Fact]
         public void FluentGenericQueryBuilder_Between()
         {

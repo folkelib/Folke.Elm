@@ -27,11 +27,12 @@ namespace Folke.Elm.Fluent
         public static IOnResult<T, TMe> OnId<T, TMe, TKey>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, TKey>> expression)
         {
             onTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ON ");
-            Column tableColumn = onTarget.QueryBuilder.ExpressionToColumn(expression.Body);
-            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
+            var table = onTarget.QueryBuilder.GetTable(expression.Body, false);
+            Field tableColumn = new Field(table.Parent, table.ParentMember);
+            tableColumn.Accept(onTarget.QueryBuilder.StringBuilder);
             onTarget.QueryBuilder.StringBuilder.Append("=");
-            Column tableColumn1 = onTarget.QueryBuilder.GetTableKey(expression.Body);
-            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Property.ColumnName);
+            Field tableColumn1 = new Field(table, table.Mapping.Key);
+            tableColumn1.Accept(onTarget.QueryBuilder.StringBuilder);
             return (IOnResult<T, TMe>)onTarget;
         }
     }

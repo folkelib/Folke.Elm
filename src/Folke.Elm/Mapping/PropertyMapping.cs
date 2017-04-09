@@ -7,7 +7,6 @@ namespace Folke.Elm.Mapping
         public PropertyInfo PropertyInfo { get; set; }
         public string ColumnName { get; set; }
         public TypeMapping Reference { get; set; }
-        public TypeMapping ComplexType { get; set; }
         public bool Readonly { get; set; }
         public bool Nullable { get; set; }
         public bool IsAutomatic { get; set; }
@@ -34,6 +33,11 @@ namespace Folke.Elm.Mapping
             if (baseName != null)
                 return $"{baseName}_{ColumnName}";
             return ColumnName;
+        }
+
+        public string ComposeNameReverse(string baseName)
+        {
+            return $"{ColumnName}_{baseName}";
         }
     }
 }
