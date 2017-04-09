@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection;
 using Folke.Elm.Mapping;
 
 namespace Folke.Elm
@@ -12,9 +14,13 @@ namespace Folke.Elm
         public string Alias { get; set; }
 
         /// <summary>Gets or sets the selected table whose this table is joined to</summary>
-        public SelectedField Parent { get; set; }
+        public SelectedTable Parent { get; set; }
+
+        public MemberInfo ParentMember { get; set; }
 
         /// <summary>In the case of a root table (<see cref="Parent"/> is null), the expression that points to the table</summary>
         public string Expression { get; set; }
+
+        public Dictionary<MemberInfo, SelectedTable> Children { get; } = new Dictionary<MemberInfo, SelectedTable>();
     }
 }

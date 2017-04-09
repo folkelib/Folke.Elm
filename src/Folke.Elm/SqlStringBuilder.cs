@@ -119,6 +119,11 @@ namespace Folke.Elm
             AppendAfterSpace("ELSE");
         }
 
+        public void DuringCount()
+        {
+            AppendAfterSpace("COUNT(*)");
+        }
+
         public virtual void BeforeAddColumn()
         {
             AppendAfterSpace("ADD COLUMN ");

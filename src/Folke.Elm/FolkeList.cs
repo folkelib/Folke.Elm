@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Folke.Elm.Fluent;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm
 {
@@ -35,20 +36,20 @@ namespace Folke.Elm
                     var type = typeof (T);
                     var typeInfo = type.GetTypeInfo();
                     var typeMapping = queryBuilder.Mapper.GetTypeMapping(type);
-
+                    var rootTable = queryBuilder.RegisterRootTable();
                     // Select from the tables in the joins list
                     foreach (var join in joins)
                     {
                         var property = typeInfo.GetProperty(join);
                         query.AppendSelect();
                         var joinTypeMapping = queryBuilder.Mapper.GetTypeMapping(property.PropertyType);
-                        var table = queryBuilder.RegisterTable(queryBuilder.SelectedFields.FirstOrDefault(x => x.PropertyMapping.PropertyInfo.Name == property.Name),  joinTypeMapping);
+                        var table = queryBuilder.RegisterTable(rootTable, property,  joinTypeMapping);
                         joinTables.Add(property, table);
                         queryBuilder.AppendAllSelects(table);
                     }
 
                     query.AppendFrom();
-                    queryBuilder.StringBuilder.AppendTable(queryBuilder.RegisterRootTable());
+                    queryBuilder.StringBuilder.AppendTable(rootTable);
 
                     // Join on all the tables in the joins list
                     foreach (var joinTable in joinTables)
@@ -58,11 +59,11 @@ namespace Folke.Elm
                         queryBuilder.StringBuilder.AppendAfterSpace("LEFT JOIN ");
                         queryBuilder.StringBuilder.AppendTable(joinTable.Value);
                         queryBuilder.StringBuilder.Append(" ON ");
-                        BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = joinKeyProperty, Table = joinTable.Value };
-                        queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                        Column tableColumn = new Column(joinTable.Value, joinKeyProperty);
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
                         queryBuilder.StringBuilder.Append(" = ");
-                        BaseQueryBuilder.TableColumn tableColumn1 = new BaseQueryBuilder.TableColumn { Column = queryBuilder.DefaultTable.Mapping.Columns[property.Name], Table = queryBuilder.DefaultTable };
-                        queryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Column.ColumnName);
+                        Column tableColumn1 = new Column(queryBuilder.DefaultTable, queryBuilder.DefaultTable.Mapping.Columns[property.Name]);
+                        queryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Property.ColumnName);
                     }
 
                     bool first = true;
@@ -73,8 +74,8 @@ namespace Folke.Elm
                         {
                             queryBuilder.StringBuilder.Append(first ? " WHERE " : " OR ");
                             first = false;
-                            BaseQueryBuilder.TableColumn tableColumn = new BaseQueryBuilder.TableColumn { Column = property, Table = queryBuilder.DefaultTable };
-                            queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                            Column tableColumn = new Column(queryBuilder.DefaultTable, property);
+                            queryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
                             queryBuilder.StringBuilder.Append(" = ");
                             var index = queryBuilder.AddParameter(parentId);
                             queryBuilder.StringBuilder.DuringParameter(index);

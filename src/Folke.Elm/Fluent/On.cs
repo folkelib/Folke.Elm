@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm.Fluent
 {
@@ -26,11 +27,11 @@ namespace Folke.Elm.Fluent
         public static IOnResult<T, TMe> OnId<T, TMe, TKey>(this IOnTarget<T, TMe> onTarget, Expression<Func<T, TKey>> expression)
         {
             onTarget.QueryBuilder.StringBuilder.AppendAfterSpace("ON ");
-            BaseQueryBuilder.TableColumn tableColumn = onTarget.QueryBuilder.ExpressionToColumn(expression.Body);
-            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+            Column tableColumn = onTarget.QueryBuilder.ExpressionToColumn(expression.Body);
+            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
             onTarget.QueryBuilder.StringBuilder.Append("=");
-            BaseQueryBuilder.TableColumn tableColumn1 = onTarget.QueryBuilder.GetTableKey(expression.Body);
-            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Column.ColumnName);
+            Column tableColumn1 = onTarget.QueryBuilder.GetTableKey(expression.Body);
+            onTarget.QueryBuilder.StringBuilder.DuringColumn(tableColumn1.Table.Alias, tableColumn1.Property.ColumnName);
             return (IOnResult<T, TMe>)onTarget;
         }
     }

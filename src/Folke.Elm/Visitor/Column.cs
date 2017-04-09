@@ -1,22 +1,24 @@
-﻿namespace Folke.Elm.Visitor
+﻿using Folke.Elm.Mapping;
+
+namespace Folke.Elm.Visitor
 {
     /// <summary>
     /// A column name with the table name.
     /// </summary>
     public class Column : IVisitable
     {
-        public string TableName { get; set; }
-        public string ColumnName { get; set; }
+        public SelectedTable Table { get; set; }
+        public PropertyMapping Property { get; set; }
 
-        public Column(string tableName, string columnName)
+        public Column(SelectedTable table, PropertyMapping property)
         {
-            TableName = tableName;
-            ColumnName = columnName;
+            Table = table;
+            Property = property;
         }
 
         public void Accept(IVisitor visitor)
         {
-            visitor.DuringColumn(this.TableName, this.ColumnName);
+            visitor.DuringColumn(this.Table.Alias, this.Property.ColumnName);
         }
     }
 }

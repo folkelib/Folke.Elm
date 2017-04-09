@@ -15,7 +15,7 @@ namespace Folke.Elm.Fluent
                 if (first)
                     first = false;
                 else
-                    builder.StringBuilder.Append(',');
+                    builder.StringBuilder.DuringFields();
                 string tableName = selectedTable.Alias;
                 builder.StringBuilder.DuringColumn(tableName, column.ColumnName);
             }

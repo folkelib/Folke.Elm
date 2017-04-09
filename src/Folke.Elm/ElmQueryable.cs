@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Folke.Elm.Fluent;
+using Folke.Elm.Mapping;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm
 {
@@ -25,7 +27,9 @@ namespace Folke.Elm
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             var queryBuilder = new BaseQueryBuilder<T>(queryProvider.Connection);
-            queryBuilder.AddExpression(Expression, registerTable: true);
+            var from = queryBuilder.ParseExpression(Expression, registerTable: true);
+            var select =  new Select(queryBuilder.ParseSelectedColumn(queryBuilder.DefaultTable), from);
+            select.Accept(queryBuilder.StringBuilder);
             return queryBuilder.GetEnumerator();
         }
     }

@@ -36,5 +36,6 @@
         void DuringWhen();
         void AfterWhen();
         void BeforeElse();
+        void DuringCount();
     }
 }

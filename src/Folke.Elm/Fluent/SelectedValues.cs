@@ -28,7 +28,7 @@ namespace Folke.Elm.Fluent
                 else
                 {
                     baseQueryBuilder.SelectField(tableColumn);
-                    baseQueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                    baseQueryBuilder.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
                 }
             }
 
@@ -114,7 +114,7 @@ namespace Folke.Elm.Fluent
             {
                 BaseQueryBuilder tempQualifier = target.QueryBuilder;
                 tempQualifier.SelectField(tableColumn);
-                tempQualifier.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Column.ColumnName);
+                tempQualifier.StringBuilder.DuringColumn(tableColumn.Table.Alias, tableColumn.Property.ColumnName);
             }
             return (ISelectedValuesResult<T, TMe>)target;
         }

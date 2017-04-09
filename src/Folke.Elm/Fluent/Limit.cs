@@ -28,7 +28,22 @@ namespace Folke.Elm.Fluent
             builder.QueryBuilder.StringBuilder.AfterTake();
             return (ILimitResult<T, TMe>) builder;
         }
-        
+
+        public static ILimitTarget<T, TMe> Skip<T, TMe>(this ILimitTarget<T, TMe> builder, int offset)
+        {
+            builder.QueryBuilder.StringBuilder.DuringSkip();
+            builder.QueryBuilder.StringBuilder.Append(offset.ToString(CultureInfo.InvariantCulture));
+            return builder;
+        }
+
+        public static ILimitResult<T, TMe> Take<T, TMe>(this ILimitTarget<T, TMe> builder, int count)
+        {
+            builder.QueryBuilder.StringBuilder.DuringTake();
+            builder.QueryBuilder.StringBuilder.Append(count.ToString(CultureInfo.InvariantCulture));
+            builder.QueryBuilder.StringBuilder.AfterTake();
+            return (ILimitResult<T, TMe>)builder;
+        }
+
         public static ILimitResult<T, TMe> Limit<T, TMe>(this ILimitTarget<T, TMe> builder, Expression<Func<T, int>> offset, int count)
         {
             builder.QueryBuilder.StringBuilder.DuringSkip();

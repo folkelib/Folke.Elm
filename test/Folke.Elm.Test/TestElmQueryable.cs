@@ -13,7 +13,9 @@ namespace Folke.Elm.Test
     {
         private readonly ElmQueryable<TestPoco> queryable;
         private readonly Mock<IFolkeCommand> commandMock;
-        private ElmQueryProvider provider;
+        private readonly ElmQueryProvider provider;
+        private readonly Mock<DbDataReader> dbReaderMock;
+        private Mock<IDatabaseDriver> driverMock;
 
         public class TestPoco
         {
@@ -33,13 +35,13 @@ namespace Folke.Elm.Test
 
         public TestElmQueryable()
         {
-            var driverMock = new Mock<IDatabaseDriver>();
+            driverMock = new Mock<IDatabaseDriver>();
             var mapper = new Mapper();
             var connection = new Mock<IFolkeConnection>(); //  FolkeConnection.Create(driverMock.Object, mapper);
             connection.Setup(x => x.Mapper).Returns(mapper);
             connection.Setup(x => x.Driver).Returns(driverMock.Object);
             commandMock = new Mock<IFolkeCommand>();
-            var dbReaderMock = new Mock<DbDataReader>();
+            dbReaderMock = new Mock<DbDataReader>();
             commandMock.Setup(x => x.ExecuteReader()).Returns(dbReaderMock.Object);
             commandMock.SetupProperty(x => x.CommandText);
             connection.Setup(x => x.CreateCommand(It.IsAny<string>(), It.IsAny<object[]>())).Returns(
@@ -83,12 +85,27 @@ namespace Folke.Elm.Test
         {
             // Arrange
 
-            //// Act
+            // Act
             List<TestPoco> result = queryable.OrderBy(x => x.Name).Skip(10).Take(15).ToList();
 
             // Assert
             Assert.Empty(result);
             Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal\" FROM \"TestPoco\" AS t ORDER BY  \"t\".\"Name\" LIMIT @Item0, @Item1", commandMock.Object.CommandText);
+        }
+
+        [Fact]
+        public void Count()
+        {
+            // Arrange
+            dbReaderMock.Setup(x => x.Read()).Returns(true);
+            driverMock.Setup(x => x.ConvertReaderValueToValue(dbReaderMock.Object, typeof(int), 0)).Returns(18);
+
+            // Act
+            int result = queryable.Count();
+
+            // Assert
+            Assert.Equal(18, result);
+            Assert.Equal("SELECT COUNT(*) FROM \"TestPoco\" AS t", commandMock.Object.CommandText);
         }
 
         [Fact(Skip = "Does not support link between two queryables")]

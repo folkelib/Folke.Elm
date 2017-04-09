@@ -209,6 +209,7 @@ namespace Folke.Elm.Abstract.Test
                     .From(x => x.Item0)
                     .LeftJoin(x => x.Item1).On(x => x.Item1.Poco == x.Item0).ToList();
             Assert.Equal(1, pocos.Count);
+            Assert.NotNull(pocos[0].Item0);
             Assert.Equal(newPoco.Name, pocos[0].Item0.Name);
             Assert.Equal(newMany.Toto, pocos[0].Item1.Toto);
             Assert.Equal(newPoco, pocos[0].Item1.Poco);

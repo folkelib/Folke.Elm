@@ -114,7 +114,7 @@ namespace Folke.Elm
 
         /// <summary>A factory for a MappedClass instance</summary>
         /// <param name="fieldAliases">The fields that have been selected in the query and that should fill the class properties</param>
-        /// <param name="selectedTable">The table of the fields to map</param>
+        /// <param name="selectedTable">The table of the fields to map or null if the object must be created empty</param>
         /// <returns>The mapping from the database query to the instancied object</returns>
         public static MappedClass MapClass(IList<SelectedField> fieldAliases, TypeMapping type, SelectedTable selectedTable)
         {
@@ -139,33 +139,31 @@ namespace Folke.Elm
 
                 var fieldInfo = fieldAliases.SingleOrDefault(f => f.Table == selectedTable && f.PropertyMapping == propertyMapping);
                 bool isForeign = propertyMapping.Reference != null;
-                if (fieldInfo != null /*|| isForeign && fieldAliases.Any(x => x.PropertyMapping == propertyMapping.Reference.Key)*/)
+                if (fieldInfo != null || isForeign && fieldAliases.Any(x => x.PropertyMapping == propertyMapping.Reference.Key))
                 {
                     var mappedField = new MappedField { PropertyInfo = propertyMapping.PropertyInfo, SelectedField = fieldInfo };
 
                     if (isForeign)
                     {
-                        if (fieldInfo != null)
+                        if (fieldInfo == null)
+                        {
+                            // The field has not been selected but children do
+                            // TODO better way to find the SelectedTable, because it may not be unique
+                            mappedField.MappedClass = MapClass(fieldAliases, propertyMapping.Reference,
+                                fieldAliases.FirstOrDefault(x => x.PropertyMapping == propertyMapping.Reference.Key)?.Table);
+                        }
+                        else if (selectedTable != null && selectedTable.Children.ContainsKey(propertyMapping.PropertyInfo))
                         {
                             mappedField.MappedClass = MapClass(fieldAliases, propertyMapping.Reference,
-                                fieldInfo.ChildTable);
+                                selectedTable.Children[propertyMapping.PropertyInfo]);
                         }
                         else
                         {
-                            mappedField.MappedClass = new MappedClass
-                            {
-                                primaryKeyField = mappedField,
-                                constructor = propertyMapping.Reference.Type.GetTypeInfo().GetConstructor(Type.EmptyTypes)
-                            };
-                            MapCollections(propertyMapping.Reference, mappedField.MappedClass);
+                            // The table has not been selected but the class must be created anyway with empty fields (or it may come from cache) 
+                            mappedField.MappedClass = MapClass(fieldAliases, propertyMapping.Reference, null);
                         }
                     }
                     mappedClass.fields.Add(mappedField);
-                }
-                else if (isForeign)
-                {
-                    // If the foreign table id table is selected, use this
-                    //fieldInfo = fieldAliases.FirstOrDefault(x => x. == )
                 }
             }
 

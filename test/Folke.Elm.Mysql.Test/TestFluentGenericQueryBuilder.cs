@@ -77,7 +77,7 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_Select_ListOfExpressionsFromDefaultTableAndJoin()
         {
             fluentSelectBuilder.Values(x => x.Id, x => x.Text, x => x.Child.Value);
-            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t1`.`Value`", queryBuilder.Sql);
+            Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t0`.`Value`", queryBuilder.Sql);
             Assert.Equal(3, queryBuilder.SelectedFields.Count);
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Id")));
             Assert.True(queryBuilder.SelectedFields.Any(x => x.PropertyMapping.PropertyInfo == typeof(FakeClass).GetTypeInfo().GetProperty("Text")));
@@ -175,7 +175,7 @@ namespace Folke.Elm.Mysql.Test
         public void FluentGenericQueryBuilder_LocalVariableIsTable_WhereProperty()
         {
             FakeChildClass child = new FakeChildClass { Id = 18 };
-            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child.Id == child.Id);
+            fluentSelectBuilder.All().All(x => child).From().LeftJoin(x => child).On(x => x.Child == child);
             Assert.Equal("SELECT `t`.`Id`, `t`.`Text`, `t`.`Value`, `t`.`Child_id`, `t1`.`Id`, `t1`.`Value` FROM `FakeClass` AS t LEFT JOIN `FakeChildClass` AS t1 ON ( `t`.`Child_id`= `t1`.`Id`)", queryBuilder.Sql);
         }
 
