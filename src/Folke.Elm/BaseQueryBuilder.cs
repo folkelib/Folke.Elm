@@ -653,9 +653,9 @@ namespace Folke.Elm
         {
             foreach (var column in columns.Values)
             {
-                if (column.ComplexType != null)
+                if (column.Reference != null)
                 {
-                    AddAllColumns(table, column.ComplexType.Columns, fields, column.ComposeName(baseName));
+                    AddAllColumns(table, column.Reference.Columns, fields, column.ComposeName(baseName));
                     continue;
                 }
                 var visitable = new Field(table, column);
