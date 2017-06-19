@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
 using Folke.Elm.Parsers;
 using Folke.Elm.Visitor;
@@ -104,7 +105,6 @@ namespace Folke.Elm
             {
                 case ExpressionType.MemberAccess:
                     if (!Mapper.IsMapped(alias.Type)) return null;
-                    var mapping = Mapper.GetTypeMapping(alias.Type);
                     var memberExpression = (MemberExpression)alias;
                     var parentTable = GetTable(memberExpression.Expression, false);
                     if (parentTable == null)
@@ -361,15 +361,10 @@ namespace Folke.Elm
                 if (constant.Type == typeof (ElmQueryable) || constant.Type.GetTypeInfo().BaseType == typeof(ElmQueryable))
                 {
                     var queryable = (ElmQueryable)constant.Value;
-                    //Debug.Assert(queryable.ElementType == defaultType.Type);
-                    // RegisterTable(queryable.ElementType, null);
                     var table = RegisterRootTable(Mapper.GetTypeMapping(queryable.ElementType));
                     return new AliasDefinition(new Table(table.Mapping.TableName, table.Mapping.TableSchema), table.Alias);
                 }
-                else
-                {
-                    return ParseParameter(constant.Value);
-                }
+                return ParseParameter(constant.Value);
             }
 
             if (expression.NodeType == ExpressionType.MemberAccess)
@@ -408,7 +403,7 @@ namespace Folke.Elm
                             return new OrderBy(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options));
 
                         case nameof(Queryable.Join):
-                            return new Join(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options), ParseExpression(call.Arguments[2]), ParseExpression(call.Arguments[3]), ParseExpression(call.Arguments[4]));
+                            return new Join(ParseExpression(call.Arguments[0], options), ParseExpression(call.Arguments[1], options), ParseExpression(call.Arguments[2], ParseOptions.Value), ParseExpression(call.Arguments[3], ParseOptions.Value), ParseExpression(call.Arguments[4]));
 
                         case nameof(Queryable.Count):
                             var from = ParseExpression(call.Arguments[0], options);
@@ -533,24 +528,30 @@ namespace Folke.Elm
             }
             return new Values(list);
         }
-        
+
         internal SelectedTable RegisterRootTable(TypeMapping typeMapping = null)
         {
-            if (defaultTable == null)
+            if (typeMapping == defaultType || typeMapping == null)
             {
-                defaultTable = new SelectedTable { Alias = "t", Parent = null, Mapping = typeMapping ?? defaultType };
-                tables.Add(defaultTable);
+                if (defaultTable == null)
+                {
+                    defaultTable = new SelectedTable {Alias = "t", Parent = null, Mapping = typeMapping ?? defaultType};
+                    tables.Add(defaultTable);
+                }
+                return defaultTable;
             }
             else
             {
-                if (defaultTable.Mapping != (typeMapping ?? defaultType))
+                var table = tables.FirstOrDefault(x => x.Mapping == typeMapping && x.Parent == null);
+                if (table == null)
                 {
-                    throw new Exception($"Unexcepted root mapping {typeMapping?.Type} instead of {defaultTable.Mapping.Type}");
+                    table = new SelectedTable { Alias = "t" + tables.Count, Mapping = typeMapping };
+                    tables.Add(table);
                 }
+                return table;
             }
-            return defaultTable;
         }
-        
+
         /// <summary>Adds a column to the list of selected values</summary>
         /// <param name="field"></param>
         internal SelectedField SelectField(Field field)
@@ -580,7 +581,11 @@ namespace Folke.Elm
 
             if (columnExpression.NodeType == ExpressionType.Parameter)
             {
-                return new Field(defaultTable, defaultType.Key);
+                if (options.HasFlag(ParseOptions.Value))
+                {
+                    return new Field(defaultTable, defaultType.Key);
+                }
+                return defaultTable;
             }
 
             if (columnExpression.NodeType == ExpressionType.Call)

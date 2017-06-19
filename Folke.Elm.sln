@@ -36,6 +36,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.PostgreSql", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Folke.Elm.PostgreSql.Test", "test\Folke.Elm.PostgreSql.Test\Folke.Elm.PostgreSql.Test.csproj", "{E1147222-002C-4DB0-83DF-2D645C8108C3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{237B20D5-C6CE-4500-A0C6-A919A3B17962}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Folke.Elm.Sample", "samples\Folke.Elm.Sample\Folke.Elm.Sample.csproj", "{A79C5167-E4CB-400D-8F3B-60939887DB8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +90,10 @@ Global
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E1147222-002C-4DB0-83DF-2D645C8108C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A79C5167-E4CB-400D-8F3B-60939887DB8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A79C5167-E4CB-400D-8F3B-60939887DB8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A79C5167-E4CB-400D-8F3B-60939887DB8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A79C5167-E4CB-400D-8F3B-60939887DB8D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,5 +110,6 @@ Global
 		{B99D6362-394C-47E0-B81A-91C86CB501E6} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
 		{671D41F3-2AE6-4D15-9FC5-5C77CC9363E9} = {3BDEB84D-8FE1-4FA9-A915-9913E9B77CD2}
 		{E1147222-002C-4DB0-83DF-2D645C8108C3} = {004A198B-DA0A-4632-BD5A-C49D88FE834E}
+		{A79C5167-E4CB-400D-8F3B-60939887DB8D} = {237B20D5-C6CE-4500-A0C6-A919A3B17962}
 	EndGlobalSection
 EndGlobal

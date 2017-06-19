@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
+using System.Diagnostics;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
 using Xunit;
@@ -105,23 +106,23 @@ namespace Folke.Elm.Test
 
             // Assert
             Assert.Equal(18, result);
-            Assert.Equal("SELECT COUNT(*) FROM \"TestPoco\" AS t", commandMock.Object.CommandText);
+            Assert.Equal("SELECT COUNT(*) FROM \"TestPoco\" AS t0", commandMock.Object.CommandText);
         }
 
-        [Fact(Skip = "Does not support link between two queryables")]
+        [Fact(Skip = "Not implemented")]
         public void Join()
         {
             // Arrange
             var otherQueryable = new ElmQueryable<TestOther>(provider);
 
             // Act
-            List<TestPoco> result = (from testPoco in queryable
-                                     join other in otherQueryable on testPoco.Id equals other.TestPoco.Id
-                                     select testPoco).ToList();
+            var result = (from testPoco in queryable
+                                     join other in otherQueryable on testPoco equals other.TestPoco
+                                     select new { testPoco, other }).ToList();
 
             // Assert
             Assert.Empty(result);
-            Assert.Equal("", commandMock.Object.CommandText);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Name\", \"t\".\"Decimal", commandMock.Object.CommandText);
         }
     }
 }
