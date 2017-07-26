@@ -1,4 +1,5 @@
-﻿using Folke.Elm.Visitor;
+﻿using System;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm.Fluent
 {
@@ -12,6 +13,5 @@ namespace Folke.Elm.Fluent
             query.DuringTable(table.Mapping.TableSchema, table.Mapping.TableName);
             query.DuringAliasDefinition(table.Alias);
         }
-
     }
 }

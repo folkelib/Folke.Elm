@@ -92,13 +92,23 @@ namespace Folke.Elm
             expressionToVisitable = new ExpressionToVisitable(Mapper);
         }
 
+        protected internal SelectedTable GetTable(LambdaExpression alias, bool register)
+        {
+            var result = TryGetTable(alias.Body, register);
+            if (result == null)
+            {
+                throw new Exception($"The expression {alias} can't be resolved as a table. Ensure that {alias.Type} is mappable, it should have IFolkeTable interface or a Table attribute.");
+            }
+            return result;
+        }
+
         /// <summary>
         /// Gets a table by its alias
         /// </summary>
         /// <param name="alias">The expression that is used as an alias to a table</param>
         /// <param name="register">Register the table if it has never been</param>
         /// <returns>The table or null if it is not a table</returns>
-        protected internal SelectedTable GetTable(Expression alias, bool register)
+        protected internal SelectedTable TryGetTable(Expression alias, bool register)
         {
             SelectedTable table;
             switch (alias.NodeType)
@@ -106,7 +116,7 @@ namespace Folke.Elm
                 case ExpressionType.MemberAccess:
                     if (!Mapper.IsMapped(alias.Type)) return null;
                     var memberExpression = (MemberExpression)alias;
-                    var parentTable = GetTable(memberExpression.Expression, false);
+                    var parentTable = TryGetTable(memberExpression.Expression, false);
                     if (parentTable == null)
                     {
                         return null;
@@ -124,7 +134,7 @@ namespace Folke.Elm
                 case ExpressionType.Parameter:
                     return RegisterRootTable(Mapper.GetTypeMapping(alias.Type));
                 case ExpressionType.Convert:
-                    return GetTable(((UnaryExpression) alias).Operand, register);
+                    return TryGetTable(((UnaryExpression) alias).Operand, register);
                 default:
                     // This is not a table
                     return null;
@@ -595,14 +605,14 @@ namespace Folke.Elm
                     callExpression.Method.Name == nameof(ExpressionHelpers.Property))
                 {
                     var propertyInfo = (PropertyInfo)Expression.Lambda(callExpression.Arguments[1]).Compile().DynamicInvoke();
-                    var table = GetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
+                    var table = TryGetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
                     return new Field(table, table.Mapping.Columns[propertyInfo.Name]);
                 }
 
                 if (callExpression.Method.DeclaringType == typeof(ExpressionHelpers) &&
                     callExpression.Method.Name == nameof(ExpressionHelpers.Key))
                 {
-                    var table = GetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
+                    var table = TryGetTable(callExpression.Arguments[0], options.HasFlag(ParseOptions.RegisterTables));
                     return new Field(table, table.Mapping.Key);
                 }
                 return null;
@@ -614,7 +624,7 @@ namespace Folke.Elm
             }
 
             var columnMember = (MemberExpression)columnExpression;
-            var columnIsTable = GetTable(columnExpression, options.HasFlag(ParseOptions.RegisterTables));
+            var columnIsTable = TryGetTable(columnExpression, options.HasFlag(ParseOptions.RegisterTables));
             if (columnIsTable != null)
             {
                 if (options.HasFlag(ParseOptions.Value))
@@ -625,7 +635,7 @@ namespace Folke.Elm
                 return columnIsTable;
             }
 
-            var parentTable = GetTable(columnMember.Expression, options.HasFlag(ParseOptions.RegisterTables));
+            var parentTable = TryGetTable(columnMember.Expression, options.HasFlag(ParseOptions.RegisterTables));
             if (parentTable != null)
             {
                 return new Field(parentTable, parentTable.Mapping.GetColumn(columnMember.Member));
@@ -642,7 +652,7 @@ namespace Folke.Elm
         /// <returns></returns>
         internal Field GetTableKey(Expression tableExpression)
         {
-            var table = GetTable(tableExpression, false);
+            var table = TryGetTable(tableExpression, false);
             return new Field(table, table.Mapping.Key);
         }
 

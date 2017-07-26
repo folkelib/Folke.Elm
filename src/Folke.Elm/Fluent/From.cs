@@ -22,7 +22,7 @@ namespace Folke.Elm.Fluent
         {
             fromTarget.AppendFrom();
             BaseQueryBuilder queryBuilder = fromTarget.QueryBuilder;
-            var selectedTable = queryBuilder.GetTable(expression.Body, true);
+            var selectedTable = queryBuilder.GetTable(expression, register: true);
             queryBuilder.StringBuilder.AppendTable(selectedTable);
             return (IFromResult<T, TMe>)fromTarget;
         }

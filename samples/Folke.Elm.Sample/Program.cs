@@ -17,7 +17,6 @@ namespace Folke.Elm.Sample
                 options =>
                 {
                     options.ConnectionString = "Data Source=:memory:";
-                    options.SqlCommandTracesEnabled = true;
                 })}));
             folke.CreateTable<Table>();
             folke.Save(new Table());

@@ -5,13 +5,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Folke.Elm.Abstract.Test
 {
-    public class TestPoco : IFolkeTable
+     public class TestPoco : IFolkeTable
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public bool Boolean { get; set; }
     }
 
+    [Table("TestManyPocoWithAttribute")]
     public class TestManyPoco : IFolkeTable
     {
         public int Id { get; set; }
@@ -62,7 +63,7 @@ namespace Folke.Elm.Abstract.Test
         public TestOtherPoco User { get; set; }
     }
 
-    [Table("TableWithGuid")]
+    [Table("TableWithGuid_OtherName")]
     public class TableWithGuid
     {
         [Key]

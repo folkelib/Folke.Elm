@@ -7,7 +7,7 @@ namespace Folke.Elm.Sqlite.Test
     [Collection("Sqlite")]
     public class IntegrationTestSave : IIntegrationTestSave
     {
-        private BaseIntegrationTestSave test;
+        private readonly BaseIntegrationTestSave test;
 
         public IntegrationTestSave()
         {

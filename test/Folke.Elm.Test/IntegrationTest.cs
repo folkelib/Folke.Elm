@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
@@ -11,6 +12,7 @@ namespace Folke.Elm.Test
     {
         private readonly ISelectResult<TestLinkTable, FolkeTuple> select;
         
+        [Table("TestPoco")]
         public class TestPoco
         {
             [Key]
@@ -19,6 +21,7 @@ namespace Folke.Elm.Test
             public decimal Decimal { get; set; }
         }
 
+        [Table("TestOtherPoco")]
         public class TestOtherPoco 
         {
             [Key]
@@ -27,6 +30,7 @@ namespace Folke.Elm.Test
             public decimal Decimal { get; set; }
         }
 
+        [Table("TestLinkTable")]
         public class TestLinkTable
         {
             [Key]
@@ -61,7 +65,38 @@ namespace Folke.Elm.Test
         public void SkipAndTake()
         {
             var query = select.All().From().OrderBy(x => x.Id).Skip(4).Take(2);
-            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Group\", \"t\".\"User\" FROM \"TestLinkTable\" AS t ORDER BY  \"t\".\"Id\" LIMIT 4,2", query.Sql);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Group_id\", \"t\".\"User_id\" FROM \"TestLinkTable\" AS t ORDER BY  \"t\".\"Id\" LIMIT 4,2", query.Sql);
+        }
+
+        [Fact]
+        public void LeftJoin_ParameterIsNotAValidExpression()
+        {
+            TestPoco poco = null;
+            Assert.Throws<Exception>(() => @select.All().From().LeftJoin(x => poco).On(x => x.Id.Equals(poco.Id)));
+        }
+
+        [Fact(Skip = "Not implemented")]
+        public void LeftJoin_OnItemsSubWithId()
+        {
+            var driverMock = new Mock<IDatabaseDriver>();
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User.Id.Equals(x.Item1.Id));
+        }
+
+        [Fact]
+        public void LeftJoin_OnItemsWithReferenceEqualOperator()
+        {
+            var driverMock = new Mock<IDatabaseDriver>();
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User == x.Item1);
+        }
+
+        [Fact(Skip = "Not implemented")]
+        public void LeftJoin_OnItemsWithReferenceEqualsMethod()
+        {
+            var driverMock = new Mock<IDatabaseDriver>();
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User.Equals(x.Item1));
         }
     }
 }
