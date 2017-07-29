@@ -39,5 +39,10 @@ namespace Folke.Elm.Mapping
         {
             return $"{ColumnName}_{baseName}";
         }
+
+        public override string ToString()
+        {
+            return ColumnName;
+        }
     }
 }

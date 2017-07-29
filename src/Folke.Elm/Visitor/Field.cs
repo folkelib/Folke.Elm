@@ -31,5 +31,16 @@ namespace Folke.Elm.Visitor
                 
             visitor.DuringColumn(alias.Alias, name);
         }
+
+        public override string ToString()
+        {
+            return $"{Column} of {Table}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            var o = obj as Field;
+            return o != null && o.Table.Equals(Table) && o.Column == Column;
+        }
     }
 }

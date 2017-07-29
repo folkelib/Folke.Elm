@@ -566,6 +566,8 @@ namespace Folke.Elm
         /// <param name="field"></param>
         internal SelectedField SelectField(Field field)
         {
+            if (selectedFields.Any(x => x.Field.Equals(field)))
+                throw new ElmException($"Attempt to add several times the same field {field}");
             var selectedField = new SelectedField { Field = field, Index = selectedFields.Count };
             selectedFields.Add(selectedField);
             return selectedField;

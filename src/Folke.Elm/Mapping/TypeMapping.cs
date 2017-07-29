@@ -169,5 +169,10 @@ namespace Folke.Elm.Mapping
         {
             return Columns[memberInfo.Name];
         }
+
+        public override string ToString()
+        {
+            return $"{Type.Name}";
+        }
     }
 }

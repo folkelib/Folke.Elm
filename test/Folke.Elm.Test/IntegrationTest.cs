@@ -98,5 +98,11 @@ namespace Folke.Elm.Test
             var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
             selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User.Equals(x.Item1));
         }
+
+        [Fact]
+        public void AttemptToSelectASameColumnMultipleTime_ThrowsAnException()
+        {
+            Assert.Throws<ElmException>(() => @select.Value(x => x.Group).Value(x => x.Group.Name).From());
+        }
     }
 }
