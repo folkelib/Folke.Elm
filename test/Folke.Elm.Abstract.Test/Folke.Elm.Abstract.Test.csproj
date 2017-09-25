@@ -4,7 +4,7 @@
     <Description>Folke.Elm.Abstract.Test Class Library</Description>
     <VersionPrefix>1.2.0</VersionPrefix>
     <Authors>Sidoine</Authors>
-    <TargetFramework>netstandard1.5</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Folke.Elm.Abstract.Test</AssemblyName>
     <PackageId>Folke.Elm.Abstract.Test</PackageId>
   </PropertyGroup>

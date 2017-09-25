@@ -13,11 +13,11 @@ namespace Folke.Elm.Sample
             var table = mapper.GetTypeMapping<Table>();
             table.ToTable("Blabla");
             table.HasKey(x => x.Id);
-            var folke = new FolkeConnection(new SqliteDriver(), mapper, new OptionsManager<ElmOptions>(new []{ new ConfigureOptions<ElmOptions>(
-                options =>
-                {
-                    options.ConnectionString = "Data Source=:memory:";
-                })}));
+            var elmOptions = new ElmOptions
+            {
+                ConnectionString = "Data Source=:memory:"
+            };
+            var folke = new FolkeConnection(new SqliteDriver(), mapper, new OptionsWrapper<ElmOptions>(elmOptions)) ;
             folke.CreateTable<Table>();
             folke.Save(new Table());
         }
