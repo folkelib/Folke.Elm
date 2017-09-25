@@ -10,7 +10,6 @@
     <PackageTags>postgresql orm</PackageTags>
     <PackageProjectUrl>https://github.com/folkelib/orm</PackageProjectUrl>
     <PackageLicenseUrl>http://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
   </PropertyGroup>
 
   <ItemGroup>
