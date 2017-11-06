@@ -1,4 +1,4 @@
-﻿namespace Folke.Elm.Abstract.Test
+﻿namespace Folke.Elm.Mysql.Test
 {
     public static class TestHelpers
     {

@@ -28,6 +28,7 @@ namespace Folke.Elm.Abstract.Test
             parentTableWithGuidMapping.HasKey(x => x.Key);
             connection.CreateOrUpdateTable<TableWithGuid>();
             connection.CreateOrUpdateTable<ParentTableWithGuid>();
+            connection.CreateOrUpdateTable<GrandParentWithGuid>();
 
             testValue = new TableWithGuid
             {
@@ -41,6 +42,7 @@ namespace Folke.Elm.Abstract.Test
         {
             connection.DropTable<TestMultiPoco>();
             connection.DropTable<TestOtherPoco>();
+            connection.DropTable<GrandParentWithGuid>();
             connection.DropTable<ParentTableWithGuid>();
             connection.DropTable<TableWithGuid>();
             connection.DropTable<TestCollectionMember>();

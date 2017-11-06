@@ -191,5 +191,11 @@ namespace Folke.Elm.MicrosoftSqlServer.Test
         {
             integrationTestSelect.SelectAllFrom_TableType_WhereVariableIsNull_Single();
         }
+
+        [Fact]
+        public void SelectAllFrom_UseCache()
+        {
+            integrationTestSelect.SelectAllFrom_UseCache();
+        }
     }
 }

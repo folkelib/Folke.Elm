@@ -209,6 +209,7 @@ namespace Folke.Elm
         public void Save<T>(T value) where T : class, new()
         {
             var keyProperty = Mapper.GetTypeMapping(typeof(T)).Key;
+            if (keyProperty == null) throw new ElmException($"{typeof(T)} does not define a key. Add a Key attribute");
             bool automatic = keyProperty.IsAutomatic;
             using (var t = BeginTransaction())
             {

@@ -1,7 +1,7 @@
 ﻿using System;
-using Folke.Elm.Abstract.Test;
 using Folke.Elm.Mapping;
 using Xunit;
+using Folke.Elm.Abstract.Test;
 
 namespace Folke.Elm.Mysql.Test
 {

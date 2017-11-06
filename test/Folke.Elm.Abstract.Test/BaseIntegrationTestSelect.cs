@@ -446,5 +446,23 @@ namespace Folke.Elm.Abstract.Test
             Assert.Equal(value.Id, values[0].Id);
             Assert.Equal(value.Text, values[0].Text);
         }
+
+        public void SelectAllFrom_UseCache()
+        {
+            var value = new TableWithGuid
+            {
+                Id = Guid.NewGuid(),
+                Text = "Text"
+            };
+            connection.Save(value);
+            var parent = new ParentTableWithGuid {Key = Guid.NewGuid(), Reference = value};
+            connection.Save(parent);
+            var grandParent = new GrandParentWithGuid { Key = Guid.NewGuid(), Reference = parent };
+            connection.Save(grandParent);
+            value = connection.Get<TableWithGuid>(value.Id);
+            var all = connection.SelectAllFrom<GrandParentWithGuid>().Where(x => x.Reference == parent).ToList();
+            Assert.Equal(value, all[0].Reference.Reference);
+            Assert.Equal("Text", value.Text);
+        }
     }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using Folke.Elm.Mapping;
 using Xunit;
 using Folke.Elm.Fluent;
-using Folke.Elm.Abstract.Test;
 
 namespace Folke.Elm.Mysql.Test
 {

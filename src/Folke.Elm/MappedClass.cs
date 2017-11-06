@@ -44,6 +44,7 @@ namespace Folke.Elm
             var cache = folkeConnection.Cache;
             object value;
             var idMappedField = primaryKeyField;
+            bool fromCache = false;
 
             // If the key field is mapped or if its value is already known, create a new item and
             // store it in cache
@@ -75,6 +76,7 @@ namespace Folke.Elm
                 if (typeCache.ContainsKey(id))
                 {
                     value = typeCache[id];
+                    fromCache = true;
                 }
                 else
                 {
@@ -84,7 +86,7 @@ namespace Folke.Elm
             }
             else
             {
-                value = Construct(folkeConnection, type, 0);
+                value = Construct(folkeConnection, type, null);
             }
 
             foreach (var mappedField in fields)
@@ -101,8 +103,11 @@ namespace Folke.Elm
                     object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.PropertyInfo.PropertyType, fieldInfo.Index);
                     mappedField.PropertyInfo.SetValue(value, field);
                 }
-                else 
+                else
                 {
+                    // If this field is not selected and the instance comes from cache, it does not need to fill the field because
+                    // it has already be filled
+                    if (fieldInfo == null && fromCache) continue;
                     object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.Index);
                     if (id != null)
                         id = folkeConnection.Driver.ConvertReaderValueToProperty(id, mappedField.MappedClass.primaryKeyField.PropertyInfo.PropertyType);

@@ -73,8 +73,16 @@ namespace Folke.Elm.Abstract.Test
 
     public class ParentTableWithGuid
     {
+        [Key]
         public Guid Key { get; set; }
         public string Text { get; set; }
         public TableWithGuid Reference { get; set; }
+    }
+
+    public class GrandParentWithGuid
+    {
+        [Key]
+        public Guid Key { get; set; }
+        public ParentTableWithGuid Reference { get; set; }
     }
 }
