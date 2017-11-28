@@ -31,10 +31,12 @@ namespace Folke.Elm.Mysql
             if (typeInfo.IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
 
-            if (type == typeof (bool))
+            if (type == typeof(bool))
             {
                 return "TINYINT";
             }
+            else if (type == typeof(byte))
+                return "TINYINT UNSIGNED";
             else if (type == typeof (short))
             {
                 return "SMALLINT";
@@ -174,6 +176,8 @@ namespace Folke.Elm.Mysql
 
             if (type == typeof(string))
                 value = reader.GetString(index);
+            else if (type == typeof(byte))
+                value = reader.GetByte(index);
             else if (type == typeof(int))
                 value = reader.GetInt32(index);
             else if (type == typeof(long))

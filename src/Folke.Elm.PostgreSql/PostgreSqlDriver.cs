@@ -36,6 +36,8 @@ namespace Folke.Elm.PostgreSql
             {
                 return "BOOLEAN";
             }
+            else if (type == typeof(byte))
+                return "SMALLINT";
             else if (type == typeof(short))
             {
                 if (isAutomatic) return "SMALLSERIAL";

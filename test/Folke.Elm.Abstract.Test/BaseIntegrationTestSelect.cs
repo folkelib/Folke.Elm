@@ -376,7 +376,7 @@ namespace Folke.Elm.Abstract.Test
         
         public void SelectAllFrom_TableType_WithDecimalValue_SingleOrDefault()
         {
-            var newDecimal = new TestOtherPoco() { Decimal = new decimal(1.23) };
+            var newDecimal = new TestOtherPoco() { Decimal = new decimal(1.23), Byte = 4 };
             connection.Save(newDecimal);
             connection.Cache.Clear();
 
@@ -384,6 +384,7 @@ namespace Folke.Elm.Abstract.Test
 
             Assert.NotNull(result);
             Assert.Equal(newDecimal.Decimal, result.Decimal);
+            Assert.Equal(newDecimal.Byte, result.Byte);
         }
 
         /*   

@@ -41,7 +41,7 @@ namespace Folke.Elm.MicrosoftSqlServer
                 value = reader.GetGuid(index);
             else if (type == typeof(string))
                 value = reader.GetString(index);
-            else if (type == typeof (byte))
+            else if (type == typeof(byte))
                 value = reader.GetByte(index);
             else if (type == typeof(int))
                 value = reader.GetInt32(index);
@@ -166,6 +166,10 @@ namespace Folke.Elm.MicrosoftSqlServer
             if (type == typeof (bool))
             {
                 return "BIT";
+            }
+            else if (type == typeof(byte))
+            {
+                return "TINYINT";
             }
             else if (type == typeof (short))
             {

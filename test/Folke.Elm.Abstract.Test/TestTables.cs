@@ -54,6 +54,7 @@ namespace Folke.Elm.Abstract.Test
         public int Id { get; set; }
         public string Name { get; set; }
         public decimal Decimal { get; set; }
+        public byte Byte { get; set; }
     }
 
     public class TestLinkTable : IFolkeTable
