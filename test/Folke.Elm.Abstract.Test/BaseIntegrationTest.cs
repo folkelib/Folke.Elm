@@ -22,6 +22,7 @@ namespace Folke.Elm.Abstract.Test
             connection.CreateTable<TestCollectionMember>(drop: drop);
             connection.CreateTable<TestOtherPoco>(drop: drop);
             connection.CreateTable<TestMultiPoco>(drop);
+            connection.CreateTable<Playground>(drop);
 
             var parentTableWithGuidMapping = mapper.GetTypeMapping<ParentTableWithGuid>();
             parentTableWithGuidMapping.Property(x => x.Key).HasColumnName("KeyColumn");
@@ -40,6 +41,7 @@ namespace Folke.Elm.Abstract.Test
 
         public void Dispose()
         {
+            connection.DropTable<Playground>();
             connection.DropTable<TestMultiPoco>();
             connection.DropTable<TestOtherPoco>();
             connection.DropTable<GrandParentWithGuid>();

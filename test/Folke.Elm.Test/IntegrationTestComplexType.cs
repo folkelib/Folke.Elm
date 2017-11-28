@@ -43,14 +43,14 @@ namespace Folke.Elm.Test
         public void SelectAllFrom()
         {
             var query = @select.All().From();
-            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Text\", \"t\".\"Composed_id_Text\", \"t\".\"Composed_id_Number\" FROM \"TestComposed\" AS t", query.Sql);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Text\", \"t\".\"Composed_Text\", \"t\".\"Composed_Number\" FROM \"TestComposed\" AS t", query.Sql);
         }
 
         [Fact]
         public void SelectAllFromWhere()
         {
             var query = @select.All().From().Where(x => x.Composed.Text == "Test");
-            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Text\", \"t\".\"Composed_id_Text\", \"t\".\"Composed_id_Number\" FROM \"TestComposed\" AS t WHERE( \"t\".\"Composed_id_Text\"= @Item0)", query.Sql);
+            Assert.Equal("SELECT \"t\".\"Id\", \"t\".\"Text\", \"t\".\"Composed_Text\", \"t\".\"Composed_Number\" FROM \"TestComposed\" AS t WHERE( \"t\".\"Composed_Text\"= @Item0)", query.Sql);
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace Folke.Elm.Test
         {
             var schemaQueryBuilder = new SchemaQueryBuilder<TestComposed>(new Mapper(), driverMock.Object);
             schemaQueryBuilder.CreateTable();
-            Assert.Equal("CREATE TABLE \"TestComposed\" ( \"Id\" TEST PRIMARY KEY AUTO_INCREMENT,\"Text\" TEST,\"Composed_id_Text\" TEST,\"Composed_id_Number\" TEST)", schemaQueryBuilder.Sql);
+            Assert.Equal("CREATE TABLE \"TestComposed\" ( \"Id\" TEST PRIMARY KEY AUTO_INCREMENT,\"Text\" TEST,\"Composed_Text\" TEST,\"Composed_Number\" TEST)", schemaQueryBuilder.Sql);
         }
         
         [Fact]
@@ -67,7 +67,7 @@ namespace Folke.Elm.Test
             var schemaQueryBuilder = new SchemaQueryBuilder<TestComposed>(new Mapper(), driverMock.Object);
             var existingDefinitions = new List<IColumnDefinition>();
             schemaQueryBuilder.AlterTable().AlterColumns(existingDefinitions);
-            Assert.Equal("ALTER TABLE \"TestComposed\" ADD COLUMN \"Id\" TEST PRIMARY KEY AUTO_INCREMENT; ALTER TABLE \"TestComposed\" ADD COLUMN \"Text\" TEST; ALTER TABLE \"Composed\" ADD COLUMN \"Composed_id_Text\" TEST; ALTER TABLE \"Composed\" ADD COLUMN \"Composed_id_Number\" TEST", schemaQueryBuilder.Sql);
+            Assert.Equal("ALTER TABLE \"TestComposed\" ADD COLUMN \"Id\" TEST PRIMARY KEY AUTO_INCREMENT; ALTER TABLE \"TestComposed\" ADD COLUMN \"Text\" TEST; ALTER TABLE \"Composed\" ADD COLUMN \"Composed_Text\" TEST; ALTER TABLE \"Composed\" ADD COLUMN \"Composed_Number\" TEST", schemaQueryBuilder.Sql);
         }
     }
 }

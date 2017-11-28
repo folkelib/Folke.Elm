@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using Folke.Elm.Mapping;
@@ -35,7 +36,7 @@ namespace Folke.Elm.Abstract.Test
                 public decimal Decimal { get; set; }
             }
         }
-
+        
         private readonly FolkeConnection connection;
         private readonly FolkeTransaction transaction;
 

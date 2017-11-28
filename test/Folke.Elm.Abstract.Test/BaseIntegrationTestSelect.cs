@@ -465,5 +465,17 @@ namespace Folke.Elm.Abstract.Test
             Assert.Equal(value, all[0].Reference.Reference);
             Assert.Equal("Text", value.Text);
         }
+
+        public void Select_WithComplexType()
+        {
+            var value = new Playground { Position = new Position { Latitude = 2, Longitude = 3 }};
+            connection.Save(value);
+
+            value.Position.Longitude = 4;
+            connection.Update(value);
+
+            value = connection.SelectAllFrom<Playground>().Where(x => x.Position.Longitude > 0).FirstOrDefault();
+            Assert.Equal(4, value.Position.Longitude);
+        }
     }
 }

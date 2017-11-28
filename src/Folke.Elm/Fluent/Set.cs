@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using Folke.Elm.Mapping;
+using Folke.Elm.Visitor;
 
 namespace Folke.Elm.Fluent
 {
@@ -27,20 +28,33 @@ namespace Folke.Elm.Fluent
             var baseQueryBuilder = target.QueryBuilder;
             var table = baseQueryBuilder.DefaultTable;
             var typeMapping = table.Mapping;
+            AddParameters(target, value, typeMapping, table, baseQueryBuilder, null);
+            return (ISetResult<T, TMe>)target;
+        }
+
+        private static void AddParameters<T, TMe>(ISetTarget<T, TMe> target, object value, TypeMapping typeMapping, SelectedTable table,
+            BaseQueryBuilder baseQueryBuilder, string baseName)
+        {
             foreach (var property in typeMapping.Columns.Values)
             {
                 if (property.Readonly)
                     continue;
 
-                target.AppendSet();
-
-                string tableName = table.Alias;
-                baseQueryBuilder.StringBuilder.DuringColumn(tableName, property.ColumnName);
-                baseQueryBuilder.StringBuilder.Append("=");
-                var index = baseQueryBuilder.AddParameter(property.PropertyInfo.GetValue(value));
-                baseQueryBuilder.StringBuilder.DuringParameter(index);
+                var parameter = property.PropertyInfo.GetValue(value);
+                if (property.Reference != null && property.Reference.IsComplexType)
+                {
+                    AddParameters(target, parameter, property.Reference, table, baseQueryBuilder, property.ComposeName(baseName));
+                }
+                else
+                {
+                    target.AppendSet();
+                    string tableName = table.Alias;
+                    baseQueryBuilder.StringBuilder.DuringColumn(tableName, property.ComposeName(baseName));
+                    baseQueryBuilder.StringBuilder.Append("=");
+                    var index = baseQueryBuilder.AddParameter(parameter);
+                    baseQueryBuilder.StringBuilder.DuringParameter(index);
+                }
             }
-            return (ISetResult<T, TMe>)target;
         }
     }
 

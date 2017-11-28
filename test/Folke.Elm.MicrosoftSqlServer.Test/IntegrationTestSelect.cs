@@ -193,6 +193,12 @@ namespace Folke.Elm.MicrosoftSqlServer.Test
         }
 
         [Fact]
+        public void Select_WithComplexType()
+        {
+            integrationTestSelect.Select_WithComplexType();
+        }
+
+        [Fact]
         public void SelectAllFrom_UseCache()
         {
             integrationTestSelect.SelectAllFrom_UseCache();

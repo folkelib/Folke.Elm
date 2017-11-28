@@ -12,22 +12,20 @@ namespace Folke.Elm.Fluent
         {
             var baseQueryBuilder = insertedValuesTarget.QueryBuilder;
             baseQueryBuilder.StringBuilder.Append(" (");
-            bool first = true;
             var type = value.GetType();
             var typeMapping = baseQueryBuilder.Mapper.GetTypeMapping(type);
-            foreach (var property in typeMapping.Columns.Values)
-            {
-                if (/*TableHelpers.IsIgnored(property.PropertyType) || */ property.Readonly)
-                    continue;
-                if (first)
-                    first = false;
-                else
-                    baseQueryBuilder.StringBuilder.Append(",");
-                baseQueryBuilder.StringBuilder.DuringColumn(null, property.ColumnName);
-            }
+            AddValues(typeMapping, baseQueryBuilder, null);
 
             baseQueryBuilder.StringBuilder.Append(") VALUES (");
-            first = true;
+            AddParameters(value, typeMapping, baseQueryBuilder);
+
+            baseQueryBuilder.StringBuilder.Append(")");
+            return (IInsertedValuesResult<T, TMe>) insertedValuesTarget;
+        }
+
+        private static void AddValues(TypeMapping typeMapping, BaseQueryBuilder baseQueryBuilder, string baseName)
+        {
+            bool first = true;
             foreach (var property in typeMapping.Columns.Values)
             {
                 if (property.Readonly)
@@ -36,12 +34,39 @@ namespace Folke.Elm.Fluent
                     first = false;
                 else
                     baseQueryBuilder.StringBuilder.Append(",");
-                var parameterIndex = baseQueryBuilder.AddParameter(property.PropertyInfo.GetValue(value));
-                baseQueryBuilder.StringBuilder.DuringParameter(parameterIndex);
+                if (property.Reference != null && property.Reference.IsComplexType)
+                {
+                    AddValues(property.Reference, baseQueryBuilder, property.ComposeName(baseName));
+                }
+                else
+                {
+                    baseQueryBuilder.StringBuilder.DuringColumn(null, property.ComposeName(baseName));
+                }
             }
+        }
 
-            baseQueryBuilder.StringBuilder.Append(")");
-            return (IInsertedValuesResult<T, TMe>) insertedValuesTarget;
+        private static void AddParameters(object value, TypeMapping typeMapping, BaseQueryBuilder baseQueryBuilder)
+        {
+            bool first = true;
+            foreach (var property in typeMapping.Columns.Values)
+            {
+                if (property.Readonly)
+                    continue;
+                if (first)
+                    first = false;
+                else
+                    baseQueryBuilder.StringBuilder.Append(",");
+                var propertValue = property.PropertyInfo.GetValue(value);
+                if (property.Reference != null && property.Reference.IsComplexType)
+                {
+                    AddParameters(propertValue, property.Reference, baseQueryBuilder);
+                }
+                else
+                {
+                    var parameterIndex = baseQueryBuilder.AddParameter(property.PropertyInfo.GetValue(value));
+                    baseQueryBuilder.StringBuilder.DuringParameter(parameterIndex);
+                }
+            }
         }
     }
 

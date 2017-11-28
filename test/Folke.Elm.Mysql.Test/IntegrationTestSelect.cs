@@ -192,5 +192,11 @@ namespace Folke.Elm.Mysql.Test
         {
             integrationTestSelect.SelectAllFrom_TableType_WhereVariableIsNull_Single();
         }
+
+        [Fact]
+        public void Select_WithComplexType()
+        {
+            integrationTestSelect.Select_WithComplexType();
+        }
     }
 }

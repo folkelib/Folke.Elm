@@ -122,7 +122,7 @@ namespace Folke.Elm.Mapping
 
                 if (propertyMapping.ColumnName == null)
                 {
-                    if (propertyMapping.Reference != null)
+                    if (propertyMapping.Reference != null && !propertyMapping.Reference.IsComplexType)
                         propertyMapping.ColumnName = propertyInfo.Name + "_id";
                     else
                         propertyMapping.ColumnName = propertyInfo.Name;

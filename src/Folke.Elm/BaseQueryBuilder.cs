@@ -176,7 +176,13 @@ namespace Folke.Elm
                 }
                 else if (Mapper.IsMapped(parameterType))
                 {
-                    var key = Mapper.GetTypeMapping(parameterType).Key;
+                    var typeMapping = Mapper.GetTypeMapping(parameterType);
+                    if (typeMapping.IsComplexType)
+                    {
+                        throw new InvalidOperationException("Attempt to add a complex type parameter");
+                    }
+
+                    var key = typeMapping.Key;
                     parameter = key.PropertyInfo.GetValue(parameter);
                     if (parameter.Equals(0))
                         throw new Exception("Id should not be 0");

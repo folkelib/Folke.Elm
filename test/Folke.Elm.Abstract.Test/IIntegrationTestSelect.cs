@@ -33,5 +33,6 @@ namespace Folke.Elm.Abstract.Test
         void Select_TableWithGuid_WhereObject_List();
         void Select_TableWithGuid_WhereParameter_List();
         void SelectAllFrom_TableType_WhereVariableIsNull_Single();
+        void Select_WithComplexType();
     }
 }

@@ -86,4 +86,19 @@ namespace Folke.Elm.Abstract.Test
         public Guid Key { get; set; }
         public ParentTableWithGuid Reference { get; set; }
     }
+
+    [ComplexType]
+    public class Position
+    {
+        public int Latitude { get; set; }
+        public int Longitude { get; set; }
+    }
+
+    [Table("Playground")]
+    public class Playground
+    {
+        [Key]
+        public int Id { get; set; }
+        public Position Position { get; set; }
+    }
 }
