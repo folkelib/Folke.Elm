@@ -66,14 +66,6 @@ namespace Folke.Elm
         T Load<T>(object id) where T : class, new();
 
         /// <summary>
-        /// Loads an object by its primary key. Throws an error if the object can not be found.
-        /// </summary>
-        /// <typeparam name="T">The object class</typeparam>
-        /// <param name="id">The primary key value</param>
-        /// <returns>The object</returns>
-        T Load<T>(int id) where T : class, IFolkeTable, new();
-
-        /// <summary>
         /// Loads an object by its primary key. Includes objects referenced by its properties.
         /// Throws an error if the object can not be found.
         /// </summary>
@@ -94,39 +86,12 @@ namespace Folke.Elm
         Task<T> LoadAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
 
         /// <summary>
-        /// Loads an object by its primary key. Includes objects referenced by its properties.
-        /// Throws an error if the object can not be found.
-        /// </summary>
-        /// <typeparam name="T">The object type</typeparam>
-        /// <param name="id">The primary key value</param>
-        /// <param name="fetches">The properties to fill with objects from the database.</param>
-        /// <returns>The found object</returns>
-        T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
-
-        /// <summary>
         /// Gets an object by its primary key value. Returns null if the object can not be found.
         /// </summary>
         /// <typeparam name="T">The object class</typeparam>
         /// <param name="id">The id</param>
         /// <returns>The object or null if it can not be found</returns>
         T Get<T>(object id) where T : class, new();
-
-        /// <summary>
-        /// Gets an object by its primary key value. Returns null if the object can not be found.
-        /// </summary>
-        /// <typeparam name="T">The object class</typeparam>
-        /// <param name="id">The id</param>
-        /// <returns>The object or null if it can not be found</returns>
-        T Get<T>(int id) where T : class, IFolkeTable, new();
-
-        /// <summary>
-        /// Gets an object by its primary key value. Returns null if the object can not be found.
-        /// </summary>
-        /// <typeparam name="T">The object class</typeparam>
-        /// <param name="id">The primary key</param>
-        /// <param name="fetches">The properties to fill with objects from the database.</param>
-        /// <returns>The object or null if it can not be found</returns>
-        T Get<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
 
         /// <summary>
         /// Gets asynchronously an object by its primary key value. Returns null if the object can not be found.
@@ -136,16 +101,7 @@ namespace Folke.Elm
         /// <param name="fetches">The properties to fill with objects from the database.</param>
         /// <returns>The object or null if it can not be found</returns>
         Task<T> GetAsync<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new();
-
-        /// <summary>
-        /// Gets an object by its primary key value. Returns null if the object can not be found.
-        /// </summary>
-        /// <typeparam name="T">The object class</typeparam>
-        /// <param name="id">The primary key</param>
-        /// <param name="fetches">The properties to fill with objects from the database.</param>
-        /// <returns>The object or null if it can not be found</returns>
-        T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new();
-
+        
         /// <summary>
         /// Saves an object in the database
         /// </summary>

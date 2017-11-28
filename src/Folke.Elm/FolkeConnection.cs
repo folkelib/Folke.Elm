@@ -155,7 +155,7 @@ namespace Folke.Elm
         {
             return Select<T>().All().From().Where(x => x.Key().Equals(id)).Single();
         }
-
+        
         public T Load<T>(object id, params Expression<Func<T, object>>[] fetches) where T : class, new()
         {
             return CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).Single();
@@ -165,27 +165,7 @@ namespace Folke.Elm
         {
             return await CreateLoadOrGetQuery(fetches).Where(x => x.Key() == id).SingleAsync();
         }
-
-        public T Load<T>(int id) where T : class, IFolkeTable, new()
-        {
-            return Select<T>().All().From().Where(x => x.Id == id).First();
-        }
-
-        public T Load<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
-        {
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).First();
-        }
-
-        public T Get<T>(int id) where T : class, IFolkeTable, new()
-        {
-            return Select<T>().All().From().Where(x => x.Id == id).FirstOrDefault();
-        }
-
-        public T Get<T>(int id, params Expression<Func<T, object>>[] fetches) where T : class, IFolkeTable, new()
-        {
-            return CreateLoadOrGetQuery(fetches).Where(x => x.Id == id).FirstOrDefault();
-        }
-
+        
         public T Get<T>(object id) where T : class, new()
         {
             return Select<T>().All().From().Where(x => x.Key() == id).FirstOrDefault();

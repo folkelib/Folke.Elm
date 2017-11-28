@@ -1,8 +1,10 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -11,7 +13,9 @@ namespace Folke.Elm.Test
     public class IntegrationTest
     {
         private readonly ISelectResult<TestLinkTable, FolkeTuple> select;
-        
+        private readonly Mock<IDatabaseDriver> driverMock;
+        private Mapper mapper = new Mapper();
+
         [Table("TestPoco")]
         public class TestPoco
         {
@@ -41,10 +45,10 @@ namespace Folke.Elm.Test
 
         public IntegrationTest()
         {
-            var driverMock = new Mock<IDatabaseDriver>();
-            select = FluentBaseBuilder<TestLinkTable, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            driverMock = new Mock<IDatabaseDriver>();
+            select = FluentBaseBuilder<TestLinkTable, FolkeTuple>.Select(driverMock.Object, mapper);
         }
-
+        
         [Fact(Skip = "Need fix")]
         public void FromSubQuery()
         {
@@ -78,24 +82,21 @@ namespace Folke.Elm.Test
         [Fact(Skip = "Not implemented")]
         public void LeftJoin_OnItemsSubWithId()
         {
-            var driverMock = new Mock<IDatabaseDriver>();
-            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestPoco>, FolkeTuple>.Select(driverMock.Object, mapper);
             selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User.Id.Equals(x.Item1.Id));
         }
 
         [Fact]
         public void LeftJoin_OnItemsWithReferenceEqualOperator()
         {
-            var driverMock = new Mock<IDatabaseDriver>();
-            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, mapper);
             selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User == x.Item1);
         }
 
         [Fact(Skip = "Not implemented")]
         public void LeftJoin_OnItemsWithReferenceEqualsMethod()
         {
-            var driverMock = new Mock<IDatabaseDriver>();
-            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, new Mapper());
+            var selectTuple = FluentBaseBuilder<FolkeTuple<TestLinkTable, TestOtherPoco>, FolkeTuple>.Select(driverMock.Object, mapper);
             selectTuple.All(x => x.Item0).From(x => x.Item0).LeftJoin(x => x.Item1).On(x => x.Item0.User.Equals(x.Item1));
         }
 
