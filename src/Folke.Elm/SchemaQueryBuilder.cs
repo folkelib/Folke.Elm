@@ -324,14 +324,14 @@ namespace Folke.Elm
             return AlterColumns(typeMapping, columns, null);
         }
 
-        internal bool AlterColumns(TypeMapping mapping, IList<IColumnDefinition> columns, string baseName)
+        internal bool AlterColumns(TypeMapping mapping, IList<IColumnDefinition> columns, string baseName, TypeMapping alteredTypeMapping = null)
         {
             bool changes = false;
             foreach (var property in mapping.Columns.Values)
             {
                 if (property.Reference != null && property.Reference.IsComplexType)
                 {
-                    changes |= AlterColumns(property.Reference, columns, property.ComposeName(baseName));
+                    changes |= AlterColumns(property.Reference, columns, property.ComposeName(baseName), alteredTypeMapping ?? mapping);
                     continue;
                 }
 
@@ -342,7 +342,7 @@ namespace Folke.Elm
                 if (existingColumn == null)
                 {
                     // TODO ugly
-                    DuringAlterTable(mapping);
+                    DuringAlterTable(alteredTypeMapping ?? mapping);
 
                     AddColumn(property, baseName);
                     changes = true;
