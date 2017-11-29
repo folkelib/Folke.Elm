@@ -7,15 +7,12 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using Folke.Elm.Fluent;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Folke.Elm.MicrosoftSqlServer
 {
     public class MicrosoftSqlServerDriver : IDatabaseDriver
     {
-        public MicrosoftSqlServerDriver()
-        {
-        }
-
         public bool CanAddIndexInCreateTable()
         {
             return true;
@@ -26,9 +23,19 @@ namespace Folke.Elm.MicrosoftSqlServer
             return false;
         }
 
-        public object ConvertReaderValueToProperty(object readerValue, Type propertyType)
+        public object ConvertReaderValueToProperty(object readerValue, PropertyMapping propertyType)
         {
             return readerValue;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, PropertyMapping propertyMapping, int index)
+        {
+            if (propertyMapping.IsJson)
+            {
+                return JsonConvert.DeserializeObject(reader.GetString(index),
+                    propertyMapping.PropertyInfo.PropertyType);
+            }
+            return ConvertReaderValueToValue(reader, propertyMapping.PropertyInfo.PropertyType, index);
         }
 
         public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)
@@ -154,6 +161,7 @@ namespace Folke.Elm.MicrosoftSqlServer
 
         public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
+            if (property.IsJson) return "NVARCHAR(MAX)";
             var type = property.PropertyInfo.PropertyType;
             return GetSqlType(type, property.MaxLength);
         }

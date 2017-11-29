@@ -39,9 +39,11 @@ namespace Folke.Elm
 
         object ConvertValueToParameter(IMapper mapper, object value);
 
-        object ConvertReaderValueToProperty(object readerValue, Type propertyType);
+        object ConvertReaderValueToProperty(object readerValue, PropertyMapping propertyType);
 
+        object ConvertReaderValueToValue(DbDataReader reader, PropertyMapping type, int index);
         object ConvertReaderValueToValue(DbDataReader reader, Type type, int index);
+
 
         // Capabilities
         bool CanAddIndexInCreateTable();

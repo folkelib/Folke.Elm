@@ -1,4 +1,5 @@
 ﻿using Folke.Elm.Mapping;
+using Newtonsoft.Json;
 
 namespace Folke.Elm.Fluent
 {
@@ -56,14 +57,15 @@ namespace Folke.Elm.Fluent
                     first = false;
                 else
                     baseQueryBuilder.StringBuilder.Append(",");
-                var propertValue = property.PropertyInfo.GetValue(value);
+                var propertyValue = value != null ? property.PropertyInfo.GetValue(value) : null;
                 if (property.Reference != null && property.Reference.IsComplexType)
                 {
-                    AddParameters(propertValue, property.Reference, baseQueryBuilder);
+                    AddParameters(propertyValue, property.Reference, baseQueryBuilder);
                 }
                 else
                 {
-                    var parameterIndex = baseQueryBuilder.AddParameter(property.PropertyInfo.GetValue(value));
+                    if (property.IsJson) propertyValue = JsonConvert.SerializeObject(propertyValue);
+                    var parameterIndex = baseQueryBuilder.AddParameter(propertyValue);
                     baseQueryBuilder.StringBuilder.DuringParameter(parameterIndex);
                 }
             }

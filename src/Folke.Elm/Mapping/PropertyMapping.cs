@@ -10,6 +10,7 @@ namespace Folke.Elm.Mapping
         public bool Readonly { get; set; }
         public bool Nullable { get; set; }
         public bool IsAutomatic { get; set; }
+        public bool IsJson { get; set; }
         public int MaxLength { get; set; }
         public string Index { get; set; }
         /// <summary>
@@ -28,14 +29,14 @@ namespace Folke.Elm.Mapping
             PropertyInfo = propertyInfo;
         }
 
-        public string ComposeName(string baseName)
+        internal string ComposeName(string baseName)
         {
             if (baseName != null)
                 return $"{baseName}_{ColumnName}";
             return ColumnName;
         }
 
-        public string ComposeNameReverse(string baseName)
+        internal string ComposeNameReverse(string baseName)
         {
             return $"{ColumnName}_{baseName}";
         }

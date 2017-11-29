@@ -7,7 +7,7 @@ namespace Folke.Elm.Mapping
     /// Allows to manipulate a TypeMapping
     /// </summary>
     /// <typeparam name="T">The type to map</typeparam>
-    public class FluentTypeMapping<T>
+    public partial class FluentTypeMapping<T>
     {
         private readonly TypeMapping typeMapping;
 
@@ -47,35 +47,11 @@ namespace Folke.Elm.Mapping
         /// </summary>
         /// <param name="expression">The expression that returns the property to map</param>
         /// <returns>An helper to define the property mapping</returns>
-        public FluentPropertyMapping Property(Expression<Func<T, object>> expression)
+        public FluentPropertyMapping<T> Property(Expression<Func<T, object>> expression)
         {
             var property = TableHelpers.GetExpressionPropertyInfo(expression);
             var propertyMapping = typeMapping.Columns[property.Name];
-            return new FluentPropertyMapping(propertyMapping);
-        }
-
-        /// <summary>
-        /// A class used to define the mapping of a property to a database column
-        /// </summary>
-        public class FluentPropertyMapping
-        {
-            private readonly PropertyMapping propertyMapping;
-
-            public FluentPropertyMapping(PropertyMapping propertyMapping)
-            {
-                this.propertyMapping = propertyMapping;
-            }
-
-            /// <summary>
-            /// Defines the column name
-            /// </summary>
-            /// <param name="name">The column name</param>
-            /// <returns>The <see cref="FluentPropertyMapping"/> itself</returns>
-            public FluentPropertyMapping HasColumnName(string name)
-            {
-                propertyMapping.ColumnName = name;
-                return this;
-            }
+            return new FluentPropertyMapping<T>(propertyMapping);
         }
     }
 }

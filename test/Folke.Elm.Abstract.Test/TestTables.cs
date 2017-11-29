@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Folke.Elm.Mapping;
 
 namespace Folke.Elm.Abstract.Test
 {
@@ -100,5 +101,7 @@ namespace Folke.Elm.Abstract.Test
         [Key]
         public int Id { get; set; }
         public Position Position { get; set; }
+        [Json]
+        public byte[] ArrayOfBytes { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using Folke.Elm.Mapping;
 using Folke.Elm.Visitor;
+using Newtonsoft.Json;
 
 namespace Folke.Elm.Fluent
 {
@@ -40,13 +41,14 @@ namespace Folke.Elm.Fluent
                 if (property.Readonly)
                     continue;
 
-                var parameter = property.PropertyInfo.GetValue(value);
+                var parameter = value != null ? property.PropertyInfo.GetValue(value) : null;
                 if (property.Reference != null && property.Reference.IsComplexType)
                 {
                     AddParameters(target, parameter, property.Reference, table, baseQueryBuilder, property.ComposeName(baseName));
                 }
                 else
                 {
+                    if (property.IsJson) parameter = JsonConvert.SerializeObject(parameter);
                     target.AppendSet();
                     string tableName = table.Alias;
                     baseQueryBuilder.StringBuilder.DuringColumn(tableName, property.ComposeName(baseName));

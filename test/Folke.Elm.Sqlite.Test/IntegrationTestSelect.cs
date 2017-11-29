@@ -197,5 +197,11 @@ namespace Folke.Elm.Sqlite.Test
         {
             integrationTestSelect.Select_WithComplexType();
         }
+
+        [Fact]
+        public void Select_WithJson()
+        {
+            integrationTestSelect.Select_WithJson();
+        }
     }
 }

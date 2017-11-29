@@ -7,6 +7,7 @@ using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
 using MySql.Data.MySqlClient;
 using Folke.Elm.Fluent;
+using Newtonsoft.Json;
 
 namespace Folke.Elm.Mysql
 {
@@ -21,6 +22,7 @@ namespace Folke.Elm.Mysql
 
         public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
+            if (property.IsJson) return "TEXT";
             var type = property.PropertyInfo.PropertyType;
             return GetSqlType(type, property.MaxLength);
         }
@@ -153,7 +155,7 @@ namespace Folke.Elm.Mysql
             return mapper.GetTypeMapping(parameterType).Key.PropertyInfo.GetValue(value);
         }
 
-        public object ConvertReaderValueToProperty(object readerValue, Type propertyType)
+        public object ConvertReaderValueToProperty(object readerValue, PropertyMapping propertyType)
         {
             return readerValue;
         }
@@ -166,6 +168,16 @@ namespace Folke.Elm.Mysql
         public bool CanDoMultipleActionsInAlterTable()
         {
             return true;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, PropertyMapping propertyMapping, int index)
+        {
+            if (propertyMapping.IsJson)
+            {
+                return JsonConvert.DeserializeObject(reader.GetString(index),
+                    propertyMapping.PropertyInfo.PropertyType);
+            }
+            return ConvertReaderValueToValue(reader, propertyMapping.PropertyInfo.PropertyType, index);
         }
 
         public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)

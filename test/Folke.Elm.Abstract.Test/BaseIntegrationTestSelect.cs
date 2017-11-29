@@ -477,5 +477,17 @@ namespace Folke.Elm.Abstract.Test
             value = connection.SelectAllFrom<Playground>().Where(x => x.Position.Longitude > 0).FirstOrDefault();
             Assert.Equal(4, value.Position.Longitude);
         }
+
+        public void Select_WithJson()
+        {
+            var value = new Playground { ArrayOfBytes = new byte[] { 1, 2, 3 }};
+            connection.Save(value);
+
+            value.ArrayOfBytes[2] = 4;
+            connection.Update(value);
+
+            var valueFromDb = connection.Load<Playground>(value.Id);
+            Assert.Equal(new byte[] { 1, 2, 4}, valueFromDb.ArrayOfBytes);
+        }
     }
 }

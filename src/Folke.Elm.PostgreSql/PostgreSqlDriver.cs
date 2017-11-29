@@ -6,6 +6,7 @@ using System.Reflection;
 using Folke.Elm.Fluent;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
+using Newtonsoft.Json;
 using Npgsql;
 
 namespace Folke.Elm.PostgreSql
@@ -23,6 +24,7 @@ namespace Folke.Elm.PostgreSql
 
         public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
+            if (property.IsJson) return "TEXT";
             var type = property.PropertyInfo.PropertyType;
             return GetSqlType(type, property.MaxLength, property.IsAutomatic && !foreignKey);
         }
@@ -170,9 +172,19 @@ namespace Folke.Elm.PostgreSql
             return mapper.GetTypeMapping(parameterType).Key.PropertyInfo.GetValue(value);
         }
 
-        public object ConvertReaderValueToProperty(object readerValue, Type propertyType)
+        public object ConvertReaderValueToProperty(object readerValue, PropertyMapping propertyType)
         {
             return readerValue;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, PropertyMapping propertyMapping, int index)
+        {
+            if (propertyMapping.IsJson)
+            {
+                return JsonConvert.DeserializeObject(reader.GetString(index),
+                    propertyMapping.PropertyInfo.PropertyType);
+            }
+            return ConvertReaderValueToValue(reader, propertyMapping.PropertyInfo.PropertyType, index);
         }
 
         public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)

@@ -27,7 +27,7 @@ namespace Folke.Elm
         {
             var ret = constructor.Invoke(null);
 
-            primaryKeyField?.PropertyInfo.SetValue(ret, id);
+            primaryKeyField?.PropertyMapping.PropertyInfo.SetValue(ret, id);
 
             if (collections != null)
             {
@@ -45,7 +45,7 @@ namespace Folke.Elm
             object value;
             var idMappedField = primaryKeyField;
             bool fromCache = false;
-
+            
             // If the key field is mapped or if its value is already known, create a new item and
             // store it in cache
             if (idMappedField != null && (idMappedField.SelectedField != null || expectedId != null))
@@ -64,7 +64,7 @@ namespace Folke.Elm
                         return null;
 
                     // Do like this because GetTypedValue does not seem to work with MySql and System.Guid
-                    id = folkeConnection.Driver.ConvertReaderValueToProperty(reader.GetValue(index), idMappedField.PropertyInfo.PropertyType);
+                    id = folkeConnection.Driver.ConvertReaderValueToProperty(reader.GetValue(index), idMappedField.PropertyMapping);
                     if (expectedId != null && !id.Equals(expectedId))
                         throw new Exception("Unexpected id");
                 }
@@ -100,8 +100,8 @@ namespace Folke.Elm
                 {
                     if (fieldInfo == null)
                         throw new Exception("Unknown error");
-                    object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.PropertyInfo.PropertyType, fieldInfo.Index);
-                    mappedField.PropertyInfo.SetValue(value, field);
+                    object field = folkeConnection.Driver.ConvertReaderValueToValue(reader, mappedField.PropertyMapping, fieldInfo.Index);
+                    mappedField.PropertyMapping.PropertyInfo.SetValue(value, field);
                 }
                 else
                 {
@@ -110,9 +110,9 @@ namespace Folke.Elm
                     if (fieldInfo == null && fromCache) continue;
                     object id = fieldInfo == null ? null : reader.GetValue(fieldInfo.Index);
                     if (id != null)
-                        id = folkeConnection.Driver.ConvertReaderValueToProperty(id, mappedField.MappedClass.primaryKeyField.PropertyInfo.PropertyType);
-                    object other = mappedField.MappedClass.Read(folkeConnection, mappedField.PropertyInfo.PropertyType, reader, id);
-                    mappedField.PropertyInfo.SetValue(value, other);
+                        id = folkeConnection.Driver.ConvertReaderValueToProperty(id, mappedField.MappedClass.primaryKeyField.PropertyMapping);
+                    object other = mappedField.MappedClass.Read(folkeConnection, mappedField.PropertyMapping.PropertyInfo.PropertyType, reader, id);
+                    mappedField.PropertyMapping.PropertyInfo.SetValue(value, other);
                 }
             }
             return value;
@@ -135,7 +135,7 @@ namespace Folke.Elm
             if (idProperty != null)
             {
                 var selectedField = fieldAliases.SingleOrDefault(f => f.Field.Table == selectedTable && f.Field.Column == idProperty);
-                mappedClass.primaryKeyField = new MappedField { SelectedField = selectedField, PropertyInfo = idProperty.PropertyInfo };
+                mappedClass.primaryKeyField = new MappedField { SelectedField = selectedField, PropertyMapping = idProperty };
             }
 
             foreach (var columnPair in type.Columns)
@@ -148,7 +148,7 @@ namespace Folke.Elm
                 bool isForeign = propertyMapping.Reference != null;
                 if (fieldInfo != null || isForeign)
                 {
-                    var mappedField = new MappedField { PropertyInfo = propertyMapping.PropertyInfo, SelectedField = fieldInfo };
+                    var mappedField = new MappedField { PropertyMapping = propertyMapping, SelectedField = fieldInfo };
 
                     if (isForeign)
                     {

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Common;
 using Folke.Elm.Fluent;
 using Folke.Elm.Mapping;
-using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 

@@ -203,5 +203,11 @@ namespace Folke.Elm.MicrosoftSqlServer.Test
         {
             integrationTestSelect.SelectAllFrom_UseCache();
         }
+
+        [Fact]
+        public void Select_WithJson()
+        {
+            integrationTestSelect.Select_WithJson();
+        }
     }
 }

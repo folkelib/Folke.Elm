@@ -1,5 +1,6 @@
 ﻿using System;
 using Folke.Elm.Mapping;
+using System.Collections.Generic;
 
 namespace Folke.Elm.Visitor
 {
@@ -8,14 +9,12 @@ namespace Folke.Elm.Visitor
     /// </summary>
     public class Field : IVisitable
     {
-        public SelectedTable Table { get; set; }
-        public PropertyMapping Column { get; set; }
+        public SelectedTable Table { get; }
+        public PropertyMapping Column { get; }
 
         public Field(SelectedTable table, PropertyMapping column)
         {
-            if (table == null)
-                throw new ArgumentNullException(nameof(table));
-            Table = table;
+            Table = table ?? throw new ArgumentNullException(nameof(table));
             Column = column;
         }
 
@@ -39,8 +38,15 @@ namespace Folke.Elm.Visitor
 
         public override bool Equals(object obj)
         {
-            var o = obj as Field;
-            return o != null && o.Table.Equals(Table) && o.Column == Column;
+            return obj is Field o && o.Table.Equals(Table) && o.Column == Column;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -366015330;
+            hashCode = hashCode * -1521134295 + EqualityComparer<SelectedTable>.Default.GetHashCode(Table);
+            hashCode = hashCode * -1521134295 + EqualityComparer<PropertyMapping>.Default.GetHashCode(Column);
+            return hashCode;
         }
     }
 }

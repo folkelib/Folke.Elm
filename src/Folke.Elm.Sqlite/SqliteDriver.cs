@@ -5,6 +5,7 @@ using System.Reflection;
 using Folke.Elm.InformationSchema;
 using Folke.Elm.Mapping;
 using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 
 namespace Folke.Elm.Sqlite
 {
@@ -22,6 +23,7 @@ namespace Folke.Elm.Sqlite
         public string GetSqlType(PropertyMapping property, bool foreignKey)
         {
             var type = property.PropertyInfo.PropertyType;
+            if (property.IsJson) return "TEXT";
             var maxLength = property.MaxLength;
             if (type.GetTypeInfo().IsGenericType)
                 type = Nullable.GetUnderlyingType(type);
@@ -184,12 +186,14 @@ namespace Folke.Elm.Sqlite
             return value;
         }
 
-        public object ConvertReaderValueToProperty(object readerValue, Type propertyType)
+        public object ConvertReaderValueToProperty(object readerValue, PropertyMapping propertyMapping)
         {
+            var propertyType = propertyMapping.PropertyInfo.PropertyType;
+
             if (propertyType == readerValue.GetType())
                 return readerValue;
 
-            if (propertyType == typeof (Guid))
+            if (propertyType== typeof (Guid))
                 return Guid.Parse((string) readerValue);
 
             return Convert.ChangeType(readerValue, propertyType);
@@ -203,6 +207,16 @@ namespace Folke.Elm.Sqlite
         public bool CanDoMultipleActionsInAlterTable()
         {
             return false;
+        }
+
+        public object ConvertReaderValueToValue(DbDataReader reader, PropertyMapping propertyMapping, int index)
+        {
+            if (propertyMapping.IsJson)
+            {
+                return JsonConvert.DeserializeObject(reader.GetString(index),
+                    propertyMapping.PropertyInfo.PropertyType);
+            }
+            return ConvertReaderValueToValue(reader, propertyMapping.PropertyInfo.PropertyType, index);
         }
 
         public object ConvertReaderValueToValue(DbDataReader reader, Type type, int index)

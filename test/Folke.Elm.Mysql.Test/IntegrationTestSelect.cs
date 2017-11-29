@@ -198,5 +198,11 @@ namespace Folke.Elm.Mysql.Test
         {
             integrationTestSelect.Select_WithComplexType();
         }
+
+        [Fact]
+        public void Select_WithJson()
+        {
+            integrationTestSelect.Select_WithJson();
+        }
     }
 }

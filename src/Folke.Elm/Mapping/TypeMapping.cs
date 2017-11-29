@@ -90,7 +90,9 @@ namespace Folke.Elm.Mapping
                 var propertyMapping = new PropertyMapping(propertyInfo) { Nullable = nullable };
                 Columns[propertyInfo.Name] = propertyMapping;
 
-                if (mapper.IsMapped(propertyInfo.PropertyType))
+                propertyMapping.IsJson = propertyInfo.GetCustomAttribute<JsonAttribute>() != null;
+                
+                if (!propertyMapping.IsJson && mapper.IsMapped(propertyInfo.PropertyType))
                 {
                     var typeMapping = mapper.GetTypeMapping(propertyInfo.PropertyType);
                     propertyMapping.Reference = typeMapping;
