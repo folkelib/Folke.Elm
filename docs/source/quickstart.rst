@@ -104,6 +104,10 @@ The second class is ``Order.cs`` and looks like this:
  {
      public class Order: IFolkeTable
      {
+		 public Order()
+		 {
+			this.Products = new List<Product>();
+		 }
          public int Id { get; set; }
          public IList<Product> Products { get; set; }
      }
@@ -202,13 +206,13 @@ But most of the time the object will be saved in a different scope than the one 
     Product loadedProduct = session.Load<Product>(product.Id);
     
      // Returns the correct product
-    Product getProduct = session.Load<Product>(product.Id);
+    Product getProduct = session.Get<Product>(product.Id);
     
     // Returns an error
     Product loadedProduct = session.Load<Product>(2323);
     
     // Returns a null object
-    Product getProduct = session.Load<Product>(2323);
+    Product getProduct = session.Get<Product>(2323);
 
 Selecting from the database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
